@@ -21,6 +21,8 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
+from selvra_analysis import manifest
+
 PII_EVENT_TYPES = {"FirstName", "LastName", "DateOfBirth"}
 
 # Clarity header prefix -> our column name. Matched by prefix because the
@@ -80,7 +82,8 @@ def read_clarity_csv(path: Path) -> pd.DataFrame:
 
 def load(paths: list[Path], db_path: Path) -> int:
     """Rebuild raw.clarity_events from all given files. Returns row count."""
-    frames = [read_clarity_csv(p) for p in sorted(paths)]
+    paths = sorted(paths)
+    frames = [read_clarity_csv(p) for p in paths]
     if not frames:
         raise SystemExit("No CSV files given. Put Clarity exports in data/raw/.")
     events = pd.concat(frames, ignore_index=True)
@@ -91,6 +94,7 @@ def load(paths: list[Path], db_path: Path) -> int:
         con.register("events_df", events)
         con.execute("create or replace table raw.clarity_events as select * from events_df")
         n = con.execute("select count(*) from raw.clarity_events").fetchone()[0]
+        manifest.record(con, "clarity", [(p, len(f)) for p, f in zip(paths, frames)])
     return n
 
 

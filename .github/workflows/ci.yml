@@ -17,6 +17,8 @@ jobs:
         run: make demo
       - name: Metrics match iglu (stored reference)
         run: make validate
+      - name: Example analysis end to end
+        run: make example
 
   iglu:
     # Independent check on every push: iglu computes the same metrics in R from the same readings.

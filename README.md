@@ -38,6 +38,19 @@ Two dbt macros in [`transform/macros/episodes.sql`](transform/macros/episodes.sq
 
 They take the episode definition as input and never define one. What counts as "high" is decided in each analysis's pre-registration.
 
+## How an analysis is run
+
+Every analysis follows [`ANALYSMALL.md`](ANALYSMALL.md). What makes a result trustworthy is the order things happen in, and the repository enforces it:
+
+1. **Pre-registration** of question, thesis, falsification criterion, metric definitions and the statistical plan: one primary outcome, the effect size and its unit, the smallest effect that matters, the interval method, sensitivity analyses and a decision rule. Committed before any code.
+2. **Blind development.** The analysis code is written against synthetic data, which contains none of the answers.
+3. **Freezing.** The code's commit hash goes into the pre-registration. On real data, [`provenance.run_analysis`](src/selvra_analysis/provenance.py) refuses to run if the analysis code, the pipeline or the pre-registration have changed since.
+4. **Run records.** Every run writes the result, commit, frozen commit, tool versions, parameters and data version to `korningar/`. The data version is the SHA-256 of each input file, recorded at ingestion (`raw.source_files`); file names are never stored, because Clarity names exports after the patient. The first run on real data is marked confirmatory; any later one is marked as a rerun.
+
+**Uncertainty.** Days from one person are not independent, so [`stats.block_bootstrap_difference`](src/selvra_analysis/stats.py) resamples runs of consecutive days (circular block bootstrap, Politis & Romano 1992). A test shows why: on simulated autocorrelated days with no real effect, an ordinary bootstrap interval covers zero only about 65 % of the time instead of 95 %; blocks of 7 to 14 days bring it to 87–89 %.
+
+[`analyses/000-exempel-traning`](analyses/000-exempel-traning/) runs the whole workflow on synthetic data (`make example`, also in CI). The synthetic data has no training effect built in, and the example correctly ends "undetermined".
+
 ## Validated against an independent implementation
 
 Every daily metric and every glycaemic event is checked against [iglu](https://github.com/irinagain/iglu) (Broll et al., *PLoS ONE* 2021), a peer-reviewed R package, on exactly the readings the pipeline used:

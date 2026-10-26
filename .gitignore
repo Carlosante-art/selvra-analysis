@@ -26,3 +26,6 @@ dashboard/*.html
 dashboard/*_files/
 dashboard/.quarto/
 .quarto/
+
+# Development runs on synthetic data are not part of the record
+analyses/*/korningar/*_synthetic.json

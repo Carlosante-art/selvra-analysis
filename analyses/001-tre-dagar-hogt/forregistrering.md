@@ -1,6 +1,6 @@
 # 001 · Tre dagar högt: vad händer dagarna efter?
 
-**Status:** förregistrering pågår. Steg 3–4 fylls i och committas **innan** någon kod körs mot riktig data.
+**Status:** förregistrering pågår. Steg 3–4 fylls i och committas **innan** någon kod skrivs. Analyskoden fryses (steg 4b) innan den körs på riktig data.
 
 ---
 
@@ -20,7 +20,7 @@
 | `intermediate.int_cgm_flagged` | Glukos var 5:e min | En mätning | Hela exporten | Tidig sensorperiod, kompressionslågvärden, orimliga hopp, Low/High | `reading_at` |
 | `data/raw/handelser.csv` | Sjukdom, sensorbyte, resor, alkohol, träning (självrapporterat) | En händelse | Så långt jag minns | Minnesfel, saknade händelser. Jämför loggade och härledda sensorbyten i `fct_day_context` för att se hur komplett loggen är | Datum |
 
-Verktyg: `consecutive_runs` hittar högperioderna enligt definitionen i steg 4, och `event_windows` ger dag +1 till +7 efter varje period.
+Verktyg: `consecutive_runs` hittar högperioderna enligt definitionen i steg 4, och `event_windows` ger dag +1 till +7 efter varje period. `fct_glucose_daily` har hypohändelser per dag enligt konsensus 2023 (nivå 1, nivå 2, förlängd), med och utan artefakter.
 
 ### 3. Tes och vad som skulle motbevisa den
 
@@ -43,3 +43,18 @@ Verktyg: `consecutive_runs` hittar högperioderna enligt definitionen i steg 4, 
 - **Jämförelse:**
 - **Metod:**
 - **Tillräckligt underlag** (minsta antal högperioder för att dra en slutsats):
+
+#### Statistik
+
+- **Primärt utfall:**
+- **Effektmått:**
+- **Minsta effekt som spelar roll:**
+- **Osäkerhet:** 95 % intervall, cirkulär block-bootstrap. Blocklängd: … dagar. Seed: …
+- **Känslighetsanalyser:**
+- **Sekundära utfall** (explorativa):
+- **Saknade data:**
+- **Beslutsregel:**
+
+### 4b. Frusen analyskod
+
+**Frusen analyskod:** *(fylls i när analys.py är klar och testad på syntetisk data)*

@@ -27,6 +27,8 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
+from selvra_analysis import manifest
+
 EVENT_TYPES = {
     "sjukdom",
     "sensorbyte",
@@ -82,6 +84,7 @@ def load(path: Path, db_path: Path) -> int:
         con.execute("create schema if not exists raw")
         con.register("events_df", events)
         con.execute("create or replace table raw.personal_events as select * from events_df")
+        manifest.record(con, "event_log", [(path, len(events))] if path.exists() else [])
         return con.execute("select count(*) from raw.personal_events").fetchone()[0]
 
 

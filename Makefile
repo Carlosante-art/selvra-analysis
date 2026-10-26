@@ -1,7 +1,7 @@
 DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
 
-.PHONY: demo build test lint dashboard validate
+.PHONY: demo build test lint dashboard validate example
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -20,11 +20,15 @@ build:
 validate:
 	uv run python -m selvra_analysis.validate_iglu --db $(DB)
 
+## Worked example of the full analysis workflow, on synthetic data
+example:
+	uv run python analyses/000-exempel-traning/analys.py --db $(DB)
+
 test:
 	uv run pytest -q
 
 lint:
-	uv run ruff check src tests
+	uv run ruff check src tests analyses
 
 ## Private data-health dashboard (rendered file is git-ignored: it contains health data)
 dashboard:
