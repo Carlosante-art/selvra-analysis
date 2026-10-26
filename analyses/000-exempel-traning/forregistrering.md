@@ -44,4 +44,4 @@
 
 ### 4b. Frusen analyskod
 
-**Frusen analyskod:** `240492825caf`
+**Frusen analyskod:** `661b5c08d21e`
