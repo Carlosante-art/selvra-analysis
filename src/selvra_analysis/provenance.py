@@ -31,6 +31,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 FROZEN_RE = re.compile(r"\*\*Frusen analyskod:\*\*\s*`?([0-9a-f]{7,40})`?")
+FROZEN_LINE_RE = re.compile(r"^\*\*Frusen analyskod:\*\*.*$", re.MULTILINE)
 PIPELINE_PATHS = ["src", "transform", "pyproject.toml", "uv.lock"]
 
 
@@ -64,7 +65,7 @@ def check_frozen(analysis_dir: Path) -> str:
     uncommitted = _git("status", "--porcelain", "--", *paths, *code).splitlines()
     prereg = analysis_dir / "forregistrering.md"
     then = _git("show", f"{commit}:{rel}/forregistrering.md")
-    if FROZEN_RE.sub("", then).strip() != FROZEN_RE.sub("", prereg.read_text()).strip():
+    if FROZEN_LINE_RE.sub("", then).strip() != FROZEN_LINE_RE.sub("", prereg.read_text()).strip():
         changed.append(f"{rel}/forregistrering.md (changed after freezing; only the hash line may be added)")
     if changed or uncommitted:
         raise NotFrozenError(
