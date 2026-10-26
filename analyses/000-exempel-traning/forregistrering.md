@@ -44,4 +44,4 @@
 
 ### 4b. Frusen analyskod
 
-**Frusen analyskod:** *(sätts efter commit av analys.py)*
+**Frusen analyskod:** `240492825caf`
