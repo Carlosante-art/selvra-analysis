@@ -29,5 +29,7 @@ dashboard/.quarto/
 
 # Development runs on synthetic data are not part of the record
 analyses/*/korningar/*_synthetic.json
+# Daily status reports are working notes
+studies/*/rapporter/
 .env
 data/

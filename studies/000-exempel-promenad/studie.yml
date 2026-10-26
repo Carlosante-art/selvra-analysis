@@ -1,0 +1,25 @@
+# Exempel på en studiefil. Körs på syntetisk data (perioden 2025), som saknar promenadeffekt.
+id: 000-exempel-promenad
+titel: Promenad efter middag och kvällsglukos (exempel)
+fraga: Sänker en promenad på 40 minuter efter middagen medelglukos 19–22 jämfört med vila?
+tes: Promenaden sänker medelglukos 19–22 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 40 minuter, start 18:30 ± 15 min, efter middagen
+  B: Ingen promenad, vila efter middagen
+  start: 2025-04-07
+  par: 12
+  periodlangd_dagar: 2
+  tvatt_dagar: 1
+
+utfall:
+  matt: medel            # medel | topp | tid_over_10
+  fonster: ["19:00", "22:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0   # A minus B; minus = A förväntas lägre

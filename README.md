@@ -53,6 +53,18 @@ Every analysis follows [`ANALYSMALL.md`](ANALYSMALL.md). What makes a result tru
 
 [`analyses/000-exempel-traning`](analyses/000-exempel-traning/) runs the whole workflow on synthetic data (`make example`, also in CI). The synthetic data has no training effect built in, and the example correctly ends "undetermined".
 
+## The study engine
+
+A study is a file. [`studies/`](studies/) holds one folder per study with a `studie.yml`: question, thesis, falsification, design, outcome, analysis and the smallest effect that matters. Readings arrive every five minutes from Selvra Diabetes; the engine does the rest:
+
+```bash
+uv run python -m selvra_analysis.study las    studies/NNN/studie.yml   # lock, draw schedule; then commit
+uv run python -m selvra_analysis.study status studies/NNN/studie.yml   # progress and data quality, never the effect
+uv run python -m selvra_analysis.study kor    studies/NNN/studie.yml   # the single confirmatory analysis
+```
+
+The final run refuses if the study file, the schedule or the pipeline changed after locking, if the study folder is not committed, if the study is still running, or if it has already been run. The verdict comes from a fixed rule set by one number written before the start. Format: [`studies/README.md`](studies/README.md).
+
 ## Experiments: n-of-1
 
 Observational analyses show what follows what. To show what *causes* what for one person, the person runs an experiment: paired periods of intervention and comparison, with the order inside each pair drawn at random before the start ([`N1MALL.md`](N1MALL.md), [`n1.py`](src/selvra_analysis/n1.py)).
