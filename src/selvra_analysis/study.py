@@ -267,9 +267,9 @@ def decide(estimate: dict, smallest: float) -> str:
     if smallest < 0:
         lo, hi, smallest = -hi, -lo, -smallest
     if lo > smallest:
-        return "tesen håller: hela intervallet visar minst den minsta relevanta effekten"
+        return "tesen håller: hela intervallet visar minst den minsta relevanta effekten, i förväntad riktning"
     if hi < smallest:
-        return "tesen motbevisad: hela intervallet ligger under den minsta relevanta effekten"
+        return "tesen motbevisad: hela intervallet visar en mindre effekt än den minsta relevanta, eller en effekt åt andra hållet"
     return "obestämt: intervallet rymmer både en relevant och en irrelevant effekt"
 
 
@@ -344,7 +344,7 @@ def _report(study: Study, record: dict) -> str:
             f"| Kompletta par | {r['n_pairs']} (bortfall {r['n_pairs_dropped']}) |",
             f"| Skattning A − B | {_fmt(r['estimate'])} {unit} |",
             f"| Intervall | {_fmt(r['ci_low'])} till {_fmt(r['ci_high'])} |",
-            f"| p (ingen effekt) | {r['p_value']:.4f} |",
+            f"| p (ingen effekt) | {r['p_value']:.4f} |".replace(".", ","),
             f"| AB-par / BA-par | {_fmt(r['estimate_ab_pairs'])} / {_fmt(r['estimate_ba_pairs'])} |", "",
             "Skiljer sig AB- och BA-paren mycket åt kan en eftereffekt mellan perioderna finnas.",
         ]
