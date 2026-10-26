@@ -16,9 +16,11 @@
 
 | Källa | Vad mäts | En rad är | Period | Kända fel | Nyckel |
 |---|---|---|---|---|---|
-| `marts.fct_glucose_daily` | Dagliga CGM-mått | En dag | Hela exporten | Täckning, sensorartefakter (se flaggkolumner) | `reading_date` |
+| `marts.mart_analysis_days` | Dagliga CGM-mått + kontext från händelseloggen | En dag | Hela exporten | Täckning, sensorartefakter (flaggkolumner), luckor i loggen | `reading_date` |
 | `intermediate.int_cgm_flagged` | Glukos var 5:e min | En mätning | Hela exporten | Tidig sensorperiod, kompressionslågvärden, orimliga hopp, Low/High | `reading_at` |
-| Egen händelselogg (att skapa) | Sjukdom, sensorbyte, resor, alkohol, träning | En händelse | Så långt jag minns | Minnesfel, saknade händelser | Datum |
+| `data/raw/handelser.csv` | Sjukdom, sensorbyte, resor, alkohol, träning (självrapporterat) | En händelse | Så långt jag minns | Minnesfel, saknade händelser. Jämför loggade och härledda sensorbyten i `fct_day_context` för att se hur komplett loggen är | Datum |
+
+Verktyg: `consecutive_runs` hittar högperioderna enligt definitionen i steg 4, och `event_windows` ger dag +1 till +7 efter varje period.
 
 ### 3. Tes och vad som skulle motbevisa den
 

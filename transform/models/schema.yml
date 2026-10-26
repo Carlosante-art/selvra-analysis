@@ -64,3 +64,22 @@ models:
               arguments:
                 min_value: 0
                 max_value: 100
+
+  - name: stg_personal_events
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: start_date
+        tests: [not_null]
+
+  - name: fct_day_context
+    description: Context per day from the event log, plus inferred sensor changes from the CGM data.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]
+
+  - name: mart_analysis_days
+    description: The starting table for analyses. One row per day with glucose metrics and context.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]

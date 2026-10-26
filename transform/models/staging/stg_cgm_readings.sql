@@ -3,7 +3,7 @@
 
 with source as (
 
-    select * from {{ source('clarity', 'clarity_events') }}
+    select * from {{ source('raw', 'clarity_events') }}
     where event_type = 'EGV' and ts_raw <> ''
 
 ),

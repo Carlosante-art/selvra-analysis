@@ -2,30 +2,39 @@
 
 **Pre-registered, reproducible analyses of personal CGM data.** Every analysis states its question, its thesis and what would disprove it *before* the data is touched, and the git history proves the order.
 
-Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his own Dexcom data. The analysis method follows the epistemic principles of the [Selvra protocol](https://github.com/Carlosante-art/Selvra-1): every claim is labelled as *observed*, *derived* or *interpreted*, and data quality problems are flagged, never silently deleted.
+Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his own Dexcom data. The analysis method follows the epistemic principles of the [Selvra protocol](https://github.com/Carlosante-art/Selvra-1): every claim is labelled as *observed*, *derived*, *interpreted* or *self-reported*, and data quality problems are flagged, never silently deleted.
 
 ## What is here
 
 | Path | What |
 |---|---|
 | [`ANALYSMALL.md`](ANALYSMALL.md) | The nine-step method every analysis follows (Swedish) |
-| [`src/selvra_analysis/`](src/selvra_analysis/) | Ingestion of Dexcom Clarity CSV exports into DuckDB, and a synthetic data generator |
-| [`transform/`](transform/) | dbt project: staging, sensor-artefact flags, daily glucose metrics, tests |
+| [`src/selvra_analysis/`](src/selvra_analysis/) | Ingestion of Dexcom Clarity exports and the personal event log into DuckDB; synthetic data generator |
+| [`transform/`](transform/) | dbt project: staging, artefact flags, daily metrics, day context, episode tools, tests |
 | [`analyses/`](analyses/) | One folder per analysis: pre-registration first, then code and results |
 
 ## Pipeline
 
 ```
-Clarity CSV ──▶ ingest (Python) ──▶ raw.clarity_events (DuckDB)
-                                        │
-                                        ▼  dbt
-                    stg_cgm_readings      parse, dedupe overlapping exports, Low/High as censored values
-                    int_cgm_segments      contiguous recording runs, gaps, probable sensor changes
-                    int_cgm_flagged       artefact flags: early sensor period, suspected compression lows, implausible jumps
-                    fct_glucose_daily     coverage, mean, CV, GMI, time in/above/below range, with and without flagged readings
+Clarity CSV ──▶ raw.clarity_events ──▶ stg_cgm_readings      parse, dedupe overlapping exports, Low/High as censored values
+                                        int_cgm_segments      gaps, contiguous runs, inferred sensor sessions
+                                        int_cgm_flagged       early sensor period, suspected compression lows, implausible jumps
+                                        fct_glucose_daily     coverage, mean, CV, GMI, time in/above/below range, with and without artefacts
+                                                 │
+handelser.csv ─▶ raw.personal_events ─▶ stg_personal_events  │
+                                        fct_day_context ◀────┘  illness, logged vs inferred sensor changes, alcohol, training, travel …
+                                                 │
+                                        mart_analysis_days    where every analysis starts: one row per day, metrics + context
 ```
 
-Patient identifiers (name, date of birth) in the Clarity export are dropped at ingestion and never reach the database.
+### Episode tools
+
+Two dbt macros in [`transform/macros/episodes.sql`](transform/macros/episodes.sql) cover the most common analysis shape, *what happens after X*:
+
+- `consecutive_runs(relation, date_column, condition, min_length)` finds runs of consecutive days meeting a condition. A day without data breaks a run.
+- `event_windows(runs, days, days_after, days_before)` returns the days around each run, joined to the day table, with `in_other_run` marking days contaminated by another episode.
+
+They take the episode definition as input and never define one. What counts as "high" is decided in each analysis's pre-registration.
 
 ## Run it
 
@@ -37,18 +46,21 @@ uv sync
 # Demo on synthetic data (no personal data needed)
 make demo
 
-# Your own data: put Clarity CSV exports in data/raw/, then
+# Your own data
+#   data/raw/clarity/*.csv   Clarity exports (any number, overlaps are fine)
+#   data/raw/handelser.csv   your event log, format in data/handelser.mall.csv (optional)
 make build
 ```
 
-`make build` loads every CSV in `data/raw/`, rebuilds the models and runs all tests. Exports that overlap in time are deduplicated.
+`make build` loads everything, rebuilds the models and runs all tests (38 dbt tests, plus `make test` for the Python side). The event log is validated strictly: an unknown event type or an unreadable date stops the load and names the line.
 
 ## Privacy
 
-Raw exports and the DuckDB file are git-ignored. Published results use aggregated figures and shifted dates. Nothing in this repository contains real personal health data; CI runs on synthetic data only.
+Raw exports, the event log and the DuckDB file are git-ignored. Patient identifiers in the Clarity export are dropped at ingestion, and a test guarantees they never reach the database. Published results use aggregated figures and patterns, not raw data. CI runs on synthetic data only.
 
 ## Known limitations of the source data
 
 - Clarity timestamps are local display time. Daylight-saving changes create a duplicated or missing hour twice a year.
-- The EGV export has no reliable sensor-start event. Sensor changes are inferred from gaps of two hours or more, and confirmed against the personal event log when available.
+- The EGV export has no reliable sensor-start event. Sensor changes are inferred from a transmitter ID change or a gap of two hours or more, and compared with the event log in `fct_day_context`.
 - Readings outside the sensor range are exported as `Low` or `High`. They are stored as censored values at the range limit (2.2 and 22.2 mmol/L), never dropped.
+- The compression-low flag is a heuristic (interpreted, not observed). Metrics are always available with and without it.

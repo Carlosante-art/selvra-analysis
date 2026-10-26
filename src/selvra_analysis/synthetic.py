@@ -50,8 +50,10 @@ def _meal_curve(minutes_since: np.ndarray, peak: float) -> np.ndarray:
     return peak * t * np.exp(1 - t) * (minutes_since >= 0)
 
 
-def generate(days: int, start: datetime, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Return (glucose readings, meal events) for `days` days."""
+def generate(
+    days: int, start: datetime, seed: int
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Return (glucose readings, meal events, personal event log) for `days` days."""
     rng = np.random.default_rng(seed)
     n = days * 288
     ts = pd.date_range(start, periods=n, freq="5min")
@@ -60,6 +62,11 @@ def generate(days: int, start: datetime, seed: int) -> tuple[pd.DataFrame, pd.Da
 
     glucose = np.full(n, 7.2)
     glucose += 1.0 * np.exp(-(((minute_of_day - 390) / 60.0) ** 2))  # dawn phenomenon
+
+    log: list[tuple[str, str, str, str]] = []
+
+    def day(d: int) -> str:
+        return (start + timedelta(days=int(d))).strftime("%Y-%m-%d")
 
     meals = []
     for d in range(days):
@@ -84,6 +91,9 @@ def generate(days: int, start: datetime, seed: int) -> tuple[pd.DataFrame, pd.Da
         length = rng.integers(3, 5)
         mask = (day_idx >= d0) & (day_idx < d0 + length)
         glucose[mask] += rng.uniform(2.5, 4.0)
+        # Some streaks have a logged cause, some do not: as in real life
+        if rng.random() < 0.6:
+            log.append((day(d0), day(d0 + length - 1), "sjukdom", "förkyld (syntetisk)"))
 
     # Real hypoglycaemia, about one every four days
     for _ in range(days // 4):
@@ -97,6 +107,8 @@ def generate(days: int, start: datetime, seed: int) -> tuple[pd.DataFrame, pd.Da
     sensor_len = 10 * 288
     for k, s0 in enumerate(range(0, n, sensor_len)):
         sensor_id[s0 : s0 + sensor_len] = f"SYN{k:04d}"
+        if k > 0 and rng.random() < 0.8:  # sensor changes are sometimes forgotten in the log
+            log.append((day(s0 // 288), "", "sensorbyte", ""))
         keep[s0 : s0 + 6] = False
         first_day = slice(s0 + 6, min(s0 + 288, n))
         glucose[first_day] += 0.5 + rng.normal(0, 0.4, len(glucose[first_day]))
@@ -115,9 +127,17 @@ def generate(days: int, start: datetime, seed: int) -> tuple[pd.DataFrame, pd.Da
         i0 = rng.integers(0, n - 20)
         keep[i0 : i0 + rng.integers(4, 18)] = False
 
+    # Everyday context with no glucose effect built in
+    for d in range(days):
+        if rng.random() < 0.08:
+            log.append((day(d), "", "alkohol", ""))
+        if rng.random() < 0.3:
+            log.append((day(d), "", "traning", "promenad 40 min"))
+
     readings = pd.DataFrame({"ts": ts, "glucose": glucose, "sensor": sensor_id})[keep]
     meal_events = pd.DataFrame(meals, columns=["ts", "carbs"])
-    return readings, meal_events
+    event_log = pd.DataFrame(log, columns=["start", "slut", "typ", "notering"]).sort_values("start")
+    return readings, meal_events, event_log
 
 
 def _format_glucose(v: float) -> str:
@@ -158,7 +178,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     start = datetime.fromisoformat(args.start)
-    readings, meals = generate(args.days, start, args.seed)
+    readings, meals, event_log = generate(args.days, start, args.seed)
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     # Two exports that overlap by ten days, as happens when you export twice.
@@ -171,6 +191,8 @@ def main(argv: list[str] | None = None) -> None:
     for name, (r_mask, m_mask) in parts.items():
         to_clarity(readings[r_mask], meals[m_mask]).to_csv(args.out_dir / name, index=False)
         print(f"Wrote {args.out_dir / name}")
+    event_log.to_csv(args.out_dir / "handelser.csv", index=False)
+    print(f"Wrote {args.out_dir / 'handelser.csv'}")
 
 
 if __name__ == "__main__":

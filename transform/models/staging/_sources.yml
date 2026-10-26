@@ -1,9 +1,9 @@
 version: 2
 
 sources:
-  - name: clarity
+  - name: raw
     schema: raw
-    description: Dexcom Clarity CSV exports, loaded as text by selvra_analysis.ingest_clarity. Patient identifiers are removed at ingestion.
+    description: Raw tables loaded by the ingestion scripts. Text as-is; typing happens in staging.
     tables:
       - name: clarity_events
         description: One row per row in an export, all event types. Overlapping exports produce duplicates here by design.
@@ -11,3 +11,11 @@ sources:
           - name: event_type
             tests:
               - not_null
+      - name: personal_events
+        description: The personal event log (handelser.csv), validated at ingestion. Self-reported context.
+        columns:
+          - name: typ
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['sjukdom', 'sensorbyte', 'alkohol', 'traning', 'resa', 'stress', 'menstruation', 'medicinandring', 'annat']

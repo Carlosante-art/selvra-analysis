@@ -1,6 +1,9 @@
 # Raw health data never leaves your machine
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/clarity/
+data/raw/clarity/*
+!data/raw/clarity/.gitkeep
 data/sample/
 *.duckdb
 *.duckdb.wal
