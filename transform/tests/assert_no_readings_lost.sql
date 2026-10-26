@@ -1,9 +1,19 @@
 -- Every distinct reading in the raw exports must survive to the flagged layer.
 -- Flagging is allowed; dropping is not.
-with raw_distinct as (
-    select count(distinct ts_raw || '|' || transmitter_id || '|' || glucose_raw) as n
+--
+-- Overlapping exports repeat readings across files; those are one reading. Within one file the
+-- same (time, transmitter, value) can legitimately appear twice: in the autumn hour that occurs
+-- twice. So a reading counts as many times as it appears in the file that has it most often.
+with per_file as (
+    select ts_raw, coalesce(transmitter_id, '') as transmitter_id, glucose_raw, source_file,
+           count(*) as n
     from {{ source('raw', 'clarity_events') }}
     where event_type = 'EGV' and ts_raw <> ''
+    group by all
+),
+raw_distinct as (
+    select sum(n) as n
+    from (select max(n) as n from per_file group by ts_raw, transmitter_id, glucose_raw)
 ),
 flagged as (
     select count(*) as n from {{ ref('int_cgm_flagged') }}

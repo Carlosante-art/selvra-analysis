@@ -19,7 +19,7 @@ events as (
 
 inferred_sensor_starts as (
 
-    select distinct cast(min(reading_at) as date) as reading_date
+    select distinct arg_min(reading_date, reading_at) as reading_date
     from {{ ref('int_cgm_flagged') }}
     where sensor_session_id > 1
     group by sensor_session_id

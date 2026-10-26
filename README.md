@@ -62,7 +62,7 @@ make demo
 make build
 ```
 
-`make build` loads everything, rebuilds the models and runs all tests (38 dbt tests, plus `make test` for the Python side). The event log is validated strictly: an unknown event type or an unreadable date stops the load and names the line.
+`make build` loads everything, rebuilds the models and runs all tests (dbt data and unit tests, plus `make test` for the Python side). The event log is validated strictly: an unknown event type or an unreadable date stops the load and names the line.
 
 ## Privacy
 
@@ -70,7 +70,7 @@ Raw exports, the event log and the DuckDB file are git-ignored. Patient identifi
 
 ## Known limitations of the source data
 
-- Clarity timestamps are local display time. Daylight-saving changes create a duplicated or missing hour twice a year.
+- Clarity timestamps are local wall-clock time without a zone. The pipeline converts them to UTC instants (`reading_at`) and keeps local time (`reading_at_local`, `reading_date`) for time of day and calendar days. The autumn hour that occurs twice is resolved by transmitter time within each export file; days are 23, 24 or 25 hours long and coverage is measured against the real length. A unit test pins this with known inputs. The local zone is the dbt var `local_timezone` (Europe/Stockholm); travel across zones is not modelled.
 - The EGV export has no reliable sensor-start event. Sensor changes are inferred from a transmitter ID change or a gap of two hours or more, and compared with the event log in `fct_day_context`.
 - Readings outside the sensor range are exported as `Low` or `High`. They are stored as censored values at the range limit (2.2 and 22.2 mmol/L), never dropped.
 - The compression-low flag is a heuristic (interpreted, not observed). Metrics are always available with and without it.

@@ -39,6 +39,7 @@ low_runs as (
     select
         low_run_id,
         min(reading_at)   as run_start_at,
+        arg_min(reading_at_local, reading_at) as run_start_local,
         max(reading_at)   as run_end_at,
         min(glucose_mmol) as nadir_mmol
     from low_runs_numbered
@@ -78,7 +79,7 @@ compression_runs as (
 
     select low_run_id
     from low_runs_with_post
-    where extract(hour from run_start_at) between 0 and 5
+    where extract(hour from run_start_local) between 0 and 5
       and date_diff('minute', run_start_at, run_end_at) <= 45
       and date_diff('minute', pre_at, run_start_at) <= 30
       and pre_mmol - nadir_mmol >= 2.0
@@ -89,7 +90,10 @@ compression_runs as (
 select
     l.reading_id,
     l.reading_at,
+    l.reading_at_local,
     l.reading_date,
+    l.local_time_ambiguous,
+    l.local_time_invalid,
     l.glucose_mmol,
     l.censored,
     l.transmitter_id,

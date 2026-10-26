@@ -38,13 +38,26 @@ daily as (
     from readings
     group by reading_date
 
+),
+
+-- Expected readings follow the local day's real length: 23 h (276) in spring, 25 h (300) in autumn.
+day_lengths as (
+
+    select
+        *,
+        date_diff('minute',
+            timezone('{{ var('local_timezone') }}', reading_date::timestamp),
+            timezone('{{ var('local_timezone') }}', (reading_date + 1)::timestamp)) / 5 as n_expected
+    from daily
+
 )
 
 select
     reading_date,
     n_readings,
-    round(100.0 * n_readings / 288, 1)                                  as coverage_pct,
-    100.0 * n_readings / 288 >= {{ var('valid_day_coverage_pct') }}     as is_valid_day,
+    n_expected,
+    round(100.0 * n_readings / n_expected, 1)                         as coverage_pct,
+    100.0 * n_readings / n_expected >= {{ var('valid_day_coverage_pct') }} as is_valid_day,
     n_artefact,
     n_compression_low,
     n_early_sensor,
@@ -62,5 +75,5 @@ select
     round(mean_mmol_clean, 2)                                           as mean_mmol_clean,
     round(tir_pct_clean, 1)                                             as tir_pct_clean,
     round(tbr_pct_clean, 1)                                             as tbr_pct_clean
-from daily
+from day_lengths
 order by reading_date

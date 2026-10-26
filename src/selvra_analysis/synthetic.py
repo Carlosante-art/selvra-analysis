@@ -10,8 +10,13 @@ does NOT encode any answer to the analyses in this repository: high-glucose
 streaks are followed by ordinary days. A pipeline tested on data that already
 contains the expected finding proves nothing.
 
+Time works as on a real receiver: readings are every 5 minutes of real time,
+exported as local wall-clock time in Europe/Stockholm. The default year
+therefore contains both daylight-saving changes, including the autumn hour
+that appears twice in the export.
+
 Usage:
-    python -m selvra_analysis.synthetic data/sample --days 180 --seed 7
+    python -m selvra_analysis.synthetic data/sample --days 365 --seed 7
 """
 
 from __future__ import annotations
@@ -24,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 STEP = timedelta(minutes=5)
+TZ = "Europe/Stockholm"
 LOW_LIMIT, HIGH_LIMIT = 2.2, 22.2
 
 HEADER = [
@@ -56,9 +62,12 @@ def generate(
     """Return (glucose readings, meal events, personal event log) for `days` days."""
     rng = np.random.default_rng(seed)
     n = days * 288
-    ts = pd.date_range(start, periods=n, freq="5min")
+    # Real time runs in UTC; the receiver shows local wall-clock time.
+    utc = pd.date_range(pd.Timestamp(start).tz_localize(TZ), periods=n, freq="5min").tz_convert("UTC")
+    ts = utc.tz_convert(TZ).tz_localize(None)
     minute_of_day = (ts.hour * 60 + ts.minute).to_numpy()
-    day_idx = np.arange(n) // 288
+    day_idx = (ts.normalize() - pd.Timestamp(start)).days.to_numpy()
+    local_minute = ((ts - pd.Timestamp(start)).total_seconds() / 60).to_numpy()
 
     glucose = np.full(n, 7.2)
     glucose += 1.0 * np.exp(-(((minute_of_day - 390) / 60.0) ** 2))  # dawn phenomenon
@@ -73,8 +82,7 @@ def generate(
         for base_min, carbs in ((450, 50), (750, 70), (1110, 80)):
             meal_min = base_min + int(rng.normal(0, 25))
             peak = rng.uniform(2.0, 7.0)
-            idx0 = d * 288
-            since = (np.arange(n) - idx0) * 5 - meal_min
+            since = local_minute - (d * 1440 + meal_min)
             glucose += _meal_curve(since.astype(float), peak) * (since < 300)
             meals.append((start + timedelta(days=d, minutes=meal_min), int(carbs * rng.uniform(0.7, 1.3))))
 
@@ -103,20 +111,26 @@ def generate(
 
     # Sensors: 10 days each, 30 min warm-up gap, noisier and biased first 24 h
     sensor_id = np.empty(n, dtype=object)
+    transmitter_time = np.zeros(n, dtype=np.int64)
     keep = np.ones(n, dtype=bool)
     sensor_len = 10 * 288
     for k, s0 in enumerate(range(0, n, sensor_len)):
         sensor_id[s0 : s0 + sensor_len] = f"SYN{k:04d}"
+        transmitter_time[s0 : s0 + sensor_len] = np.arange(len(transmitter_time[s0 : s0 + sensor_len])) * 300
         if k > 0 and rng.random() < 0.8:  # sensor changes are sometimes forgotten in the log
             log.append((day(s0 // 288), "", "sensorbyte", ""))
         keep[s0 : s0 + 6] = False
         first_day = slice(s0 + 6, min(s0 + 288, n))
         glucose[first_day] += 0.5 + rng.normal(0, 0.4, len(glucose[first_day]))
 
-    # Compression lows: sharp nightly dips that recover within ~30 min
+    # Compression lows: sharp nightly dips that recover within ~30 min, 02:00-05:00 local
+    night = np.flatnonzero((ts.hour >= 2) & (ts.hour < 5))
     for _ in range(days // 7):
         d = rng.integers(0, days)
-        i0 = d * 288 + rng.integers(24, 60)  # 02:00-05:00
+        candidates = night[day_idx[night] == d]
+        if len(candidates) == 0:
+            continue
+        i0 = int(rng.choice(candidates))
         if i0 + 8 < n:
             target = rng.uniform(2.4, 3.2)
             glucose[i0 : i0 + 6] = np.linspace(glucose[i0], target, 6)
@@ -134,7 +148,9 @@ def generate(
         if rng.random() < 0.3:
             log.append((day(d), "", "traning", "promenad 40 min"))
 
-    readings = pd.DataFrame({"ts": ts, "glucose": glucose, "sensor": sensor_id})[keep]
+    readings = pd.DataFrame(
+        {"ts": ts, "glucose": glucose, "sensor": sensor_id, "transmitter_time": transmitter_time}
+    )[keep]
     meal_events = pd.DataFrame(meals, columns=["ts", "carbs"])
     event_log = pd.DataFrame(log, columns=["start", "slut", "typ", "notering"]).sort_values("start")
     return readings, meal_events, event_log
@@ -157,7 +173,7 @@ def to_clarity(readings: pd.DataFrame, meals: pd.DataFrame) -> pd.DataFrame:
     for r in readings.itertuples():
         rows.append(
             ["", r.ts.strftime("%Y-%m-%dT%H:%M:%S"), "EGV", "", "", "", "SYNTHETIC",
-             _format_glucose(r.glucose), "", "", "", "", "", r.sensor]
+             _format_glucose(r.glucose), "", "", "", "", str(r.transmitter_time), r.sensor]
         )
     for m in meals.itertuples():
         rows.append(
@@ -172,7 +188,7 @@ def to_clarity(readings: pd.DataFrame, meals: pd.DataFrame) -> pd.DataFrame:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("out_dir", type=Path)
-    parser.add_argument("--days", type=int, default=180)
+    parser.add_argument("--days", type=int, default=365)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--start", default="2025-01-01")
     args = parser.parse_args(argv)

@@ -7,7 +7,16 @@ models:
       - name: reading_id
         tests: [unique, not_null]
       - name: reading_at
-        description: Local display time as exported by Clarity.
+        description: The instant of the reading (timestamptz, UTC). Use for ordering, gaps and durations.
+        tests: [not_null]
+      - name: reading_at_local
+        description: Wall-clock time in var('local_timezone'), as shown on the receiver. Use for time of day.
+        tests: [not_null]
+      - name: reading_date
+        description: Local calendar date.
+        tests: [not_null]
+      - name: local_time_invalid
+        description: The exported wall time does not exist locally (spring-forward hour). Read as summer time.
         tests: [not_null]
       - name: glucose_mmol
         description: Glucose in mmol/L. Censored readings are set to the sensor limit. A null here means an unparseable export value.
@@ -52,12 +61,14 @@ models:
       - name: reading_date
         tests: [unique, not_null]
       - name: coverage_pct
-        description: Share of the 288 expected 5-minute readings. Can exceed 100 on the day clocks go back.
+        description: Share of expected 5-minute readings for the local day's real length (276 in spring, 288, 300 in autumn). Above 100 means more readings than the clock allows, for example two sensors running in parallel during a G7 grace period.
         tests:
           - between:
               arguments:
                 min_value: 0
-                max_value: 110
+                max_value: 100
+              config:
+                severity: warn
       - name: tir_pct
         tests:
           - between:

@@ -32,7 +32,7 @@ days = q("select * from marts.mart_analysis_days order by reading_date")
 days["reading_date"] = pd.to_datetime(days["reading_date"])
 last = days["reading_date"].max()
 recent = days[days["reading_date"] > last - pd.Timedelta(days=14)]
-last_reading = q("select max(reading_at) as t from intermediate.int_cgm_flagged")["t"].iloc[0]
+last_reading = q("select arg_max(reading_at_local, reading_at) as t from intermediate.int_cgm_flagged")["t"].iloc[0]
 
 # Consensus colours for glucose ranges (AGP report convention)
 RANGES = [
@@ -99,7 +99,7 @@ colours = ["#3aa655" if v else "#e0453a" for v in days["is_valid_day"]]
 ax.bar(days["reading_date"], days["coverage_pct"], width=1.0, color=colours)
 ax.axhline(70, color=INK, linestyle="--", linewidth=1)
 ax.set_ylim(0, 105)
-ax.set_ylabel("% of 288 readings")
+ax.set_ylabel("% of expected readings")
 date_axis(ax)
 fig.tight_layout()
 plt.show()
@@ -109,7 +109,7 @@ plt.show()
 #| title: "Ambulatory glucose profile · last 14 days, artefacts excluded"
 agp = q(f"""
     select
-        (extract(hour from reading_at) * 60 + floor(extract(minute from reading_at) / 15) * 15) / 60.0 as hour,
+        (extract(hour from reading_at_local) * 60 + floor(extract(minute from reading_at_local) / 15) * 15) / 60.0 as hour,
         quantile_cont(glucose_mmol, 0.05) as p05, quantile_cont(glucose_mmol, 0.25) as p25,
         quantile_cont(glucose_mmol, 0.50) as p50, quantile_cont(glucose_mmol, 0.75) as p75,
         quantile_cont(glucose_mmol, 0.95) as p95

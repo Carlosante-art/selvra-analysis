@@ -8,6 +8,9 @@ test-paths: ["tests"]
 macro-paths: ["macros"]
 
 vars:
+  # Clarity exports local wall-clock time. Readings are stored as UTC instants and converted back
+  # to this zone for time-of-day and calendar dates.
+  local_timezone: Europe/Stockholm
   # Sensor reporting range (Dexcom G6/G7), mmol/L. Low/High are stored at these limits.
   sensor_low_mmol: 2.2
   sensor_high_mmol: 22.2

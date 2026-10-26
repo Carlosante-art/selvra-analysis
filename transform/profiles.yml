@@ -5,3 +5,6 @@ selvra:
       type: duckdb
       path: "{{ env_var('SELVRA_DUCKDB', '../data/selvra.duckdb') }}"
       threads: 4
+      # Sessions run in UTC so no result depends on the machine's zone. Local time is explicit.
+      settings:
+        TimeZone: UTC
