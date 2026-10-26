@@ -1,12 +1,5 @@
 DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
-USER_ID ?= 98345704-bed3-4f31-ac83-4818171d39ea
-
-# Ladda .env om den finns (utan att skriva ut innehållet)
-ifneq (,$(wildcard .env))
-  include .env
-  export
-endif
 
 .PHONY: demo build build-live test lint dashboard validate example
 
@@ -23,10 +16,10 @@ build:
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 
-## Live data direct from Supabase — kräver ANALYSIS_DB_URL i env
-## Kör: ANALYSIS_DB_URL=postgresql://... make build-live
+## Readings collected by Selvra Diabetes (Dexcom Share), from Supabase. Needs ANALYSIS_DB_URL and
+## ANALYSIS_USER_ID in .env. Clarity exports already loaded are kept and take precedence.
 build-live:
-	uv run python -m selvra_analysis.ingest_supabase --user-id $(USER_ID) --db $(DB)
+	uv run python -m selvra_analysis.ingest_supabase --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 

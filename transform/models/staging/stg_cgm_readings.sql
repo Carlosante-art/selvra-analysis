@@ -1,4 +1,6 @@
--- One row per glucose reading (EGV), typed, in mmol/L, deduplicated across overlapping exports.
+-- One row per glucose reading, typed, in mmol/L, deduplicated across overlapping exports.
+-- Two sources: Clarity exports (history) and Dexcom Share via Selvra Diabetes (after the last
+-- Clarity reading). The column `source` says which.
 -- Low/High are kept as censored values at the sensor limits, never dropped.
 --
 -- Time: Clarity exports local wall-clock time without a zone. Each reading gets
@@ -151,19 +153,58 @@ deduplicated as (
         order by source_file, source_row
     ) = 1
 
+),
+
+clarity as (
+
+    select
+        md5(concat_ws('|', epoch_ms(reading_at), coalesce(transmitter_id, ''), glucose_raw)) as reading_id,
+        reading_at,
+        local_wall                    as reading_at_local,
+        cast(local_wall as date)      as reading_date,
+        is_ambiguous                  as local_time_ambiguous,
+        local_time_invalid,
+        glucose_mmol,
+        glucose_raw,
+        censored,
+        transmitter_id,
+        source_device_id,
+        source_file,
+        'clarity'                     as source
+    from deduplicated
+
+),
+
+-- Dexcom Share readings collected by Selvra Diabetes: exact instants, mg/dL.
+-- Used only after the last Clarity reading. Clarity is the complete record (it includes
+-- backfill), and the two sources timestamp and round the same reading differently, so
+-- letting both cover the same period would count readings twice.
+-- Out-of-range: Dexcom reports 40-400 mg/dL; values outside are treated as Low/High.
+share as (
+
+    select
+        md5(concat_ws('|', 'share', epoch_ms(s.reading_at)))                as reading_id,
+        s.reading_at,
+        timezone('{{ tz }}', s.reading_at)                                  as reading_at_local,
+        cast(timezone('{{ tz }}', s.reading_at) as date)                    as reading_date,
+        false                                                               as local_time_ambiguous,
+        false                                                               as local_time_invalid,
+        round(case
+            when s.value_mgdl < 40  then {{ var('sensor_low_mmol') }}
+            when s.value_mgdl > 400 then {{ var('sensor_high_mmol') }}
+            else s.value_mgdl / 18.016
+        end, 1)                                                             as glucose_mmol,
+        cast(s.value_mgdl as varchar)                                       as glucose_raw,
+        case when s.value_mgdl < 40 then 'low' when s.value_mgdl > 400 then 'high' end as censored,
+        null::varchar                                                       as transmitter_id,
+        null::varchar                                                       as source_device_id,
+        'dexcom_share'                                                      as source_file,
+        'dexcom_share'                                                      as source
+    from {{ source('raw', 'share_readings') }} as s
+    where s.reading_at > coalesce((select max(reading_at) from clarity), '-infinity'::timestamptz)
+
 )
 
-select
-    md5(concat_ws('|', epoch_ms(reading_at), coalesce(transmitter_id, ''), glucose_raw)) as reading_id,
-    reading_at,
-    local_wall                    as reading_at_local,
-    cast(local_wall as date)      as reading_date,
-    is_ambiguous                  as local_time_ambiguous,
-    local_time_invalid,
-    glucose_mmol,
-    glucose_raw,
-    censored,
-    transmitter_id,
-    source_device_id,
-    source_file
-from deduplicated
+select * from clarity
+union all
+select * from share

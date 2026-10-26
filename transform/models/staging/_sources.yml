@@ -11,6 +11,15 @@ sources:
           - name: event_type
             tests:
               - not_null
+      - name: share_readings
+        description: >
+          Readings collected by Selvra Diabetes from Dexcom Share, loaded from Supabase.
+          Exact UTC instants, mg/dL as Dexcom measures them. No transmitter ID, no backfill.
+        columns:
+          - name: reading_at
+            tests: [not_null, unique]
+          - name: value_mgdl
+            tests: [not_null]
       - name: personal_events
         description: The personal event log (handelser.csv), validated at ingestion. Self-reported context.
         columns:

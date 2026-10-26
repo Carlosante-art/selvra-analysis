@@ -1,5 +1,5 @@
 -- Every distinct reading in the raw exports must survive to the flagged layer.
--- Flagging is allowed; dropping is not.
+-- Flagging is allowed; dropping is not. Share readings count from the last Clarity reading on.
 --
 -- Overlapping exports repeat readings across files; those are one reading. Within one file the
 -- same (time, transmitter, value) can legitimately appear twice: in the autumn hour that occurs
@@ -15,9 +15,16 @@ raw_distinct as (
     select sum(n) as n
     from (select max(n) as n from per_file group by ts_raw, transmitter_id, glucose_raw)
 ),
+share_after_clarity as (
+    select count(*) as n
+    from {{ source('raw', 'share_readings') }}
+    where reading_at > coalesce(
+        (select max(reading_at) from {{ ref('stg_cgm_readings') }} where source = 'clarity'),
+        '-infinity'::timestamptz)
+),
 flagged as (
     select count(*) as n from {{ ref('int_cgm_flagged') }}
 )
-select raw_distinct.n as raw_n, flagged.n as flagged_n
-from raw_distinct, flagged
-where raw_distinct.n <> flagged.n
+select coalesce(raw_distinct.n, 0) + share_after_clarity.n as raw_n, flagged.n as flagged_n
+from raw_distinct, share_after_clarity, flagged
+where coalesce(raw_distinct.n, 0) + share_after_clarity.n <> flagged.n

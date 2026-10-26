@@ -62,3 +62,29 @@ def test_load_rebuilds_table(export: Path, tmp_path: Path) -> None:
     assert load([export, export], db) == 6  # overlap is deduplicated later, in dbt
     with duckdb.connect(str(db)) as con:
         assert con.execute("select count(*) from raw.clarity_events").fetchone()[0] == 6
+
+
+HEADER_SV = (
+    "Sakregister;Tidsstämpel (ÅÅÅÅ-MM-DDThh:mm:ss);Händelsetyp;Händelseundertyp;Patientinformation;"
+    "Enhetsinfo;Källenhets-ID;Glukosvärde (mmol/l);Insulinvärde (E);Kolhydratvärde (gram);"
+    "Varaktighet (hh:mm:ss);Förändringshastighet för glukos (mmol/l/min);Sändartid (långt heltal);Sändar-ID"
+)
+
+
+def test_swedish_eu_export(tmp_path: Path) -> None:
+    path = tmp_path / "sv.csv"
+    rows = [
+        "1;;Förnamn;;Carl;;;;;;;;;",
+        "2;;Efternamn;;Exempel;;;;;;;;;",
+        "3;;Födelsedatum;;2000-01-01;;;;;;;;;",
+        "4;2025-03-01T02:00:00;EGV;;;;iOS G7;6,2;;;;;123;AB12",
+        "5;2025-03-01T02:05:00;EGV;;;;iOS G7;Lågt;;;;;423;AB12",
+    ]
+    path.write_text("\n".join([HEADER_SV, *rows]) + "\n", encoding="utf-8-sig")
+    df = read_clarity_csv(path)
+    assert list(df.columns) == list(dict.fromkeys(df.columns)), "duplicate column names"
+    assert "Carl" not in df.to_string() and "Exempel" not in df.to_string()
+    egv = df[df["event_type"] == "EGV"]
+    assert egv["glucose_raw"].tolist() == ["6,2", "Lågt"]
+    assert set(egv["glucose_unit"]) == {"mmol/L"}
+    assert egv["transmitter_time_raw"].tolist() == ["123", "423"]

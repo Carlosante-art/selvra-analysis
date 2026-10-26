@@ -59,7 +59,9 @@ COLUMN_PREFIXES = {
     "Sändar-ID": "transmitter_id",
 }
 
-RAW_COLUMNS = [*COLUMN_PREFIXES.values(), "glucose_unit", "source_file", "loaded_at"]
+# Swedish and English headers map to the same names; keep each name once, in order.
+EXPORT_COLUMNS = list(dict.fromkeys(COLUMN_PREFIXES.values()))
+RAW_COLUMNS = [*EXPORT_COLUMNS, "glucose_unit", "source_file", "loaded_at"]
 
 
 def _glucose_unit(header: str) -> str:
@@ -92,17 +94,32 @@ def read_clarity_csv(path: Path) -> pd.DataFrame:
                 if name == "glucose_raw":
                     unit = _glucose_unit(col)
                 break
-    missing = set(COLUMN_PREFIXES.values()) - set(rename.values())
+    missing = set(EXPORT_COLUMNS) - set(rename.values())
     if missing:
         raise ValueError(f"{path.name}: not a Clarity export, missing columns {sorted(missing)}")
 
     df = df.rename(columns=rename)
     df = df[~df["event_type"].isin(PII_EVENT_TYPES)]
-    df = df[list(COLUMN_PREFIXES.values())].copy()
+    df = df[EXPORT_COLUMNS].copy()
     df["glucose_unit"] = unit
     df["source_file"] = path.name
     df["loaded_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     return df[RAW_COLUMNS]
+
+
+def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
+    """Both CGM sources exist as tables, empty if never loaded, so staging always builds."""
+    con.execute("create schema if not exists raw")
+    cols = ", ".join(f"{c} varchar" for c in RAW_COLUMNS)
+    con.execute(f"create table if not exists raw.clarity_events ({cols})")
+    con.execute(
+        "create table if not exists raw.share_readings "
+        "(reading_at timestamptz, value_mgdl integer, trend varchar, loaded_at varchar)"
+    )
+    con.execute(
+        "create table if not exists raw.source_files "
+        "(kind varchar, sha256 varchar, bytes bigint, n_rows bigint, loaded_at varchar)"
+    )
 
 
 def load(paths: list[Path], db_path: Path) -> int:
@@ -115,7 +132,7 @@ def load(paths: list[Path], db_path: Path) -> int:
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with duckdb.connect(str(db_path)) as con:
-        con.execute("create schema if not exists raw")
+        ensure_raw_tables(con)
         con.register("events_df", events)
         con.execute("create or replace table raw.clarity_events as select * from events_df")
         n = con.execute("select count(*) from raw.clarity_events").fetchone()[0]

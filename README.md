@@ -18,6 +18,7 @@ Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his
 
 ```
 Clarity CSV ──▶ raw.clarity_events ──▶ stg_cgm_readings      parse, dedupe overlapping exports, Low/High as censored values
+Supabase ────▶ raw.share_readings ──┘                         Dexcom Share via Selvra Diabetes, after the last Clarity reading
                                         int_cgm_segments      gaps, contiguous runs, inferred sensor sessions
                                         int_cgm_flagged       early sensor period, suspected compression lows, implausible jumps
                                         int_glycaemic_events  consensus 2023 hypo/hyper events (level 1, level 2, extended)
@@ -98,9 +99,13 @@ uv sync
 make demo
 
 # Your own data
-#   data/raw/clarity/*.csv   Clarity exports (any number, overlaps are fine)
+#   data/raw/clarity/*.csv   Clarity exports, English or Swedish (any number, overlaps are fine)
 #   data/raw/handelser.csv   your event log, format in data/handelser.mall.csv (optional)
 make build
+
+# Plus readings collected since the last export by Selvra Diabetes (Dexcom Share)
+#   .env: ANALYSIS_DB_URL and ANALYSIS_USER_ID (never committed, never printed)
+make build-live
 ```
 
 `make build` loads everything, rebuilds the models and runs all tests (dbt data and unit tests, plus `make test` for the Python side). The event log is validated strictly: an unknown event type or an unreadable date stops the load and names the line.
@@ -110,6 +115,8 @@ make build
 Raw exports, the event log and the DuckDB file are git-ignored. Patient identifiers in the Clarity export are dropped at ingestion, and a test guarantees they never reach the database. Published results use aggregated figures and patterns, not raw data. CI runs on synthetic data only.
 
 ## Known limitations of the source data
+
+- **Two sources, one record.** Clarity is the complete history: it includes readings the receiver backfilled after a signal loss. Dexcom Share (collected by Selvra Diabetes) has exact UTC instants but no backfill and no transmitter ID. Staging uses Share only after the last Clarity reading, so no reading is counted twice; export from Clarity now and then to replace Share with the complete record. Every Share load is snapshotted to `data/snapshots/` and its checksum recorded as the data version.
 
 - Clarity timestamps are local wall-clock time without a zone. The pipeline converts them to UTC instants (`reading_at`) and keeps local time (`reading_at_local`, `reading_date`) for time of day and calendar days. The autumn hour that occurs twice is resolved by transmitter time within each export file; days are 23, 24 or 25 hours long and coverage is measured against the real length. A unit test pins this with known inputs. The local zone is the dbt var `local_timezone` (Europe/Stockholm); travel across zones is not modelled.
 - The EGV export has no reliable sensor-start event. Sensor changes are inferred from a transmitter ID change or a gap of two hours or more, and compared with the event log in `fct_day_context`.
