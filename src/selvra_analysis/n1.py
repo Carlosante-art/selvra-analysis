@@ -77,7 +77,7 @@ def period_outcomes(schedule: pd.DataFrame, daily: pd.DataFrame, outcome: str,
     d = daily[[date_column, outcome] + ([valid_column] if valid_column else [])].copy()
     d[date_column] = pd.to_datetime(d[date_column]).dt.date
     if valid_column:
-        d.loc[d[valid_column] != True, outcome] = np.nan  # noqa: E712
+        d.loc[d[valid_column] != True, outcome] = np.nan
     m = schedule[~schedule["washout"]].merge(d, left_on="date", right_on=date_column, how="left")
     out = (m.groupby(["pair", "period", "condition", "order"], as_index=False)
              .agg(value=(outcome, "mean"), n_days=(outcome, "count")))
@@ -223,7 +223,7 @@ def period_sd(daily: pd.DataFrame, outcome: str, analysed_days: int,
     d[date_column] = pd.to_datetime(d[date_column])
     d = d.set_index(date_column).sort_index()
     d = d.reindex(pd.date_range(d.index.min(), d.index.max(), freq="D"))
-    y = d[outcome].where(d[valid_column] == True) if valid_column else d[outcome]  # noqa: E712
+    y = d[outcome].where(d[valid_column] == True) if valid_column else d[outcome]
     block = np.arange(len(y)) // analysed_days
     means = y.groupby(block).agg(["mean", "count"])
     return float(means.loc[means["count"] == analysed_days, "mean"].std(ddof=1))
