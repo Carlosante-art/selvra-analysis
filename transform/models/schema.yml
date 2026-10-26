@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: stg_cgm_readings
+    description: One glucose reading per row, mmol/L, deduplicated across overlapping exports.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+      - name: reading_at
+        description: Local display time as exported by Clarity.
+        tests: [not_null]
+      - name: glucose_mmol
+        description: Glucose in mmol/L. Censored readings are set to the sensor limit. A null here means an unparseable export value.
+        tests:
+          - not_null
+          - between:
+              arguments:
+                min_value: 2.2
+                max_value: 22.2
+      - name: censored
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['low', 'high']
+
+  - name: int_cgm_segments
+    description: Readings with gaps, contiguous segments and inferred sensor sessions.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+      - name: gap_minutes
+        tests:
+          - between:
+              arguments:
+                min_value: 0
+                max_value: 1000000
+
+  - name: int_cgm_flagged
+    description: Readings with artefact flags. Nothing is removed.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+      - name: flag_compression_low
+        description: "Interpreted (heuristic): night-time run below 3.9 mmol/L, reached by a drop of 2.0+ mmol/L within ~20 min, lasting at most 45 min, recovering to within 1.0 of the pre-drop value within 45 min."
+        tests: [not_null]
+      - name: flag_implausible_jump
+        tests: [not_null]
+
+  - name: fct_glucose_daily
+    description: Daily CGM metrics per international consensus, on all readings and without artefacts.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]
+      - name: coverage_pct
+        description: Share of the 288 expected 5-minute readings. Can exceed 100 on the day clocks go back.
+        tests:
+          - between:
+              arguments:
+                min_value: 0
+                max_value: 110
+      - name: tir_pct
+        tests:
+          - between:
+              arguments:
+                min_value: 0
+                max_value: 100

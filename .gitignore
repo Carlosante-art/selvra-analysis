@@ -1,0 +1,19 @@
+# Raw health data never leaves your machine
+data/raw/*
+!data/raw/.gitkeep
+data/sample/
+*.duckdb
+*.duckdb.wal
+
+# dbt
+transform/target/
+transform/logs/
+transform/dbt_packages/
+transform/.user.yml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/

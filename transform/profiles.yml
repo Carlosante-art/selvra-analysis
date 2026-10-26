@@ -1,0 +1,7 @@
+selvra:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('SELVRA_DUCKDB', '../data/selvra.duckdb') }}"
+      threads: 4

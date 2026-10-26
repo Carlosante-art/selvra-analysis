@@ -1,0 +1,43 @@
+name: selvra_analysis
+version: "0.1.0"
+config-version: 2
+profile: selvra
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+vars:
+  # Sensor reporting range (Dexcom G6/G7), mmol/L. Low/High are stored at these limits.
+  sensor_low_mmol: 2.2
+  sensor_high_mmol: 22.2
+  # International consensus ranges (Battelino et al., Diabetes Care 2019), mmol/L
+  range_low_mmol: 3.9
+  range_high_mmol: 10.0
+  level2_low_mmol: 3.0
+  level2_high_mmol: 13.9
+  # Gap that starts a new recording segment
+  segment_gap_minutes: 15
+  # Gap long enough to imply a sensor change when the transmitter ID does not change (G6 warm-up is 2 h)
+  sensor_change_gap_minutes: 120
+  # First-day readings are less accurate; flagged, not removed
+  early_sensor_hours: 24
+  # Faster than this between consecutive readings is physiologically implausible
+  implausible_rate_mmol_per_min: 0.3
+  # A day counts as valid for analysis at this share of expected readings
+  valid_day_coverage_pct: 70
+
+models:
+  selvra_analysis:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+flags:
+  send_anonymous_usage_stats: false
