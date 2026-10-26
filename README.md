@@ -8,7 +8,8 @@ Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his
 
 | Path | What |
 |---|---|
-| [`ANALYSMALL.md`](ANALYSMALL.md) | The nine-step method every analysis follows (Swedish) |
+| [`ANALYSMALL.md`](ANALYSMALL.md) | The nine-step method every observational analysis follows (Swedish) |
+| [`N1MALL.md`](N1MALL.md) | Protocol and report template for n-of-1 experiments, following SPENT 2019 and CENT 2015 (Swedish) |
 | [`src/selvra_analysis/`](src/selvra_analysis/) | Ingestion of Dexcom Clarity exports and the personal event log into DuckDB; synthetic data generator |
 | [`transform/`](transform/) | dbt project: staging, artefact flags, daily metrics, day context, episode tools, tests |
 | [`analyses/`](analyses/) | One folder per analysis: pre-registration first, then code and results |
@@ -50,6 +51,14 @@ Every analysis follows [`ANALYSMALL.md`](ANALYSMALL.md). What makes a result tru
 **Uncertainty.** Days from one person are not independent, so [`stats.block_bootstrap_difference`](src/selvra_analysis/stats.py) resamples runs of consecutive days (circular block bootstrap, Politis & Romano 1992). A test shows why: on simulated autocorrelated days with no real effect, an ordinary bootstrap interval covers zero only about 65 % of the time instead of 95 %; blocks of 7 to 14 days bring it to 87–89 %.
 
 [`analyses/000-exempel-traning`](analyses/000-exempel-traning/) runs the whole workflow on synthetic data (`make example`, also in CI). The synthetic data has no training effect built in, and the example correctly ends "undetermined".
+
+## Experiments: n-of-1
+
+Observational analyses show what follows what. To show what *causes* what for one person, the person runs an experiment: paired periods of intervention and comparison, with the order inside each pair drawn at random before the start ([`N1MALL.md`](N1MALL.md), [`n1.py`](src/selvra_analysis/n1.py)).
+
+- **Schedule** drawn from the operating system's random source, committed with its checksum before day one.
+- **Outcome** in a fixed local-time window where the mechanism acts, because whole-day metrics are usually too noisy for an experiment of realistic length. `n1 sd` measures that noise on existing data, and `n1 power` turns it into the number of pairs needed.
+- **Analysis** by the paired randomisation test: its null distribution is the 2^n ways the coin flips could have fallen, so it needs neither normality nor independent days. The interval is every effect the test does not reject. Washout days are excluded, and AB and BA pairs are reported separately to expose carryover.
 
 ## Validated against an independent implementation
 

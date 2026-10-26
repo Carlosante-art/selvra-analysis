@@ -1,5 +1,7 @@
 # Analysmall
 
+Gäller observationsanalyser: vad följer på vad. För frågor om orsak (*gör X skillnad för mig?*) används [`N1MALL.md`](N1MALL.md), ett experiment med lottad ordning.
+
 Varje analys går igenom samma nio steg, i samma ordning. **Steg 1–4 skrivs och committas innan du rör datan i kod.** Analyskoden skrivs sedan mot syntetisk data och fryses (steg 4b) innan den körs en gång på riktig data. Git-historiken är beviset för att tesen och metoden kom före resultatet.
 
 - **Full version:** kopiera den här filen till `analyses/NNN-namn/forregistrering.md` och fyll i steg 1–4. Commit. Sedan steg 5–9 i `resultat.md`.
