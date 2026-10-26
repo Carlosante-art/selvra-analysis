@@ -1,7 +1,8 @@
 DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
+USER_ID ?= 98345704-bed3-4f31-ac83-4818171d39ea
 
-.PHONY: demo build test lint dashboard validate example
+.PHONY: demo build build-live test lint dashboard validate example
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -13,6 +14,13 @@ demo:
 ## Your own data: Clarity exports in data/raw/clarity/, event log in data/raw/handelser.csv
 build:
 	uv run python -m selvra_analysis.ingest_clarity data/raw/clarity/*.csv --db $(DB)
+	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
+	$(DBT) build --profiles-dir .
+
+## Live data direct from Supabase — kräver ANALYSIS_DB_URL i env
+## Kör: ANALYSIS_DB_URL=postgresql://... make build-live
+build-live:
+	uv run python -m selvra_analysis.ingest_supabase --user-id $(USER_ID) --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 
