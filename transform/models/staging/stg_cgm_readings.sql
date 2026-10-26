@@ -31,7 +31,12 @@ typed as (
     select
         strptime(ts_raw, '%Y-%m-%dT%H:%M:%S')                    as local_wall,
         glucose_raw,
-        case glucose_raw when 'Low' then 'low' when 'High' then 'high' end as censored,
+        case glucose_raw
+            when 'Low'  then 'low'  -- English (US export)
+            when 'High' then 'high' -- English (US export)
+            when 'Lågt' then 'low'  -- Swedish (EU export)
+            when 'Högt' then 'high' -- Swedish (EU export)
+        end as censored,
         case glucose_unit
             when 'mmol/L' then try_cast(replace(glucose_raw, ',', '.') as double)
             when 'mg/dL'  then try_cast(glucose_raw as double) / 18.016

@@ -23,11 +23,13 @@ import pandas as pd
 
 from selvra_analysis import manifest
 
-PII_EVENT_TYPES = {"FirstName", "LastName", "DateOfBirth"}
+PII_EVENT_TYPES = {"FirstName", "LastName", "DateOfBirth", "Förnamn", "Efternamn", "Födelsedatum"}
 
 # Clarity header prefix -> our column name. Matched by prefix because the
 # unit is part of the header ("Glucose Value (mmol/L)" or "(mg/dL)").
+# Both English (US/global) and Swedish (EU) column names are included.
 COLUMN_PREFIXES = {
+    # English
     "Index": "source_row",
     "Timestamp": "ts_raw",
     "Event Type": "event_type",
@@ -41,6 +43,20 @@ COLUMN_PREFIXES = {
     "Glucose Rate of Change": "rate_of_change_raw",
     "Transmitter Time": "transmitter_time_raw",
     "Transmitter ID": "transmitter_id",
+    # Swedish (EU export)
+    "Sakregister": "source_row",
+    "Tidsstämpel": "ts_raw",
+    "Händelsetyp": "event_type",
+    "Händelseundertyp": "event_subtype",
+    "Enhetsinfo": "device_info",
+    "Källenhets-ID": "source_device_id",
+    "Glukosvärde": "glucose_raw",
+    "Insulinvärde": "insulin_raw",
+    "Kolhydratvärde": "carbs_raw",
+    "Varaktighet": "duration_raw",
+    "Förändringshastighet": "rate_of_change_raw",
+    "Sändartid": "transmitter_time_raw",
+    "Sändar-ID": "transmitter_id",
 }
 
 RAW_COLUMNS = [*COLUMN_PREFIXES.values(), "glucose_unit", "source_file", "loaded_at"]
@@ -54,9 +70,18 @@ def _glucose_unit(header: str) -> str:
     raise ValueError(f"Unknown glucose unit in header: {header!r}")
 
 
+def _detect_separator(path: Path) -> str:
+    """Sniff separator from first line — EU exports use ';', US exports use ','."""
+    with path.open(encoding="utf-8-sig", errors="replace") as f:
+        first = f.readline()
+    return ";" if first.count(";") > first.count(",") else ","
+
+
 def read_clarity_csv(path: Path) -> pd.DataFrame:
     """Read one Clarity export and return it in the raw schema."""
-    df = pd.read_csv(path, dtype=str, keep_default_na=False)
+    sep = _detect_separator(path)
+    df = pd.read_csv(path, dtype=str, keep_default_na=False,
+                     sep=sep, encoding="utf-8-sig")
 
     rename: dict[str, str] = {}
     unit = None
