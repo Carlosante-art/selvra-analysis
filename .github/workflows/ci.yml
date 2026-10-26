@@ -15,3 +15,22 @@ jobs:
       - run: make test
       - name: Pipeline on synthetic data
         run: make demo
+      - name: Metrics match iglu (stored reference)
+        run: make validate
+
+  iglu:
+    # Independent check on every push: iglu computes the same metrics in R from the same readings.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: any::iglu
+      - run: uv sync
+      - run: make demo
+      - name: Metrics match iglu (live, R)
+        run: make validate

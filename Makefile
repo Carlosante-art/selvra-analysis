@@ -1,7 +1,7 @@
 DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
 
-.PHONY: demo build test lint dashboard
+.PHONY: demo build test lint dashboard validate
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -15,6 +15,10 @@ build:
 	uv run python -m selvra_analysis.ingest_clarity data/raw/clarity/*.csv --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
+
+## Check daily metrics and glycaemic events against iglu (R). Without R: stored reference, demo data only
+validate:
+	uv run python -m selvra_analysis.validate_iglu --db $(DB)
 
 test:
 	uv run pytest -q

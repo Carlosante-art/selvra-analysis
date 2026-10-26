@@ -55,6 +55,29 @@ models:
       - name: flag_implausible_jump
         tests: [not_null]
 
+  - name: int_glycaemic_events
+    description: >
+      Consensus 2023 hypo- and hyperglycaemic events (Battelino et al., Lancet Diabetes Endocrinol
+      2023, Table 4), one row per event, on raw readings within recording segments. Identical to
+      iglu's event classifier on the same readings (make validate).
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['hypo_level1', 'hypo_level2', 'hypo_extended', 'hyper_level1', 'hyper_level2']
+      - name: n_readings
+        tests:
+          - between:
+              arguments:
+                min_value: 3
+                max_value: 1000000
+      - name: contains_artefact
+        description: The event includes a reading flagged as compression low or implausible jump.
+        tests: [not_null]
+
   - name: fct_glucose_daily
     description: Daily CGM metrics per international consensus, on all readings and without artefacts.
     columns:

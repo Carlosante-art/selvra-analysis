@@ -40,6 +40,24 @@ daily as (
 
 ),
 
+-- Consensus 2023 glycaemic events, counted on the local date they start.
+-- The _clean counts leave out events that contain a flagged artefact.
+events as (
+
+    select
+        start_date as reading_date,
+        count(*) filter (where event_type = 'hypo_level1')                              as n_hypo_level1_events,
+        count(*) filter (where event_type = 'hypo_level2')                              as n_hypo_level2_events,
+        count(*) filter (where event_type = 'hypo_extended')                            as n_hypo_extended_events,
+        count(*) filter (where event_type = 'hyper_level1')                             as n_hyper_level1_events,
+        count(*) filter (where event_type = 'hyper_level2')                             as n_hyper_level2_events,
+        count(*) filter (where event_type = 'hypo_level1' and not contains_artefact)    as n_hypo_level1_events_clean,
+        count(*) filter (where event_type = 'hypo_level2' and not contains_artefact)    as n_hypo_level2_events_clean
+    from {{ ref('int_glycaemic_events') }}
+    group by start_date
+
+),
+
 -- Expected readings follow the local day's real length: 23 h (276) in spring, 25 h (300) in autumn.
 day_lengths as (
 
@@ -74,6 +92,14 @@ select
     round(tbr_level2_pct, 1)                                            as tbr_level2_pct,
     round(mean_mmol_clean, 2)                                           as mean_mmol_clean,
     round(tir_pct_clean, 1)                                             as tir_pct_clean,
-    round(tbr_pct_clean, 1)                                             as tbr_pct_clean
+    round(tbr_pct_clean, 1)                                             as tbr_pct_clean,
+    coalesce(n_hypo_level1_events, 0)                                   as n_hypo_level1_events,
+    coalesce(n_hypo_level2_events, 0)                                   as n_hypo_level2_events,
+    coalesce(n_hypo_extended_events, 0)                                 as n_hypo_extended_events,
+    coalesce(n_hyper_level1_events, 0)                                  as n_hyper_level1_events,
+    coalesce(n_hyper_level2_events, 0)                                  as n_hyper_level2_events,
+    coalesce(n_hypo_level1_events_clean, 0)                             as n_hypo_level1_events_clean,
+    coalesce(n_hypo_level2_events_clean, 0)                             as n_hypo_level2_events_clean
 from day_lengths
+left join events using (reading_date)
 order by reading_date

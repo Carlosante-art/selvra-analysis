@@ -1,0 +1,12 @@
+{
+  "daily": {
+    "input_sha256": "c8abe4d5b14f7cdfcff7b013e7a4f282d8e272ecaee7ec643a5f335532913a27",
+    "iglu_version": "4.4.0",
+    "rows": 365
+  },
+  "events": {
+    "input_sha256": "e5aecce47447347e25cd54935ab1d4254d71a3a8efb3e8be49c4450a77535c56",
+    "iglu_version": "4.4.0",
+    "rows": 1236
+  }
+}

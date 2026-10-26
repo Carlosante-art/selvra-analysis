@@ -19,7 +19,9 @@ Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his
 Clarity CSV ──▶ raw.clarity_events ──▶ stg_cgm_readings      parse, dedupe overlapping exports, Low/High as censored values
                                         int_cgm_segments      gaps, contiguous runs, inferred sensor sessions
                                         int_cgm_flagged       early sensor period, suspected compression lows, implausible jumps
-                                        fct_glucose_daily     coverage, mean, CV, GMI, time in/above/below range, with and without artefacts
+                                        int_glycaemic_events  consensus 2023 hypo/hyper events (level 1, level 2, extended)
+                                        fct_glucose_daily     coverage, mean, CV, GMI, time in/above/below range, event counts,
+                                                              with and without artefacts
                                                  │
 handelser.csv ─▶ raw.personal_events ─▶ stg_personal_events  │
                                         fct_day_context ◀────┘  illness, logged vs inferred sensor changes, alcohol, training, travel …
@@ -35,6 +37,23 @@ Two dbt macros in [`transform/macros/episodes.sql`](transform/macros/episodes.sq
 - `event_windows(runs, days, days_after, days_before)` returns the days around each run, joined to the day table, with `in_other_run` marking days contaminated by another episode.
 
 They take the episode definition as input and never define one. What counts as "high" is decided in each analysis's pre-registration.
+
+## Validated against an independent implementation
+
+Every daily metric and every glycaemic event is checked against [iglu](https://github.com/irinagain/iglu) (Broll et al., *PLoS ONE* 2021), a peer-reviewed R package, on exactly the readings the pipeline used:
+
+```bash
+make validate
+# daily: OK, 4380 values identical to iglu 4.4.0
+# events: OK, 1236 events identical to iglu 4.4.0
+```
+
+- **Daily metrics** (mean, SD, CV, GMI, time in each range, with and without artefacts) must equal iglu's to the precision the pipeline publishes, day by day.
+- **Glycaemic events** (Battelino et al., *Lancet Diabetes Endocrinol* 2023, Table 4) must be the same set of events with the same first and last reading. The pipeline uses iglu's event logic on raw readings within recording segments, without iglu's interpolation step: the consensus does not specify interpolation, and an interpolated value could start or end an event.
+
+CI runs the check live in R on every push. Without R, `make validate` uses a stored iglu result, and only accepts it when the readings are byte-for-byte the synthetic demo data it was computed from. Your own data needs R and iglu.
+
+Two dbt unit tests pin the hardest cases with hand-derived answers: daylight-saving time in the export, and event boundaries (an event interrupted too briefly to end, level 2 ending while level 1 continues, extended hypoglycaemia, an event cut off by a gap).
 
 ## Data-health dashboard
 

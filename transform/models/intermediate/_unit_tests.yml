@@ -1,0 +1,79 @@
+version: 2
+
+unit_tests:
+  - name: int_glycaemic_events_consensus_2023
+    model: int_glycaemic_events
+    description: >
+      Known readings, known events (Battelino et al. 2023, Table 4). Segment 1: a level 1 hypo
+      interrupted by two readings back in range, which is too short to end it; two readings below
+      range, too short to start one; 26 readings below 3.0 (130 min, so also extended), whose
+      level 2 event ends at the first 15 min at or above 3.0 while level 1 continues until
+      15 min at or above 3.9; a hyper event cut off by the end of the segment. Segment 2 is
+      short and above 13.9 throughout. One reading is a flagged artefact.
+    given:
+      - input: ref('int_cgm_flagged')
+        rows:
+          - {reading_id: s1r01, reading_at: '2025-01-01 00:00:00+00', reading_at_local: '2025-01-01 00:00:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r02, reading_at: '2025-01-01 00:05:00+00', reading_at_local: '2025-01-01 00:05:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r03, reading_at: '2025-01-01 00:10:00+00', reading_at_local: '2025-01-01 00:10:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r04, reading_at: '2025-01-01 00:15:00+00', reading_at_local: '2025-01-01 00:15:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r05, reading_at: '2025-01-01 00:20:00+00', reading_at_local: '2025-01-01 00:20:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r06, reading_at: '2025-01-01 00:25:00+00', reading_at_local: '2025-01-01 00:25:00', reading_date: '2025-01-01', glucose_mmol: 4.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r07, reading_at: '2025-01-01 00:30:00+00', reading_at_local: '2025-01-01 00:30:00', reading_date: '2025-01-01', glucose_mmol: 4.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r08, reading_at: '2025-01-01 00:35:00+00', reading_at_local: '2025-01-01 00:35:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r09, reading_at: '2025-01-01 00:40:00+00', reading_at_local: '2025-01-01 00:40:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r10, reading_at: '2025-01-01 00:45:00+00', reading_at_local: '2025-01-01 00:45:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r11, reading_at: '2025-01-01 00:50:00+00', reading_at_local: '2025-01-01 00:50:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r12, reading_at: '2025-01-01 00:55:00+00', reading_at_local: '2025-01-01 00:55:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r13, reading_at: '2025-01-01 01:00:00+00', reading_at_local: '2025-01-01 01:00:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r14, reading_at: '2025-01-01 01:05:00+00', reading_at_local: '2025-01-01 01:05:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r15, reading_at: '2025-01-01 01:10:00+00', reading_at_local: '2025-01-01 01:10:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r16, reading_at: '2025-01-01 01:15:00+00', reading_at_local: '2025-01-01 01:15:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r17, reading_at: '2025-01-01 01:20:00+00', reading_at_local: '2025-01-01 01:20:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r18, reading_at: '2025-01-01 01:25:00+00', reading_at_local: '2025-01-01 01:25:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r19, reading_at: '2025-01-01 01:30:00+00', reading_at_local: '2025-01-01 01:30:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r20, reading_at: '2025-01-01 01:35:00+00', reading_at_local: '2025-01-01 01:35:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: true, flag_implausible_jump: false}
+          - {reading_id: s1r21, reading_at: '2025-01-01 01:40:00+00', reading_at_local: '2025-01-01 01:40:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r22, reading_at: '2025-01-01 01:45:00+00', reading_at_local: '2025-01-01 01:45:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r23, reading_at: '2025-01-01 01:50:00+00', reading_at_local: '2025-01-01 01:50:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r24, reading_at: '2025-01-01 01:55:00+00', reading_at_local: '2025-01-01 01:55:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r25, reading_at: '2025-01-01 02:00:00+00', reading_at_local: '2025-01-01 02:00:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r26, reading_at: '2025-01-01 02:05:00+00', reading_at_local: '2025-01-01 02:05:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r27, reading_at: '2025-01-01 02:10:00+00', reading_at_local: '2025-01-01 02:10:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r28, reading_at: '2025-01-01 02:15:00+00', reading_at_local: '2025-01-01 02:15:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r29, reading_at: '2025-01-01 02:20:00+00', reading_at_local: '2025-01-01 02:20:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r30, reading_at: '2025-01-01 02:25:00+00', reading_at_local: '2025-01-01 02:25:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r31, reading_at: '2025-01-01 02:30:00+00', reading_at_local: '2025-01-01 02:30:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r32, reading_at: '2025-01-01 02:35:00+00', reading_at_local: '2025-01-01 02:35:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r33, reading_at: '2025-01-01 02:40:00+00', reading_at_local: '2025-01-01 02:40:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r34, reading_at: '2025-01-01 02:45:00+00', reading_at_local: '2025-01-01 02:45:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r35, reading_at: '2025-01-01 02:50:00+00', reading_at_local: '2025-01-01 02:50:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r36, reading_at: '2025-01-01 02:55:00+00', reading_at_local: '2025-01-01 02:55:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r37, reading_at: '2025-01-01 03:00:00+00', reading_at_local: '2025-01-01 03:00:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r38, reading_at: '2025-01-01 03:05:00+00', reading_at_local: '2025-01-01 03:05:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r39, reading_at: '2025-01-01 03:10:00+00', reading_at_local: '2025-01-01 03:10:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r40, reading_at: '2025-01-01 03:15:00+00', reading_at_local: '2025-01-01 03:15:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r41, reading_at: '2025-01-01 03:20:00+00', reading_at_local: '2025-01-01 03:20:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r42, reading_at: '2025-01-01 03:25:00+00', reading_at_local: '2025-01-01 03:25:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r43, reading_at: '2025-01-01 03:30:00+00', reading_at_local: '2025-01-01 03:30:00', reading_date: '2025-01-01', glucose_mmol: 2.8, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r44, reading_at: '2025-01-01 03:35:00+00', reading_at_local: '2025-01-01 03:35:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r45, reading_at: '2025-01-01 03:40:00+00', reading_at_local: '2025-01-01 03:40:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r46, reading_at: '2025-01-01 03:45:00+00', reading_at_local: '2025-01-01 03:45:00', reading_date: '2025-01-01', glucose_mmol: 3.5, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r47, reading_at: '2025-01-01 03:50:00+00', reading_at_local: '2025-01-01 03:50:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r48, reading_at: '2025-01-01 03:55:00+00', reading_at_local: '2025-01-01 03:55:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r49, reading_at: '2025-01-01 04:00:00+00', reading_at_local: '2025-01-01 04:00:00', reading_date: '2025-01-01', glucose_mmol: 5.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r50, reading_at: '2025-01-01 04:05:00+00', reading_at_local: '2025-01-01 04:05:00', reading_date: '2025-01-01', glucose_mmol: 11.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r51, reading_at: '2025-01-01 04:10:00+00', reading_at_local: '2025-01-01 04:10:00', reading_date: '2025-01-01', glucose_mmol: 11.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s1r52, reading_at: '2025-01-01 04:15:00+00', reading_at_local: '2025-01-01 04:15:00', reading_date: '2025-01-01', glucose_mmol: 11.0, segment_id: 1, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s2r01, reading_at: '2025-01-01 10:00:00+00', reading_at_local: '2025-01-01 10:00:00', reading_date: '2025-01-01', glucose_mmol: 15.0, segment_id: 2, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s2r02, reading_at: '2025-01-01 10:05:00+00', reading_at_local: '2025-01-01 10:05:00', reading_date: '2025-01-01', glucose_mmol: 15.0, segment_id: 2, flag_compression_low: false, flag_implausible_jump: false}
+          - {reading_id: s2r03, reading_at: '2025-01-01 10:10:00+00', reading_at_local: '2025-01-01 10:10:00', reading_date: '2025-01-01', glucose_mmol: 15.0, segment_id: 2, flag_compression_low: false, flag_implausible_jump: false}
+    expect:
+      rows:
+        - {event_type: hypo_level1, segment_id: 1, start_rn: 3, last_rn: 9, n_readings: 7, contains_artefact: false}
+        - {event_type: hypo_level1, segment_id: 1, start_rn: 18, last_rn: 46, n_readings: 29, contains_artefact: true}
+        - {event_type: hypo_level2, segment_id: 1, start_rn: 18, last_rn: 43, n_readings: 26, contains_artefact: true}
+        - {event_type: hypo_extended, segment_id: 1, start_rn: 18, last_rn: 46, n_readings: 29, contains_artefact: true}
+        - {event_type: hyper_level1, segment_id: 1, start_rn: 50, last_rn: 52, n_readings: 3, contains_artefact: false}
+        - {event_type: hyper_level1, segment_id: 2, start_rn: 1, last_rn: 3, n_readings: 3, contains_artefact: false}
+        - {event_type: hyper_level2, segment_id: 2, start_rn: 1, last_rn: 3, n_readings: 3, contains_artefact: false}

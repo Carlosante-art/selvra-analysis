@@ -27,6 +27,13 @@ vars:
   early_sensor_hours: 24
   # Faster than this between consecutive readings is physiologically implausible
   implausible_rate_mmol_per_min: 0.3
+  # Glycaemic events (Battelino et al., Lancet Diabetes Endocrinol 2023, Table 4): an event starts
+  # after this many consecutive minutes beyond the threshold and ends after as many back inside.
+  cgm_interval_minutes: 5
+  event_min_minutes: 15
+  event_end_minutes: 15
+  # Extended hypoglycaemia: below range_low for more than this many consecutive minutes
+  extended_hypo_minutes: 120
   # A day counts as valid for analysis at this share of expected readings
   valid_day_coverage_pct: 70
 
