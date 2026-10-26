@@ -125,3 +125,47 @@ def test_no_effect_is_not_called_an_effect(folder: Path, tmp_path: Path) -> None
     with duckdb.connect(str(db), read_only=True) as con:
         record, _ = st.run(s, con, today=date(2025, 6, 1))
     assert "håller" not in record["beslut"]
+
+
+def test_observation_with_night_window_after_training(folder: Path, tmp_path: Path) -> None:
+    """Nights after training are 1.5 mmol/L lower; the engine finds it in the 00-06 window."""
+    spec = yaml.safe_load(EXAMPLE.read_text())
+    spec["id"] = "obs-natt"
+    spec["design"] = {"typ": "observation", "exponering": {"handelse": "traning", "dagar_efter": 1},
+                      "period": [date(2025, 1, 1), date(2025, 12, 31)], "retrospektiv": True}
+    spec["utfall"] = {"matt": "medel", "fonster": ["00:00", "06:00"]}
+    spec["analys"] = {"metod": "blockbootstrap", "blocklangd": 7, "niva": 0.95, "minsta_relevanta_effekt": -0.5}
+    d = tmp_path / "obs-natt"
+    d.mkdir()
+    (d / "studie.yml").write_text(yaml.safe_dump(spec, allow_unicode=True))
+    assert st.validate(spec) == []
+    s = st.load(d / "studie.yml")
+    st.lock(s)
+
+    rng = np.random.default_rng(3)
+    days = pd.date_range("2025-01-01", "2025-12-31").date
+    training = {day: bool(rng.random() < 0.3) for day in days}
+    rows = []
+    for day in days:
+        after = training.get(day - timedelta(days=1), False)
+        level = 8.0 + rng.normal(0, 0.8) - (1.5 if after else 0.0)
+        for k in range(72):
+            t = datetime.combine(day, datetime.min.time()) + timedelta(minutes=5 * k)
+            rows.append({"reading_at_local": t, "reading_date": day, "glucose_mmol": level,
+                         "flag_compression_low": False, "flag_implausible_jump": False})
+    db = tmp_path / "o.duckdb"
+    with duckdb.connect(str(db)) as con:
+        con.execute("create schema intermediate; create schema raw; create schema marts")
+        con.register("df", pd.DataFrame(rows))
+        con.execute("create table intermediate.int_cgm_flagged as select * from df")
+        con.register("ctx", pd.DataFrame({"reading_date": days, "had_training": [training[x] for x in days],
+                                          "is_valid_day": True}))
+        con.execute("create table marts.mart_analysis_days as select * from ctx")
+        con.execute("create table raw.source_files (kind varchar, sha256 varchar, bytes bigint, "
+                    "n_rows bigint, loaded_at varchar)")
+        con.execute("create table raw.clarity_events as select 'EGV' as event_type, 'X' as source_device_id")
+    with duckdb.connect(str(db), read_only=True) as con:
+        record, report = st.run(s, con, today=date(2026, 1, 15))
+    assert "håller" in record["beslut"]
+    assert -2.0 < record["result"]["estimate"] < -1.0
+    assert "00:00–06:00" in report and "Observationsdata visar samband" in report

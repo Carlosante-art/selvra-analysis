@@ -139,8 +139,14 @@ def validate(spec: dict) -> list[str]:
         _need(analysis.get("metod") == "blockbootstrap", e, "analys.metod: blockbootstrap för observation")
         _need(isinstance(analysis.get("blocklangd"), int) and analysis["blocklangd"] >= 1, e,
               "analys.blocklangd: dagar, heltal ≥ 1")
-        _need(isinstance(outcome.get("kolumn"), str), e,
-              "utfall.kolumn: en kolumn i marts.mart_analysis_days, t.ex. tbr_pct")
+        if "fonster" in outcome:
+            _need(outcome.get("matt") in WINDOW_METRICS, e, f"utfall.matt: en av {sorted(WINDOW_METRICS)}")
+            w = outcome.get("fonster")
+            _need(isinstance(w, list) and len(w) == 2 and all(isinstance(t, str) for t in w) and w[0] < w[1],
+                  e, 'utfall.fonster: ["HH:MM", "HH:MM"] inom samma dygn, t.ex. ["00:00", "06:00"]')
+        else:
+            _need(isinstance(outcome.get("kolumn"), str), e,
+                  "utfall: antingen kolumn (i marts.mart_analysis_days) eller matt + fonster")
     return e
 
 
@@ -196,8 +202,15 @@ def check_lock(study: Study) -> dict:
 
 def _daily_outcome(study: Study, con) -> tuple[pd.DataFrame, str]:
     o = study.spec["utfall"]
-    if study.kind == "n1":
+    if "fonster" in o:
         daily = n1.window_outcomes(con, o["fonster"][0], o["fonster"][1], o.get("min_tackning_pct", 70.0))
+        if study.kind == "observation":
+            # Context (logged events) comes from the day table; validity from the window itself.
+            context = con.execute("select * exclude (is_valid_day) from marts.mart_analysis_days").df()
+            context = context.drop(columns=[c for c in daily.columns if c != "reading_date" and c in context])
+            daily["reading_date"] = pd.to_datetime(daily["reading_date"])
+            context["reading_date"] = pd.to_datetime(context["reading_date"])
+            daily = daily.merge(context, on="reading_date", how="left")
         return daily, WINDOW_METRICS[o["matt"]]
     daily = con.execute("select * from marts.mart_analysis_days").df()
     if o["kolumn"] not in daily.columns:
@@ -353,7 +366,10 @@ def _report(study: Study, record: dict) -> str:
         lines += [
             (f"- **Exponering:** dagar {exp.get('dagar_efter', 0)} dag(ar) efter loggad händelse "
              f"`{exp['handelse']}`, jämfört med övriga dagar, {d['period'][0]} till {d['period'][1]}."),
-            f"- **Utfall:** `{sp['utfall']['kolumn']}` på giltiga dagar.",
+            (f"- **Utfall:** `{sp['utfall']['kolumn']}` på giltiga dagar." if "kolumn" in sp["utfall"] else
+             f"- **Utfall:** {sp['utfall']['matt']} glukos {sp['utfall']['fonster'][0]}–"
+             f"{sp['utfall']['fonster'][1]} lokal tid, dagar med minst {sp['utfall'].get('min_tackning_pct', 70)} % "
+             "täckning i fönstret."),
             f"- **Analys:** skillnad i medelvärde, cirkulär block-bootstrap, block {r['block_length']} dagar.", "",
             "## Resultat", "",
             f"Exponerade dagar {r['n_exposed']}, jämförelsedagar {r['n_comparison']}.", "",

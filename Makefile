@@ -5,7 +5,7 @@ DEMO_DB ?= data/demo.duckdb
 DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
 
-.PHONY: demo build build-live live test lint dashboard validate validate-real example log dagbok
+.PHONY: demo build build-live live rapport test lint dashboard validate validate-real example log dagbok
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -30,6 +30,11 @@ build-live:
 
 ## Live: fetch the latest readings from Selvra Diabetes, rebuild, render the dashboard
 live: build-live dashboard
+
+## Descriptive report of the last DAGAR days (default 30): make rapport DAGAR=14
+DAGAR ?= 30
+rapport:
+	uv run python -m selvra_analysis.report --dagar $(DAGAR) --db $(DB)
 
 ## Check daily metrics and glycaemic events against iglu on the demo data (stored reference without R)
 validate:

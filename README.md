@@ -53,6 +53,15 @@ Every analysis follows [`ANALYSMALL.md`](ANALYSMALL.md). What makes a result tru
 
 [`analyses/000-exempel-traning`](analyses/000-exempel-traning/) runs the whole workflow on synthetic data (`make example`, also in CI). The synthetic data has no training effect built in, and the example correctly ends "undetermined".
 
+## Reports
+
+```bash
+make rapport            # the last 30 days
+make rapport DAGAR=14
+```
+
+A descriptive report in Swedish: time in each range, mean, GMI and CV pooled over all readings in the period, consensus 2023 hypo/hyper events with and without artefacts, the previous period beside it, and each metric against the consensus target. It warns when the period is below the consensus minimum (14 days, 70 % coverage) and marks synthetic data. It describes; questions about causes are studies. Written to `data/rapporter/` (git-ignored).
+
 ## The study engine
 
 A study is a file. [`studies/`](studies/) holds one folder per study with a `studie.yml`: question, thesis, falsification, design, outcome, analysis and the smallest effect that matters. Readings arrive every five minutes from Selvra Diabetes; the engine does the rest:

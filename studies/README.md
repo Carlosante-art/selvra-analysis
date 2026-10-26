@@ -39,15 +39,35 @@ design:
   # retrospektiv: true                 # datan fanns när studien skrevs
 
 utfall:
-  matt: medel                          # n1: medel | topp | tid_over_10 i fönstret
-  fonster: ["19:00", "22:00"]          # lokal tid
-  # kolumn: tbr_pct                    # observation: kolumn i marts.mart_analysis_days
+  matt: medel                          # medel | topp | tid_over_10 i fönstret
+  fonster: ["19:00", "22:00"]          # lokal tid, inom samma dygn
+  # observation kan i stället mäta ett helt dygn:
+  # kolumn: tbr_pct                    # en kolumn i marts.mart_analysis_days
 
 analys:
   metod: randomiseringstest            # n1 | blockbootstrap (observation, + blocklangd: 7)
   niva: 0.95
   minsta_relevanta_effekt: -1.0        # A minus B, i utfallets enhet; tecknet = förväntad riktning
 ```
+
+## Exempel: träning och natten efter (observation)
+
+```yaml
+design:
+  typ: observation
+  exponering: {handelse: traning, dagar_efter: 1}   # natten räknas på dagen efter träningen
+  period: [2025-11-01, 2026-10-26]
+  retrospektiv: true
+utfall:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  minsta_relevanta_effekt: -0.5
+```
+
+Observation visar samband, inte orsak: du kanske tränar på dagar som redan är annorlunda. Håller sambandet är nästa steg ett n1-experiment med lottade träningsdagar.
 
 **Beslutsregeln är fast:** tesen håller om hela intervallet visar minst den minsta relevanta effekten; motbevisad om hela intervallet ligger under den; annars obestämt. Den bestäms alltså av ett enda tal du skriver innan studien börjar.
 
