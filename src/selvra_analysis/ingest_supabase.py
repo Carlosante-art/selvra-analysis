@@ -37,7 +37,7 @@ from selvra_analysis.ingest_clarity import ensure_raw_tables
 SNAPSHOTS = Path("data/snapshots")
 
 
-def fetch(user_id: str, pg_url: str) -> pd.DataFrame:
+def fetch(pg_url: str) -> pd.DataFrame:
     """Read this user's readings from Supabase: reading_at (UTC), value_mgdl, trend."""
     with duckdb.connect() as con:
         con.execute("set TimeZone = 'UTC'")
@@ -50,11 +50,9 @@ def fetch(user_id: str, pg_url: str) -> pd.DataFrame:
         return con.execute(
             """
             select time as reading_at, value_mgdl, trend
-            from pg.public.glucose_readings
-            where user_id = ?::uuid
+            from pg.analysis.glucose_readings
             order by time
             """,
-            [user_id],
         ).df()
 
 
@@ -115,7 +113,7 @@ def main(argv: list[str] | None = None) -> None:
     user_id = os.environ.get("ANALYSIS_USER_ID", "")
     if not pg_url or not user_id:
         raise SystemExit("Set ANALYSIS_DB_URL and ANALYSIS_USER_ID in .env.")
-    rows = fetch(user_id, pg_url)
+    rows = fetch(pg_url)
     digest = store(rows, args.db)
     print(f"Loaded {len(rows)} Share readings into {args.db} (data version {digest[:12]})",
           file=sys.stderr)
