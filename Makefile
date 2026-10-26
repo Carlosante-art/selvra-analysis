@@ -5,7 +5,7 @@ DEMO_DB ?= data/demo.duckdb
 DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
 
-.PHONY: demo build build-live live test lint dashboard validate validate-real example
+.PHONY: demo build build-live live test lint dashboard validate validate-real example log dagbok
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -48,6 +48,15 @@ test:
 
 lint:
 	uv run ruff check src tests analyses
+
+## Dagbok: visa gårdagens CGM-siffror och logga händelser interaktivt
+dagbok:
+	uv run python -m selvra_analysis.dagbok
+
+## Logga en händelse: make log start=2026-10-24 typ=traning notering="löpning 5km"
+## Typer: alkohol, annat, medicinandring, menstruation, resa, sensorbyte, sjukdom, stress, traning
+log:
+	uv run python -m selvra_analysis.log_event --start "$(start)" --typ "$(typ)" $(if $(slut),--slut "$(slut)",) $(if $(notering),--notering "$(notering)",)
 
 ## Private data-health dashboard (rendered file is git-ignored: it contains health data)
 dashboard:
