@@ -13,7 +13,7 @@ Valid types:
 from __future__ import annotations
 
 import argparse
-import sys
+import csv
 from pathlib import Path
 
 import pandas as pd
@@ -47,15 +47,18 @@ def append_event(
         _parse_date(slut, "slut")
 
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    new_row = f"{start},{slut},{typ},{notering}\n"
-
-    if not log_path.exists():
-        log_path.write_text(",".join(HEADER) + "\n" + new_row)
-        print(f"Skapade {log_path} och lade till: {new_row.strip()}")
-    else:
-        with log_path.open("a") as f:
-            f.write(new_row)
-        print(f"La till i {log_path}: {new_row.strip()}")
+    row = [start.strip(), slut.strip(), typ, notering.strip()]
+    created = not log_path.exists()
+    # Start on a new line even if the file was edited by hand without a final newline.
+    needs_newline = not created and log_path.read_bytes()[-1:] not in (b"\n", b"")
+    with log_path.open("a", newline="", encoding="utf-8") as f:
+        if needs_newline:
+            f.write("\n")
+        writer = csv.writer(f, lineterminator="\n")  # quotes notes with commas or quotes
+        if created:
+            writer.writerow(HEADER)
+        writer.writerow(row)
+    print(f"{'Skapade' if created else 'La till i'} {log_path}: {', '.join(x for x in row if x)}")
 
 
 def main(argv: list[str] | None = None) -> None:
