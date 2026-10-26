@@ -2,6 +2,12 @@ DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
 USER_ID ?= 98345704-bed3-4f31-ac83-4818171d39ea
 
+# Ladda .env om den finns (utan att skriva ut innehållet)
+ifneq (,$(wildcard .env))
+  include .env
+  export
+endif
+
 .PHONY: demo build build-live test lint dashboard validate example
 
 ## Synthetic data end to end: generate, load, transform, test
