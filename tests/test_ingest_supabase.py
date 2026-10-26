@@ -38,3 +38,15 @@ def test_env_file_values_are_literal(tmp_path: Path, monkeypatch) -> None:
     import os
     assert os.environ["X_URL"] == "postgresql://u:p$a#ss@h:5432/db"
     assert os.environ["X_ID"] == "abc"
+
+
+def test_refuses_database_with_synthetic_demo_data(tmp_path: Path) -> None:
+    import pytest
+
+    from selvra_analysis.ingest_clarity import ensure_raw_tables
+    db = tmp_path / "demo.duckdb"
+    with duckdb.connect(str(db)) as con:
+        ensure_raw_tables(con)
+        con.execute("insert into raw.clarity_events (event_type, source_device_id) values ('EGV', 'SYNTHETIC')")
+    with pytest.raises(SystemExit, match="synthetic demo data"):
+        store(rows(), db, tmp_path / "snap")

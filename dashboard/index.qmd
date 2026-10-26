@@ -32,7 +32,33 @@ days = q("select * from marts.mart_analysis_days order by reading_date")
 days["reading_date"] = pd.to_datetime(days["reading_date"])
 last = days["reading_date"].max()
 recent = days[days["reading_date"] > last - pd.Timedelta(days=14)]
-last_reading = q("select arg_max(reading_at_local, reading_at) as t from intermediate.int_cgm_flagged")["t"].iloc[0]
+latest = q("select arg_max(reading_at_local, reading_at) as local, max(reading_at) as instant "
+           "from intermediate.int_cgm_flagged").iloc[0]
+last_reading = latest["local"]
+age_min = (pd.Timestamp.now(tz="UTC") - pd.Timestamp(latest["instant"]).tz_convert("UTC")).total_seconds() / 60
+
+
+def scalar(sql: str, default=0):
+    try:
+        v = con.execute(sql).fetchone()[0]
+        return default if v is None else v
+    except duckdb.Error:
+        return default
+
+
+# Which data this is. Synthetic demo data must never be mistaken for yours.
+n_synthetic = scalar("select count(*) from raw.clarity_events where source_device_id = 'SYNTHETIC'")
+n_clarity = scalar("select count(*) from raw.clarity_events where event_type = 'EGV' "
+                   "and coalesce(source_device_id, '') <> 'SYNTHETIC'")
+n_share = scalar("select count(*) from raw.share_readings")
+if n_synthetic:
+    SOURCE, SOURCE_COLOUR = "SYNTHETIC demo data", "danger"
+elif n_clarity and n_share:
+    SOURCE, SOURCE_COLOUR = "Clarity + Dexcom Share", "light"
+elif n_share:
+    SOURCE, SOURCE_COLOUR = "Dexcom Share (live)", "light"
+else:
+    SOURCE, SOURCE_COLOUR = "Clarity export", "light"
 
 # Consensus colours for glucose ranges (AGP report convention)
 RANGES = [
@@ -60,8 +86,8 @@ def date_axis(ax):
 
 ```{python}
 #| content: valuebox
-#| title: "Days of data"
-dict(icon="calendar3", color="light", value=f"{len(days)}")
+#| title: "Data"
+dict(icon="database", color=SOURCE_COLOUR, value=f"{SOURCE} · {len(days)} days")
 ```
 
 ```{python}
@@ -87,7 +113,10 @@ dict(icon="flag", color="light", value=f"{pct:.1f} %")
 ```{python}
 #| content: valuebox
 #| title: "Latest reading"
-dict(icon="clock-history", color="light", value=pd.Timestamp(last_reading).strftime("%d %b %H:%M"))
+ago = f"{age_min:.0f} min ago" if age_min < 120 else f"{age_min / 1440:.1f} days ago"
+stale = n_share and age_min > 30
+dict(icon="clock-history", color="warning" if stale else "light",
+     value=f"{pd.Timestamp(last_reading).strftime('%d %b %Y %H:%M')} · {ago}")
 ```
 
 ## Row {height=39%}

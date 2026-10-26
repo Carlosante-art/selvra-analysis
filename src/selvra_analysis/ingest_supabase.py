@@ -72,6 +72,11 @@ def store(rows: pd.DataFrame, db_path: Path, snapshot_dir: Path = SNAPSHOTS) -> 
         snapshot.write_text(text)
 
         ensure_raw_tables(con)
+        n_synthetic = con.execute(
+            "select count(*) from raw.clarity_events where source_device_id = 'SYNTHETIC'").fetchall()[0][0]
+        if n_synthetic:
+            raise SystemExit(f"{db_path} holds synthetic demo data. Real data goes in its own file: "
+                             "delete it, or use the default data/selvra.duckdb (the demo uses data/demo.duckdb).")
         con.register("share_df", rows)
         con.execute(
             "create or replace table raw.share_readings as "

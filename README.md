@@ -107,7 +107,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync
 
-# Demo on synthetic data (no personal data needed)
+# Demo on synthetic data (no personal data needed), in its own file data/demo.duckdb
 make demo
 
 # Your own data
@@ -118,6 +118,9 @@ make build
 # Plus readings collected since the last export by Selvra Diabetes (Dexcom Share)
 #   .env: ANALYSIS_DB_URL and ANALYSIS_USER_ID (never committed, never printed)
 make build-live
+
+# Fetch the latest readings, rebuild and render the dashboard in one go
+make live
 ```
 
 `make build` loads everything, rebuilds the models and runs all tests (dbt data and unit tests, plus `make test` for the Python side). The event log is validated strictly: an unknown event type or an unreadable date stops the load and names the line.
