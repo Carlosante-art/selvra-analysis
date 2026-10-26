@@ -20,3 +20,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# Rendered dashboard contains personal health data
+dashboard/*.html
+dashboard/*_files/
+dashboard/.quarto/
+.quarto/

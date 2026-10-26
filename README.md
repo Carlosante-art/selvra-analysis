@@ -36,6 +36,16 @@ Two dbt macros in [`transform/macros/episodes.sql`](transform/macros/episodes.sq
 
 They take the episode definition as input and never define one. What counts as "high" is decided in each analysis's pre-registration.
 
+## Data-health dashboard
+
+A private working view, rendered with [Quarto](https://quarto.org) from the same marts the analyses use: coverage per day, an ambulatory glucose profile for the last 14 days, time in ranges per day, artefact flags per week, the last 30 days with logged context, and how complete the event log is.
+
+```bash
+make dashboard   # writes dashboard/index.html
+```
+
+The rendered file contains personal health data and is git-ignored. Only `dashboard/index.qmd` is committed.
+
 ## Run it
 
 Requires [uv](https://docs.astral.sh/uv/).

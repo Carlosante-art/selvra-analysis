@@ -1,7 +1,7 @@
 DB ?= data/selvra.duckdb
 DBT = cd transform && SELVRA_DUCKDB=../$(DB) uv run dbt
 
-.PHONY: demo build test lint
+.PHONY: demo build test lint dashboard
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -21,3 +21,8 @@ test:
 
 lint:
 	uv run ruff check src tests
+
+## Private data-health dashboard (rendered file is git-ignored: it contains health data)
+dashboard:
+	cd dashboard && SELVRA_DUCKDB=../$(DB) uv run quarto render index.qmd
+	@echo "Open dashboard/index.html"

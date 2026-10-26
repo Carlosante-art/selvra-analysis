@@ -1,0 +1,225 @@
+---
+title: "Selvra · data health"
+format:
+  dashboard:
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+---
+
+```{python}
+#| include: false
+# Private working view. Reads the dbt marts in DuckDB. Never publish the rendered file:
+# it contains personal health data (dashboard/*.html is git-ignored).
+import os
+from pathlib import Path
+
+import duckdb
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
+
+DB = Path(os.environ.get("SELVRA_DUCKDB", Path.cwd().parent / "data" / "selvra.duckdb"))
+con = duckdb.connect(str(DB), read_only=True)
+
+
+def q(sql: str) -> pd.DataFrame:
+    return con.execute(sql).df()
+
+
+days = q("select * from marts.mart_analysis_days order by reading_date")
+days["reading_date"] = pd.to_datetime(days["reading_date"])
+last = days["reading_date"].max()
+recent = days[days["reading_date"] > last - pd.Timedelta(days=14)]
+last_reading = q("select max(reading_at) as t from intermediate.int_cgm_flagged")["t"].iloc[0]
+
+# Consensus colours for glucose ranges (AGP report convention)
+RANGES = [
+    ("<3.0", "#8b1a1a"), ("3.0–3.9", "#e0453a"), ("3.9–10.0", "#3aa655"),
+    ("10.0–13.9", "#f2c12e"), (">13.9", "#f08c2e"),
+]
+INK, MUTED, GRID = "#1d1d21", "#6b6b73", "#e6e6e3"
+
+plt.rcParams.update({
+    "figure.figsize": (9, 3.6), "figure.dpi": 110, "font.size": 9,
+    "axes.edgecolor": GRID, "axes.labelcolor": MUTED, "axes.grid": True, "grid.color": GRID,
+    "xtick.color": MUTED, "ytick.color": MUTED, "axes.spines.top": False, "axes.spines.right": False,
+    "legend.frameon": False,
+})
+
+
+def date_axis(ax):
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+```
+
+# Overview
+
+## Row {height=22%}
+
+```{python}
+#| content: valuebox
+#| title: "Days of data"
+dict(icon="calendar3", color="light", value=f"{len(days)}")
+```
+
+```{python}
+#| content: valuebox
+#| title: "Coverage, last 14 days"
+cov = recent["coverage_pct"].mean()
+dict(icon="reception-4", color="success" if cov >= 70 else "danger", value=f"{cov:.0f} %")
+```
+
+```{python}
+#| content: valuebox
+#| title: "Valid days (≥ 70 % coverage)"
+dict(icon="check2-circle", color="light", value=f"{100 * days['is_valid_day'].mean():.0f} %")
+```
+
+```{python}
+#| content: valuebox
+#| title: "Readings flagged as artefacts"
+pct = 100 * days["n_artefact"].sum() / days["n_readings"].sum()
+dict(icon="flag", color="light", value=f"{pct:.1f} %")
+```
+
+```{python}
+#| content: valuebox
+#| title: "Latest reading"
+dict(icon="clock-history", color="light", value=pd.Timestamp(last_reading).strftime("%d %b %H:%M"))
+```
+
+## Row {height=39%}
+
+```{python}
+#| title: "Coverage per day · dashed line = 70 % threshold, red = invalid day"
+fig, ax = plt.subplots()
+colours = ["#3aa655" if v else "#e0453a" for v in days["is_valid_day"]]
+ax.bar(days["reading_date"], days["coverage_pct"], width=1.0, color=colours)
+ax.axhline(70, color=INK, linestyle="--", linewidth=1)
+ax.set_ylim(0, 105)
+ax.set_ylabel("% of 288 readings")
+date_axis(ax)
+fig.tight_layout()
+plt.show()
+```
+
+```{python}
+#| title: "Ambulatory glucose profile · last 14 days, artefacts excluded"
+agp = q(f"""
+    select
+        (extract(hour from reading_at) * 60 + floor(extract(minute from reading_at) / 15) * 15) / 60.0 as hour,
+        quantile_cont(glucose_mmol, 0.05) as p05, quantile_cont(glucose_mmol, 0.25) as p25,
+        quantile_cont(glucose_mmol, 0.50) as p50, quantile_cont(glucose_mmol, 0.75) as p75,
+        quantile_cont(glucose_mmol, 0.95) as p95
+    from intermediate.int_cgm_flagged
+    where reading_date > date '{last.date()}' - 14
+      and not (flag_compression_low or flag_implausible_jump)
+    group by 1 order by 1
+""")
+fig, ax = plt.subplots()
+ax.axhspan(3.9, 10.0, color="#3aa655", alpha=0.07, linewidth=0)
+ax.fill_between(agp.hour, agp.p05, agp.p95, color="#3c6ec8", alpha=0.13, linewidth=0, label="5–95 %")
+ax.fill_between(agp.hour, agp.p25, agp.p75, color="#3c6ec8", alpha=0.35, linewidth=0, label="25–75 %")
+ax.plot(agp.hour, agp.p50, color="#1f3f8f", linewidth=2.2, label="Median")
+for y in (3.9, 10.0):
+    ax.axhline(y, color="#3aa655", linewidth=1)
+ax.set_xlim(0, 24)
+ax.set_xticks(range(0, 25, 3))
+_ = ax.set_xticklabels([f"{h:02d}:00" for h in range(0, 25, 3)])
+ax.set_ylim(2, 20)
+ax.set_ylabel("mmol/L")
+ax.legend(loc="upper right", ncols=3)
+fig.tight_layout()
+plt.show()
+```
+
+## Row {height=39%}
+
+```{python}
+#| title: "Time in ranges per day (mmol/L)"
+bands = {
+    "<3.0": days["tbr_level2_pct"],
+    "3.0–3.9": days["tbr_pct"] - days["tbr_level2_pct"],
+    "3.9–10.0": days["tir_pct"],
+    "10.0–13.9": days["tar_pct"] - days["tar_level2_pct"],
+    ">13.9": days["tar_level2_pct"],
+}
+fig, ax = plt.subplots()
+bottom = pd.Series(0.0, index=days.index)
+for name, colour in RANGES:
+    ax.bar(days["reading_date"], bands[name], bottom=bottom, width=1.0, color=colour, label=name)
+    bottom = bottom + bands[name]
+ax.set_ylim(0, 100)
+ax.set_ylabel("% of readings")
+date_axis(ax)
+ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=5)
+fig.tight_layout()
+plt.show()
+```
+
+```{python}
+#| title: "Artefact flags per week"
+flags = q("""
+    select date_trunc('week', reading_date) as week,
+           sum(flag_compression_low::int) as compression_low,
+           sum(flag_implausible_jump::int) as implausible_jump,
+           sum(flag_censored::int)         as censored
+    from intermediate.int_cgm_flagged group by 1 order by 1
+""")
+flags["week"] = pd.to_datetime(flags["week"])
+fig, ax = plt.subplots()
+bottom = pd.Series(0.0, index=flags.index)
+for col, label, colour in [
+    ("compression_low", "Compression low", "#7a5cc7"),
+    ("implausible_jump", "Implausible jump", "#c75c8a"),
+    ("censored", "Low/High (censored)", "#5c8ac7"),
+]:
+    ax.bar(flags["week"], flags[col], bottom=bottom, width=6, color=colour, label=label)
+    bottom = bottom + flags[col]
+ax.set_ylabel("Readings")
+date_axis(ax)
+ax.legend(loc="upper left", ncols=3)
+fig.tight_layout()
+plt.show()
+```
+
+# Days
+
+```{python}
+#| title: "Last 30 days · metrics, flags and logged context"
+cols = {
+    "reading_date": "Date", "coverage_pct": "Coverage %", "mean_mmol": "Mean", "cv_pct": "CV %",
+    "tir_pct": "TIR %", "tbr_pct": "TBR %", "tbr_pct_clean": "TBR % (no artefacts)",
+    "n_artefact": "Artefacts", "sensor_change_inferred": "Sensor change (inferred)",
+    "sensor_change_logged": "Sensor change (logged)", "is_ill": "Ill", "had_alcohol": "Alcohol",
+    "had_training": "Training", "notes": "Notes",
+}
+table = days.sort_values("reading_date", ascending=False).head(30)[list(cols)].rename(columns=cols)
+table["Date"] = table["Date"].dt.strftime("%Y-%m-%d")
+table = table.fillna("")
+for c in ["Sensor change (inferred)", "Sensor change (logged)", "Ill", "Alcohol", "Training"]:
+    table[c] = table[c].map({True: "yes", False: ""})
+table.style.hide(axis="index").format(precision=1)
+```
+
+# Log completeness
+
+## Row {height=35%}
+
+```{python}
+#| title: "Sensor changes: what the data suggests vs what you logged"
+sc = q("""
+    select
+        count(*) filter (where sensor_change_inferred and sensor_change_logged)     as "Inferred and logged",
+        count(*) filter (where sensor_change_inferred and not sensor_change_logged) as "Inferred, not logged",
+        count(*) filter (where sensor_change_logged and not sensor_change_inferred) as "Logged, not inferred"
+    from marts.fct_day_context
+""")
+sc.style.hide(axis="index")
+```
+
+## Row
+
+The comparison measures how complete the event log is. A sensor change the data suggests but the log lacks is either a missing log entry or a false inference, for example a long signal gap. Check those days before using sensor-change context in an analysis.
