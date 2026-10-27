@@ -80,6 +80,30 @@ Omprövning mot sann styrka:
 - **Falska stopp: 3 av 11** giltiga fall (d05, d12, j08). Alla tre gäller styrka nära 80-procentsgränsen.
 - **Orsaken är densamma i alla tre:** granskningen är för pessimistisk när den skattar styrkan. Väntat antal par avrundas nedåt, och SD skattad på få dagar används som om den vore exakt. Rättningen är att räkna styrkan över fördelningen av kompletta par och att varna i stället för att stoppa när osäkerheten i skattningen omfattar 80 %. Görs den förbrukas dold2 och dold3 som mått för styrkekategorin, och nästa mätning kräver en ny uppsättning.
 
+## 2026-10-27: styrka-rättningen
+
+Rättningen ur sammanfattningen ovan är genomförd: väntad styrka beräknas nu över den
+binomiala fördelningen av kompletta par (inte vid dess golv), och när SD-skattningens
+osäkerhet (normalapproximation på n dagar) rymmer 80 % blir domen VARNING med rådet
+kvar — inte STOPP. Körning efter rättningen: `resultat/` (granska-alla, efter commit).
+
+| Fall | Före | Efter | Skiljedom (sann styrka) |
+|---|---|---|---|
+| d05 | STOPP 71 % | **GODKANN** (varning) | 90 % — rättningen korrekt |
+| d12 | STOPP 78 % | **GODKANN** (varning) | 84 % — rättningen korrekt |
+| d09 | STOPP 66 % | STOPP | 70 % — granskningen har rätt, facit fel |
+| j04 | STOPP underlag | STOPP underlag | 22 % risk för omöjligt p — granskningen har rätt |
+| j08 | STOPP 66 % | STOPP | 84 % — **kvarstående äkta falskt stopp** |
+
+j08:s rotorsak är en annan: när de tillåtna dagarna är för få poolas SD över alla dagar,
+och skiljer sig dagstyperna åt överskattas bruset. Den rättningen är inte gjord.
+
+**Protokollet:** granskningen ändrades efter att dold2 och dold3 setts — båda är därmed
+förbrukade som mått för styrka/underlag-kategorierna. Utvecklingsfallen fortsätter som
+regressionstest (18/18 gröna efter rättningen; inga andra kategorier påverkades).
+Nästa ärliga styrkemått kräver en dold4 skriven av en författare som inte sett rättningen
+— inte av den som skrev den.
+
 ## 2026-10-27: språkmodellen, båda armarna
 
 Körd med `claude-opus-5-5` — frontier-modellen, inte en liten — på samtliga 52 fall

@@ -318,10 +318,41 @@ def _expected_valid_pairs(pairs: int, valid_rate: float, analysed_days: int) -> 
     return math.floor(pairs * period_ok ** 2)
 
 
-def _pairs_needed(pairs: int, rate: float, analysed: int, effect: float, sd: float, alpha: float) -> int | None:
-    """Fewest pairs with power >= MIN_POWER after expected data loss, by bisection (power rises with pairs)."""
-    def enough(k: int) -> bool:
-        return n1.power(_expected_valid_pairs(k, rate, analysed), effect, sd, alpha, n_sim=POWER_SIMS) >= MIN_POWER
+def _pair_q(rate: float, analysed: int) -> float:
+    """Probability that one pair completes: both periods deliver a valid outcome."""
+    return (1 - (1 - rate) ** analysed) ** 2
+
+
+def _expected_power(pairs: int, q: float, effect: float, sd: float, alpha: float,
+                    cache: dict) -> float:
+    """Power averaged over the binomial distribution of complete pairs, not at its floor.
+
+    Flooring the expectation cost ~10 percentage points at the boundary (benchmark dold2:
+    d05 stopped at "71%" where the true power was 90%). The distribution is the honest view."""
+    if q >= 0.999:
+        fordelning = {pairs: 1.0}
+    else:
+        fordelning = {k: math.comb(pairs, k) * q ** k * (1 - q) ** (pairs - k)
+                      for k in range(pairs + 1)}
+        fordelning = {k: pm for k, pm in fordelning.items() if pm >= 0.005}
+        tot_p = sum(fordelning.values())
+        fordelning = {k: pm / tot_p for k, pm in fordelning.items()}
+    pw = 0.0
+    for k, pm in fordelning.items():
+        if k < 1 or 2 / 2 ** k > alpha:
+            continue
+        nyckel = (k, round(sd, 6))
+        if nyckel not in cache:
+            cache[nyckel] = n1.power(k, effect, sd, alpha, n_sim=POWER_SIMS)
+        pw += pm * cache[nyckel]
+    return pw
+
+
+def _pairs_needed(pairs: int, q: float, effect: float, sd: float, alpha: float,
+                  cache: dict) -> int | None:
+    """Fewest pairs with expected power >= MIN_POWER, by bisection (power rises with pairs)."""
+    def enough(n: int) -> bool:
+        return _expected_power(n, q, effect, sd, alpha, cache) >= MIN_POWER
     lo, hi = pairs, MAX_PAIRS_SEARCHED
     if not enough(hi):
         return None
@@ -373,15 +404,27 @@ def _check_power(study: st.Study, con) -> list[Check]:
                                             "skiljer sig dagstyperna åt i variation blir styrkan fel"))
     sd = float(valid.std(ddof=1)) if analysed == 1 else n1.period_sd(daily, col, analysed)
     effect = abs(spec["analys"]["minsta_relevanta_effekt"])
-    pw = n1.power(k_eff, effect, sd, alpha, n_sim=POWER_SIMS)
-    text = (f"periodens SD {sd:.2f} (egen data, {basis}); styrka {pw:.0%} att upptäcka "
-            f"{effect:g} med {k_eff} kompletta par")
+    q = _pair_q(rate, analysed)
+    cache: dict = {}
+    pw = _expected_power(pairs, q, effect, sd, alpha, cache)
+    text = (f"periodens SD {sd:.2f} (egen data, {basis}); väntad styrka {pw:.0%} att upptäcka "
+            f"{effect:g} med {pairs} par, bortfallet inräknat som fördelning")
     if pw >= MIN_POWER:
         return [*out, Check("styrka", OK, text)]
-    need = _pairs_needed(pairs, rate, analysed, effect, sd, alpha)
+    need = _pairs_needed(pairs, q, effect, sd, alpha, cache)
     advice = (f"; ungefär {need} par behövs" if need else
               f"; inte ens {MAX_PAIRS_SEARCHED} par räcker: välj ett utfall närmare mekanismen (kortare fönster) "
               "eller gör studien till en skattning och säg det i tesen")
+    # SD skattad på få dagar är inte exakt. Rymmer osäkerheten 80 % är ett stopp inte
+    # motiverat — det är ett gränsfall, och det ska sägas som varning med rådet kvar.
+    n_sd = len(valid)
+    sd_lo = sd * max(1 - 1.645 / math.sqrt(2 * max(n_sd - 1, 1)), 0.5)
+    pw_hi = _expected_power(pairs, q, effect, sd_lo, alpha, cache)
+    if pw_hi >= MIN_POWER:
+        return [*out, Check("styrka", VARNING,
+                            text + f". SD bygger på {n_sd} dagar; inom skattningens osäkerhet ryms "
+                                   f"{MIN_POWER:.0%} (upp till {pw_hi:.0%}) — gränsfall" + advice
+                                   + " för marginal")]
     return [*out, Check("styrka", STOPP, text + advice)]
 
 
