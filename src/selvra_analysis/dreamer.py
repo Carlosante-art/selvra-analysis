@@ -19,10 +19,11 @@ import re
 import sys
 from pathlib import Path
 
+import anthropic
 import duckdb
 import yaml
 
-from selvra_analysis.study import EVENT_COLUMNS, validate
+from selvra_analysis.study import MIN_DAYS, validate
 
 DB_DEFAULT = Path("data/selvra.duckdb")
 STUDIES_DIR = Path("studies")
@@ -37,7 +38,7 @@ Tillgängliga kolumner i marts.mart_analysis_days (för utfall.kolumn):
             n_hyper_level1_events, n_hyper_level2_events
   Tidsfönster (utfall.matt + utfall.fonster): medel, topp, tid_over_10"""
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_TEMPLATE = """\
 Du är Dreamer, en del av Selvra-analysmotorn. Du genererar studiedesigner.
 
 Din uppgift: ta en fråga på svenska och returnera EXAKT en giltig studie.yml.
@@ -83,6 +84,18 @@ analys:
   niva: 0.95
   blocklangd: 7            # dagar, för blockbootstrap
   minsta_relevanta_effekt: -0.5  # tal ≠ 0; negativt = förväntat lägre med exponering
+  minsta_underlag: {exponerade: 15, jamforelse: 30}  # endast observation; var och en minst {min_days}
+
+protokoll:                 # CENT 2015
+  periodeffekt: ...        # hur tidstrender hanteras
+  overforing: ...          # endast n1: hur eftereffekter hanteras (tvättdagar, AB mot BA)
+  stoppregel: ...          # endast n1: när försöket avbryts i förtid (t.ex. upprepad hypo nivå 2)
+  andringslogg: []         # alltid en tom lista
+
+negativ_kontroll:          # ett utfall exponeringen INTE kan påverka, samma form som utfall
+  matt: medel
+  fonster: ["HH:MM", "HH:MM"]  # t.ex. ett fönster som ligger FÖRE exponeringen samma dag
+  motivering: ...          # varför exponeringen inte kan påverka det
 
 REGLER:
 - observation + fonster → metod: blockbootstrap
@@ -92,6 +105,8 @@ REGLER:
 - Välj n1 om frågan kräver att du aktivt ändrar beteende.
 - minsta_relevanta_effekt: välj kliniskt rimlig storlek. För glukos ±0.5 mmol/L är en liten men meningsfull effekt.
 - För TIR/TAR/TBR i procent är ±5 procentenheter rimlig minsta effekt.
+- Den negativa kontrollen måste ligga där exponeringen inte kan verka: före den i tid,
+  eller ett utfall utan mekanism. Samma analys körs på den; en effekt där avslöjar snedvridning.
 """
 
 
@@ -143,7 +158,6 @@ def _next_id(fraga: str) -> str:
 
 
 def _call_llm(fraga: str, context: str, error_feedback: str = "") -> str:
-    import anthropic
     client = anthropic.Anthropic()
 
     user_content = f"{context}\n\nFRÅGA: {fraga}"
@@ -153,7 +167,7 @@ def _call_llm(fraga: str, context: str, error_feedback: str = "") -> str:
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
+        system=SYSTEM_PROMPT_TEMPLATE.replace("{min_days}", str(MIN_DAYS)),
         messages=[{"role": "user", "content": user_content}],
     )
     return msg.content[0].text.strip()
@@ -236,7 +250,9 @@ def main(argv: list[str] | None = None) -> None:
     if svar in ("", "j", "ja", "y", "yes"):
         path = write_study(study_id, spec)
         print(f"\nSparad: {path}")
-        print(f"Nästa steg: uv run python -m selvra_analysis.study validera {path}")
+        print("Granska fråga, tes, motbevis, minsta relevanta effekt och negativ kontroll innan du låser.")
+        print("Dreamer föreslår; besluten är dina. Det du låser är det du står för.")
+        print(f"Nästa steg: uv run python -m selvra_analysis.study las {path}")
     else:
         print("Avbröt — inget skrevs.")
 
