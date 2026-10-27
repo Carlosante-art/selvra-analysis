@@ -253,3 +253,17 @@ def test_every_computed_number_in_the_report_comes_from_the_run_record(folder: P
     in_report = set(re.findall(r"[+-]\d+,\d{2}", report))
     assert in_report, "the report should contain computed numbers"
     assert in_report <= recorded, f"numbers not traceable to the record: {in_report - recorded}"
+
+
+def test_run_refuses_until_data_reaches_past_the_last_day(folder: Path, tmp_path: Path) -> None:
+    """An unattended run the morning after the end must not spend the study on a partial last day."""
+    s = st.load(folder / "studie.yml")
+    st.lock(s, seed=1)
+    sched = st.n1.read_schedule(s.schedule_path)
+    db = make_db(tmp_path / "db.duckdb", sched, effect=-1.0)
+    end = sched["date"].max()
+    with duckdb.connect(str(db)) as con:
+        con.execute("delete from intermediate.int_cgm_flagged where reading_date > ?", [end])
+    with duckdb.connect(str(db), read_only=True) as con, pytest.raises(st.StudyError, match="inte förbrukad"):
+        st.run(s, con, today=end + timedelta(days=1))
+    assert not (folder / "korningar").exists()

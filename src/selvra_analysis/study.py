@@ -460,6 +460,24 @@ def _adherence(study: Study, con) -> dict | None:
     return out
 
 
+def _check_data_complete(con, end: date, strict: bool) -> None:
+    """The data must cover the study's last day before the one analysis is spent.
+
+    A run the morning after an experiment ends, before the last day's readings have been
+    loaded (failed ingest, an export that lags), would analyse an incomplete study for good.
+    An experiment needs data from after its last day, so that day is known to be complete;
+    an observational period may end where the data ends.
+    """
+    try:
+        latest = con.execute("select max(cast(reading_at_local as date)) "
+                             "from intermediate.int_cgm_flagged").fetchone()[0]
+    except duckdb.CatalogException:  # a day-level outcome read only from the marts
+        latest = con.execute("select max(reading_date) from marts.mart_analysis_days").fetchone()[0]
+    if latest is None or latest < end or (strict and latest == end):
+        raise StudyError(f"datan når bara till {latest}, studien slutade {end}; ladda ny data (make live) "
+                         "och kör igen. Ingenting har körts; studien är inte förbrukad.")
+
+
 def _check_ready(study: Study, con, rec: dict, today: date) -> None:
     """Refuse before anything is written: running, already run, or too little data."""
     if any((study.folder / "korningar").glob("*.json")):
@@ -467,6 +485,7 @@ def _check_ready(study: Study, con, rec: dict, today: date) -> None:
     end = (date.fromisoformat(rec["schedule_end"]) if study.kind == "n1" else study.design["period"][1])
     if today <= end:
         raise StudyError(f"studien pågår till {end}; slutanalysen körs efter det")
+    _check_data_complete(con, end, strict=study.kind == "n1")
     if study.kind == "observation":
         daily, col = _daily_outcome(study, con)
         n_exp, n_cmp = _observation_counts(_observation_series(study, daily, col))
