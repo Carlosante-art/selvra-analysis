@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: demo build build-live live rapport dreamer tolka test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -76,6 +76,10 @@ lint: $(DBT_PACKAGES)
 ## make dreamer fraga="Påverkar stress mitt TIR?"
 dreamer:
 	uv run python -m selvra_analysis.dreamer $(if $(fraga),--fraga "$(fraga)",)
+
+## Tolka en slutrapport och ge nästa steg: make tolka studie=studies/001-traning-natten-efter/
+tolka:
+	uv run python -m selvra_analysis.dreamer tolka "$(studie)"
 
 ## Dagbok: visa gårdagens CGM-siffror och logga händelser interaktivt
 dagbok:
