@@ -1,14 +1,18 @@
-"""Dreamer: generera en studiefil från en naturlig fråga.
+"""Dreamer: generera och tolka studier från naturliga frågor.
 
-Tar en fråga på svenska, analyserar tillgänglig data, och genererar en
-giltig studie.yml via ett LLM-anrop. Validerar, presenterar, skriver till disk.
+Två kommandon:
+
+  generera (default) — tar en fråga, returnerar studie.yml
+  tolka              — läser en slutrapport, ger klartext + nästa steg
 
 Kräver ANTHROPIC_API_KEY i miljön (eller i .env).
 
 Usage:
     uv run python -m selvra_analysis.dreamer
     uv run python -m selvra_analysis.dreamer --fraga "Påverkar stress mitt TIR?"
+    uv run python -m selvra_analysis.dreamer tolka studies/001-traning-natten-efter/
     make dreamer
+    make tolka studie=studies/001-traning-natten-efter/
 """
 
 from __future__ import annotations
@@ -22,7 +26,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-from selvra_analysis.study import EVENT_COLUMNS, validate
+from selvra_analysis.study import validate
 
 DB_DEFAULT = Path("data/selvra.duckdb")
 STUDIES_DIR = Path("studies")
@@ -197,6 +201,83 @@ def generate(fraga: str, db_path: Path) -> tuple[str, dict]:
     )
 
 
+TOLKA_PROMPT = """\
+Du är Dreamer, tolkningslagret i Selvra-analysmotorn.
+
+Du får en slutrapport från en genomförd studie och aktuell datastatus.
+Din uppgift: förklara vad resultatet betyder på klartext svenska, och ge ett konkret nästa steg.
+
+Strukturera svaret i tre korta avsnitt — inga rubriker, bara löpande text:
+
+1. VAD RESULTATET SÄGER (2-3 meningar): förklara beslutet (tesen håller / motbevisad / obestämt)
+   i termer som inte kräver statistikkunskaper. Nämn skattningen och intervallet konkret.
+
+2. VARFÖR INTERVALLET ÄR SOM DET ÄR (1-2 meningar): förklara den viktigaste begränsningen
+   — för lite data, hög variation, för kort period, eller att effekten är liten men reell.
+
+3. NÄSTA STEG (1-2 meningar): ett konkret, handlingsbart förslag. Exempel:
+   - Om obestämt + få exponerade dagar: hur många fler behövs och hur man loggar dem
+   - Om obestämt + tillräcklig data men hög variation: föreslå n1-experiment
+   - Om tesen håller: föreslå att bekräfta med n1 för att skilja samband från orsak
+   - Om motbevisad: föreslå att undersöka en annan hypotes
+
+Var ärlig om begränsningar. Observationsstudier visar samband, inte orsak.
+Skriv på svenska. Max 150 ord totalt.
+"""
+
+
+def _call_tolka(studie_yml: str, slutrapport: str, status_text: str) -> str:
+    import anthropic
+    client = anthropic.Anthropic()
+
+    user_content = f"""\
+STUDIEFIL:
+{studie_yml}
+
+SLUTRAPPORT:
+{slutrapport}
+
+DATASTATUS:
+{status_text}
+"""
+    msg = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=512,
+        system=TOLKA_PROMPT,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    return msg.content[0].text.strip()
+
+
+def _study_status_text(folder: Path, db_path: Path) -> str:
+    import subprocess
+    result = subprocess.run(
+        ["uv", "run", "python", "-m", "selvra_analysis.study",
+         "status", str(folder / "studie.yml"), "--db", str(db_path)],
+        check=False, capture_output=True, text=True,
+    )
+    return result.stdout.strip() or result.stderr.strip()
+
+
+def tolka(folder: Path, db_path: Path) -> str:
+    slutrapport_path = folder / "slutrapport.md"
+    studie_path = folder / "studie.yml"
+
+    if not studie_path.exists():
+        raise SystemExit(f"Ingen studie.yml i {folder}")
+    if not slutrapport_path.exists():
+        raise SystemExit(
+            f"Ingen slutrapport.md i {folder}\n"
+            "Kör studien först: uv run python -m selvra_analysis.study kor {studie_path}"
+        )
+
+    studie_yml = studie_path.read_text()
+    slutrapport = slutrapport_path.read_text()
+    status_text = _study_status_text(folder, db_path)
+
+    return _call_tolka(studie_yml, slutrapport, status_text)
+
+
 def write_study(study_id: str, spec: dict) -> Path:
     folder = STUDIES_DIR / study_id
     folder.mkdir(parents=True, exist_ok=True)
@@ -207,23 +288,50 @@ def write_study(study_id: str, spec: dict) -> Path:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--fraga", default=None, help="Frågan på svenska")
+    sub = parser.add_subparsers(dest="kommando")
+
+    gen = sub.add_parser("generera", help="Generera en studiefil från en fråga (default)")
+    gen.add_argument("--fraga", default=None, help="Frågan på svenska")
+    gen.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    tol = sub.add_parser("tolka", help="Tolka en slutrapport och ge nästa steg")
+    tol.add_argument("studie", type=Path, help="Sökväg till studiemappen")
+    tol.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    # Bakåtkompatibilitet: dreamer [--fraga "..."] utan subkommando = generera
+    parser.add_argument("--fraga", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--db", type=Path, default=DB_DEFAULT)
+
     args = parser.parse_args(argv)
 
     _load_dotenv()
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
 
-    fraga = args.fraga
+    if args.kommando == "tolka":
+        folder = args.studie.resolve()
+        print(f"\nTolkar {folder.name}...\n", file=sys.stderr)
+        text = tolka(folder, args.db)
+        print(text)
+        out = folder / "tolkning.md"
+        out.write_text(text + "\n")
+        print(f"\nSparad: {out}", file=sys.stderr)
+        return
+
+    # generera (default)
+    fraga = getattr(args, "fraga", None)
+    db = getattr(args, "db", DB_DEFAULT)
     if not fraga:
         print("Vad vill du veta? (Skriv din fråga på svenska)")
-        fraga = input("> ").strip()
+        try:
+            fraga = input("> ").strip()
+        except EOFError:
+            fraga = ""
     if not fraga:
         raise SystemExit("Ingen fråga angiven.")
 
     print(f"\nGenererar studiedesign för: {fraga!r}", file=sys.stderr)
-    study_id, spec = generate(fraga, args.db)
+    study_id, spec = generate(fraga, db)
 
     print()
     print(yaml.dump(spec, allow_unicode=True, sort_keys=False, default_flow_style=False))

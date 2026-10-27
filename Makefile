@@ -5,7 +5,7 @@ DEMO_DB ?= data/demo.duckdb
 DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
 
-.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok
+.PHONY: demo build build-live live rapport dreamer tolka test lint dashboard validate validate-real example log dagbok
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -59,6 +59,10 @@ lint:
 ## make dreamer fraga="Påverkar stress mitt TIR?"
 dreamer:
 	uv run python -m selvra_analysis.dreamer $(if $(fraga),--fraga "$(fraga)",)
+
+## Tolka en slutrapport och ge nästa steg: make tolka studie=studies/001-traning-natten-efter/
+tolka:
+	uv run python -m selvra_analysis.dreamer tolka "$(studie)"
 
 ## Dagbok: visa gårdagens CGM-siffror och logga händelser interaktivt
 dagbok:
