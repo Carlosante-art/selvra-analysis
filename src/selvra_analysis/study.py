@@ -47,6 +47,9 @@ EVENT_COLUMNS = {
     "medicinandring": "had_medication_change",
 }
 REQUIRED_TEXT = ["id", "titel", "fraga", "tes", "motbevis"]
+# Fewest exposed or comparison days an observational study may be run on. With fewer,
+# a block bootstrap has too few blocks containing exposed days to say anything.
+MIN_DAYS = 10
 
 
 class StudyError(ValueError):
@@ -137,6 +140,10 @@ def validate(spec: dict) -> list[str]:
         _need(isinstance(design.get("retrospektiv"), bool), e,
               "design.retrospektiv: true om datan redan fanns när studien skrevs")
         _need(analysis.get("metod") == "blockbootstrap", e, "analys.metod: blockbootstrap för observation")
+        floor = analysis.get("minsta_underlag") or {}
+        _need(all(isinstance(floor.get(k), int) and floor[k] >= MIN_DAYS for k in ("exponerade", "jamforelse")),
+              e, f"analys.minsta_underlag: {{exponerade: N, jamforelse: M}}, var och en minst {MIN_DAYS} dagar. "
+                 "Slutanalysen vägrar köra under det, så studien inte förbrukas på för lite data.")
         _need(isinstance(analysis.get("blocklangd"), int) and analysis["blocklangd"] >= 1, e,
               "analys.blocklangd: dagar, heltal ≥ 1")
         if "fonster" in outcome:
@@ -229,6 +236,11 @@ def _observation_series(study: Study, daily: pd.DataFrame, col: str) -> pd.DataF
     return s[(s.index >= lo) & (s.index <= hi)]
 
 
+def _observation_counts(s: pd.DataFrame) -> tuple[int, int]:
+    valid = s["y"].notna()
+    return int((s["exposed"].eq(True) & valid).sum()), int((s["exposed"].eq(False) & valid).sum())
+
+
 # --- Status (blind) ---------------------------------------------------------------------------
 
 def status(study: Study, con, today: date | None = None) -> str:
@@ -262,10 +274,12 @@ def status(study: Study, con, today: date | None = None) -> str:
         lines += ["", f"Slutanalysen kan köras från {date.fromisoformat(rec['schedule_end']) + timedelta(days=1)}."]
     else:
         s = _observation_series(study, daily, col)
+        n_exp, n_cmp = _observation_counts(s)
+        floor = study.spec["analys"]["minsta_underlag"]
         lines += [
             f"- **Period:** {study.design['period'][0]} till {study.design['period'][1]}",
-            f"- **Exponerade dagar med giltigt utfall:** {int((s['exposed'].eq(True) & s['y'].notna()).sum())}",
-            f"- **Jämförelsedagar med giltigt utfall:** {int((s['exposed'].eq(False) & s['y'].notna()).sum())}",
+            f"- **Exponerade dagar med giltigt utfall:** {n_exp} av minst {floor['exponerade']}",
+            f"- **Jämförelsedagar med giltigt utfall:** {n_cmp} av minst {floor['jamforelse']}",
         ]
         if study.design["retrospektiv"]:
             lines += ["", "*Retrospektiv: datan fanns när studien skrevs.*"]
@@ -303,7 +317,17 @@ def run(study: Study, con, today: date | None = None) -> tuple[dict, str]:
         est = n1.randomisation_test(periods, level=a.get("niva", 0.95)).as_dict()
         extra = {"perioder": periods.to_dict("records")}
     else:
+        end = study.design["period"][1]
+        if today <= end:
+            raise StudyError(f"perioden pågår till {end}; slutanalysen körs efter det")
         s = _observation_series(study, daily, col)
+        n_exp, n_cmp = _observation_counts(s)
+        floor = a["minsta_underlag"]
+        if n_exp < floor["exponerade"] or n_cmp < floor["jamforelse"]:
+            raise StudyError(
+                f"för lite underlag: {n_exp} exponerade och {n_cmp} jämförelsedagar med giltigt utfall, "
+                f"studien kräver {floor['exponerade']} och {floor['jamforelse']}. Ingenting har körts; "
+                "studien är inte förbrukad.")
         est = block_bootstrap_difference(s["y"], s["exposed"], block_length=a["blocklangd"],
                                          seed=a.get("seed", 1), level=a.get("niva", 0.95)).as_dict()
         extra = {}

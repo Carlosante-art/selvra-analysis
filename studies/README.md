@@ -12,7 +12,7 @@ uv run python -m selvra_analysis.study kor      studies/NNN-namn/studie.yml   # 
 1. **validera** kontrollerar filen och säger på svenska vad som saknas.
 2. **las** låser: kontrollsumma på filen, pipelinens commit och, för experiment, det lottade schemat. Committa mappen direkt. Commiten är den offentliga tidsstämpeln för att tesen kom före datan.
 3. **status** visar framsteg och datakvalitet: avslutade perioder, kompletta par, perioder utan data, vad schemat säger de närmaste dagarna. **Aldrig effekten.** Ett experiment analyseras en gång, när det är klart, så ingen kan avbryta det när det ser bra ut.
-4. **kor** gör den enda bekräftande analysen. Den vägrar om filen, schemat eller pipelinen ändrats efter låsningen, om mappen inte är committad, om studien pågår, eller om den redan körts. Resultatet bedöms med den låsta beslutsregeln och skrivs till `slutrapport.md` och `korningar/`.
+4. **kor** gör den enda bekräftande analysen. Den vägrar om filen, schemat eller pipelinen ändrats efter låsningen, om mappen inte är committad, om studien pågår, om underlaget är mindre än det låsta minimumet, eller om den redan körts. Resultatet bedöms med den låsta beslutsregeln och skrivs till `slutrapport.md` och `korningar/`.
 
 ## Format
 
@@ -65,7 +65,10 @@ analys:
   metod: blockbootstrap
   blocklangd: 7
   minsta_relevanta_effekt: -0.5
+  minsta_underlag: {exponerade: 15, jamforelse: 30}   # minst 10 vardera
 ```
+
+`minsta_underlag` bestäms i förväg. `kor` vägrar före periodens slut och under minsta underlag, och då förbrukas ingenting: studien kan köras när datan finns. `status` visar hur långt det är kvar.
 
 Observation visar samband, inte orsak: du kanske tränar på dagar som redan är annorlunda. Håller sambandet är nästa steg ett n1-experiment med lottade träningsdagar.
 

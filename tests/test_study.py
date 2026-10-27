@@ -134,7 +134,8 @@ def test_observation_with_night_window_after_training(folder: Path, tmp_path: Pa
     spec["design"] = {"typ": "observation", "exponering": {"handelse": "traning", "dagar_efter": 1},
                       "period": [date(2025, 1, 1), date(2025, 12, 31)], "retrospektiv": True}
     spec["utfall"] = {"matt": "medel", "fonster": ["00:00", "06:00"]}
-    spec["analys"] = {"metod": "blockbootstrap", "blocklangd": 7, "niva": 0.95, "minsta_relevanta_effekt": -0.5}
+    spec["analys"] = {"metod": "blockbootstrap", "blocklangd": 7, "niva": 0.95, "minsta_relevanta_effekt": -0.5,
+                      "minsta_underlag": {"exponerade": 30, "jamforelse": 30}}
     d = tmp_path / "obs-natt"
     d.mkdir()
     (d / "studie.yml").write_text(yaml.safe_dump(spec, allow_unicode=True))
@@ -169,3 +170,33 @@ def test_observation_with_night_window_after_training(folder: Path, tmp_path: Pa
     assert "håller" in record["beslut"]
     assert -2.0 < record["result"]["estimate"] < -1.0
     assert "00:00–06:00" in report and "Observationsdata visar samband" in report
+
+
+def test_observation_refuses_below_minimum_without_spending_the_study(folder: Path, tmp_path: Path) -> None:
+    spec = yaml.safe_load(EXAMPLE.read_text())
+    spec["id"] = "obs-lite"
+    spec["design"] = {"typ": "observation", "exponering": {"handelse": "traning", "dagar_efter": 1},
+                      "period": [date(2026, 10, 1), date(2026, 10, 20)], "retrospektiv": True}
+    spec["utfall"] = {"kolumn": "tir_pct"}
+    spec["analys"] = {"metod": "blockbootstrap", "blocklangd": 7, "minsta_relevanta_effekt": 5.0,
+                      "minsta_underlag": {"exponerade": 10, "jamforelse": 10}}
+    bad = dict(spec, analys={**spec["analys"], "minsta_underlag": {"exponerade": 1, "jamforelse": 15}})
+    assert any("minsta_underlag" in e for e in st.validate(bad))
+    d = tmp_path / "obs-lite"
+    d.mkdir()
+    (d / "studie.yml").write_text(yaml.safe_dump(spec, allow_unicode=True))
+    s = st.load(d / "studie.yml")
+    st.lock(s)
+    days = pd.date_range("2026-10-01", "2026-10-20").date
+    db = tmp_path / "l.duckdb"
+    with duckdb.connect(str(db)) as con:
+        con.execute("create schema marts")
+        con.register("ctx", pd.DataFrame({"reading_date": days, "tir_pct": 70.0, "is_valid_day": True,
+                                          "had_training": [i == 5 for i in range(len(days))]}))
+        con.execute("create table marts.mart_analysis_days as select * from ctx")
+    with duckdb.connect(str(db), read_only=True) as con:
+        with pytest.raises(st.StudyError, match="pågår"):
+            st.run(s, con, today=date(2026, 10, 15))
+        with pytest.raises(st.StudyError, match="för lite underlag: 1 exponerade"):
+            st.run(s, con, today=date(2026, 10, 27))
+    assert not (d / "korningar").exists()
