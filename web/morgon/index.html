@@ -73,6 +73,11 @@
     <p id="fel" class="muted" hidden></p>
   </section>
 
+  <section class="card" id="klar" hidden>
+    <p class="label">Kopplad</p>
+    <p>Den här telefonen är kopplad till Selvra och får morgonnotiser kl. 07:00.</p>
+  </section>
+
   <section class="card" id="koppla" hidden>
     <p class="label">Ett sista steg</p>
     <p>Skicka den här koden till Carl, så kopplar han ihop telefonen med Selvra. Den behövs bara en gång.</p>
@@ -109,6 +114,11 @@ async function visaRapport() {
 }
 
 function visaKod(sub) {
+  if (localStorage.getItem("selvraKopplad") && !new URLSearchParams(location.search).has("kod")) {
+    $("klar").hidden = false;
+    $("notiser").hidden = true;
+    return;
+  }
   const kod = btoa(JSON.stringify(sub));
   $("kod").value = kod;
   $("koppla").hidden = false;
@@ -134,11 +144,13 @@ async function slaPa() {
 $("slaPa").addEventListener("click", slaPa);
 $("dela").addEventListener("click", async () => {
   const text = $("kod").value;
+  localStorage.setItem("selvraKopplad", "1");
   if (navigator.share) { try { await navigator.share({ title: "Selvra-kod", text }); return; } catch (e) { /* avbrutet */ } }
   await navigator.clipboard.writeText(text);
   $("dela").textContent = "Kopierad, klistra in i ett sms till Carl";
 });
 $("kopiera").addEventListener("click", async () => {
+  localStorage.setItem("selvraKopplad", "1");
   await navigator.clipboard.writeText($("kod").value);
   $("kopiera").textContent = "Kopierad";
 });
@@ -150,7 +162,8 @@ $("kopiera").addEventListener("click", async () => {
   navigator.serviceWorker.addEventListener("message", (e) => { if (e.data === "ny-rapport") visaRapport(); });
   const sub = await reg.pushManager.getSubscription();
   if (sub && Notification.permission === "granted") {
-    if (new URLSearchParams(location.search).has("kod")) visaKod(sub.toJSON());
+    if (new URLSearchParams(location.search).has("kod")) { visaKod(sub.toJSON()); return; }
+    $("klar").hidden = false;
     return;
   }
   $("notiser").hidden = false;
