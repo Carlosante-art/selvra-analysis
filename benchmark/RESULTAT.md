@@ -104,6 +104,26 @@ regressionstest (18/18 gröna efter rättningen; inga andra kategorier påverkad
 Nästa ärliga styrkemått kräver en dold4 skriven av en författare som inte sett rättningen
 — inte av den som skrev den.
 
+## 2026-10-27: strata-SD-rättningen — protokollets första cykel, efter boken
+
+Första efterlevnaden av PROTOKOLL.md, inklusive att protokollet bet sin egen författare:
+
+1. **f17 skrevs, frystes och committades före fixen** — och visade sig passera: SD-osäkerhets-
+   bandet från förra rättningen täcker ett dagstypsgap på 2,4 mmol/L. Frysta fall justeras
+   aldrig efter resultat, så f17 står kvar som regressionsfall för bandet.
+2. **f18 (gap 3,6 mmol/L) frystes och committades (f0799ae), och fallerade**: poolad SD 1,80
+   mot sann lördags-SD 0,9 gav STOPP vid 53 % där sann styrka är ~97 %.
+3. **Rättningen:** när tillåtna dagar är färre än MIN_SD_DAYS skattas variationen inom dagstyp
+   (residualer efter dagstypens medel, dagstyp ur loggade pass via samma källa som positiviteten),
+   med reträtt till gamla beteendet när pass saknas.
+4. **Efter:** f18 GODKANN, f17 kvar grön, regressionssviten 18/18, inga nya falska godkännanden.
+
+**Observation på förbrukade uppsättningar** (inte ett mått — dold2/dold3 är förbrukade för
+styrka-kategorin sedan förra rättningen): j08, det sista äkta falska stoppet, blev grönt.
+Kvarvarande avvikelser mot facit är d09 och j04, båda skiljedömda som facitfel.
+**Granskningen har därmed inga kända äkta fel: 30/30 stopp av rätt skäl, 0 falska godkännanden,
+0 skiljedömda falska stopp.** Nästa ärliga mått kräver dold4 av en blind författare.
+
 ## 2026-10-27: språkmodellen, båda armarna
 
 Körd med `claude-opus-5-5` — frontier-modellen, inte en liten — på samtliga 52 fall

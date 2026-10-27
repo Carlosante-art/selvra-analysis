@@ -393,15 +393,30 @@ def _check_power(study: st.Study, con) -> list[Check]:
         return out
     basis = "tillåtna dagar"
     if len(valid) < MIN_SD_DAYS:
-        # Too few eligible days of history (one weekday gives 13 in 90 days): pool all days.
-        valid = daily[daily["is_valid_day"] == True][col].dropna()
+        # Too few eligible days of history (one weekday gives 13 in 90 days): pool all days —
+        # but within day type. A study comparing Saturdays with Saturdays should not count the
+        # workday/day-off level difference as noise (benchmark f18/j08: pooled 1.8 vs true 0.9).
+        alla = daily[daily["is_valid_day"] == True][["reading_date", col]].dropna(subset=[col])
+        valid = alla[col]
         basis = "alla dagar, för få tillåtna"
         if len(valid) < MIN_SD_DAYS:
             out.append(Check("styrka", VARNING, f"bara {len(valid)} giltiga dagar att skatta variationen från; "
                                                 "styrkan kan inte bedömas"))
             return out
-        out.append(Check("styrka", VARNING, "variationen skattas på alla dagar eftersom de tillåtna är för få; "
-                                            "skiljer sig dagstyperna åt i variation blir styrkan fel"))
+        pass_dagar = _workdays(con)
+        dagtyp = (alla["reading_date"].map(lambda x: x in pass_dagar)
+                  if pass_dagar is not None else None)
+        grupper = alla.groupby(dagtyp)[col] if dagtyp is not None else None
+        if grupper is not None and grupper.ngroups > 1 and int(grupper.size().min()) >= 2:
+            valid = alla[col] - grupper.transform("mean")
+            basis = "alla dagar, inom dagstyp"
+            out.append(Check("styrka", VARNING,
+                             "variationen skattas på alla dagar eftersom de tillåtna är för få — inom "
+                             "dagstyp (arbetsdag/ledig ur loggade pass), så nivåskillnaden mellan "
+                             "dagstyperna räknas inte som brus"))
+        else:
+            out.append(Check("styrka", VARNING, "variationen skattas på alla dagar eftersom de tillåtna är för få; "
+                                                "skiljer sig dagstyperna åt i variation blir styrkan fel"))
     sd = float(valid.std(ddof=1)) if analysed == 1 else n1.period_sd(daily, col, analysed)
     effect = abs(spec["analys"]["minsta_relevanta_effekt"])
     q = _pair_q(rate, analysed)
