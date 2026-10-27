@@ -1,0 +1,55 @@
+{
+  "study": "001-traning-natten-efter",
+  "run_at": "2026-10-27T00:02:06+00:00",
+  "lock": {
+    "study": "001-traning-natten-efter",
+    "locked_at": "2026-10-27T00:01:31+00:00",
+    "spec_sha256": "cc8219b1bb5860e3b30d732c8014f01ef159a2fb5e6983839479377d528e0b66",
+    "pipeline_commit": "d09b77bfea70003c8b318067a39b9102066c8a07"
+  },
+  "commit": "f9171b809bad626e731ee8ca9366c5e2079b24be",
+  "data": {
+    "synthetic": false,
+    "files": [
+      {
+        "kind": "clarity",
+        "sha256": "4c69930192eb7ca4aeb6a0563887c5222f211e673290b1efa3b59f888852d3c0",
+        "bytes": 2230226,
+        "n_rows": 22897
+      },
+      {
+        "kind": "clarity",
+        "sha256": "9a8ba86a716f9e6aab7e7580eb464b28e1583e2dc6a33fc4856ecbc2b3bd340f",
+        "bytes": 361971,
+        "n_rows": 3729
+      },
+      {
+        "kind": "dexcom_share",
+        "sha256": "1921f3591cfbb97a81ef84b58db65d9bb1ca139ee9b730569d979d5d1a82dc55",
+        "bytes": 2067,
+        "n_rows": 63
+      },
+      {
+        "kind": "event_log",
+        "sha256": "6f4fbcafef1569854c3ea2c5141f6e8874d1f602901cf90bd839ff453459f4c6",
+        "bytes": 150,
+        "n_rows": 4
+      }
+    ],
+    "fingerprint": "64d2bb01484b746e223c3fb03b46a7afb1091e351385c1c0936b305d86718bca"
+  },
+  "result": {
+    "estimate": -0.4689205603994342,
+    "ci_low": -1.5985269459896654,
+    "ci_high": 1.2425980774165217,
+    "level": 0.95,
+    "n_exposed": 1,
+    "n_comparison": 15,
+    "block_length": 7,
+    "n_boot": 10000,
+    "n_boot_valid": 6792,
+    "seed": 1,
+    "method": "circular block bootstrap, percentile interval"
+  },
+  "beslut": "obestämt: intervallet rymmer både en relevant och en irrelevant effekt"
+}
