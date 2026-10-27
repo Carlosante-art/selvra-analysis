@@ -85,6 +85,7 @@ n-of-1 passar behandlingar med snabb verkan och kort eftereffekt vid stabila til
 |---|---|---|
 | O1 | Ett primärt mått och ett lokalt tidsfönster, och varför just det fönstret? | Lås ett; övriga är explorativa |
 | O2 | Fångar fönstret mekanismen? G7 har cirka 3,5 min sensorfördröjning plus 5–10 min fysiologisk (Garg 2022; tillverkarmaterial) | Fönster ≥ 1–2 h; för korta exponeringar förläng 15–30 min efter |
+| O3b | Kommer mätningen från en och samma apparat hela studien? Oura och Garmin räknar steg olika, och `hr_lowest_bpm` är nattens lägsta på Oura men dygnets vilopuls på Garmin | En apparat; `granska` varnar om historiken blandar `wearable_source` |
 | O3 | Hur mycket varierar måttet dag till dag utan ingrepp? (`granska` räknar) | Mått närmare mekanismen, längre fönster eller fler par |
 | O4 | Vilken täckning krävs per fönster? | ≥70 % per fönster (Battelinos 70 % anpassat; konsensus gäller 14 dagar, inte korta fönster) |
 | O5 | Negativ kontroll: något A inte kan påverka men som samma störfaktorer påverkar? | Fönster före `verkan.borjar` samma dag, och utanför föregående exponerings eftereffekt (`granska` kontrollerar båda) |
@@ -148,7 +149,7 @@ Allvarlig hypoglykemi senaste 24 h är kontraindikation.
 ### 8. Observationsstudier
 
 Exponeringen styrs inte, så anspråket är alltid "samband". Krav och tekniker (Daza 2019; Lipsitch 2010 **[overifierat]**):
-- **Jämför inom dagstyp.** `granska` varnar om helgandelen skiljer mer än 25 procentenheter.
+- **Jämför inom dagstyp.** `granska` varnar om helgandelen skiljer mer än 25 procentenheter mellan exponerade dagar och jämförelsedagar, och stoppar över 50: då följer exponeringen dagstypen och observationsdata kan inte skilja dem åt (strukturellt positivitetsbrott). Det gäller t.ex. `hoga_steg` för den som går 10 000 på arbetsdagar. Skannern jämför därför bara inom vardag och inom helg.
 - **Placebodatum.** Kör samma analys på dagen *före* händelsen. En "effekt" där tyder på selektion eller omvänd orsak.
 - **Omvänd orsak.** Förutsäger gårdagens glukos dagens exponering ("dålig dag → långpromenad i morgon")?
 - **Regression mot medelvärdet.** Loggas händelser efter extrema dagar? Jämför baslinjen före händelsen med helheten.

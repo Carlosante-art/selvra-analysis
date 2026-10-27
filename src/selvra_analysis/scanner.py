@@ -106,14 +106,16 @@ def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
         exposed = valid[valid[col] == True]["tir_pct"]
         if len(exposed) < MIN_EVENTS_FOR_CORRELATION:
             continue
-        control = valid[valid[col] == False]["tir_pct"]
-        diff = exposed.mean() - control.mean()
+        diff = _within_daytype_diff(valid, col)
+        if diff is None:
+            patterns.append(_follows_daytype(namn, len(exposed)))
+            continue
         patterns.append(Pattern(
             typ="korrelation",
             beskrivning=(
-                f"{namn.capitalize()}: {len(exposed)} loggade dagar. "
-                f"TIR skiljer sig från övriga dagar (baseline {baseline_tir:.0f}%). "
-                "Sambandets riktning och storlek kräver en studie för att avgöra."
+                f"{namn.capitalize()}: {len(exposed)} dagar. "
+                f"TIR skiljer sig från övriga dagar av samma typ, vardag mot vardag och helg mot helg "
+                f"(baseline {baseline_tir:.0f}%). Sambandets riktning och storlek kräver en studie för att avgöra."
             ),
             fragor=[
                 f"Påverkar {namn} mitt TIR samma dag?",
@@ -124,6 +126,37 @@ def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
         ))
 
     return patterns
+
+
+def _within_daytype_diff(valid: pd.DataFrame, col: str) -> float | None:
+    """Exposed minus unexposed TIR inside weekdays and inside weekends, weighted by exposed days.
+
+    Comparing exposed days with all other days mixes in the day type whenever the exposure
+    follows it (10,000 steps on work days, few on days off). None when no day type has both.
+    """
+    weekend = pd.to_datetime(valid["reading_date"]).dt.day_of_week >= 5
+    diffs, weights = [], []
+    for stratum in (valid[~weekend], valid[weekend]):
+        exp = stratum.loc[stratum[col] == True, "tir_pct"]
+        ctl = stratum.loc[stratum[col] == False, "tir_pct"]
+        if len(exp) >= MIN_EVENTS_FOR_CORRELATION and len(ctl) >= MIN_EVENTS_FOR_CORRELATION:
+            diffs.append(exp.mean() - ctl.mean())
+            weights.append(len(exp))
+    if not diffs:
+        return None
+    return float(np.average(diffs, weights=weights))
+
+
+def _follows_daytype(namn: str, n: int) -> Pattern:
+    return Pattern(
+        typ="korrelation",
+        beskrivning=(
+            f"{namn.capitalize()}: {n} dagar, men exponeringen följer dagstypen (vardag/helg) så nära att "
+            "den inte går att skilja från den i observationsdata. En jämförelse skulle mäta arbetsdag mot ledig."
+        ),
+        fragor=[f"Påverkar {namn} mitt TIR på dagar av samma typ, lottat i ett n-of-1-försök?"],
+        vikt=1,
+    )
 
 
 def _kluster(df: pd.DataFrame) -> list[Pattern]:

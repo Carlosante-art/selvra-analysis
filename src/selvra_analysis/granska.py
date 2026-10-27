@@ -61,6 +61,8 @@ CARRYOVER = {
     "annat": (1, 1, ""),
 }
 WEEKEND = {5, 6}
+DAYTYPE_WARN = 0.25   # observation: difference in weekend share between exposed and comparison days
+DAYTYPE_STOP = 0.50
 
 
 @dataclass
@@ -213,6 +215,7 @@ def _check_positivity(spec: dict, con) -> list[Check]:
                       f"ingen mätning av {col} de senaste {HISTORY_DAYS} dagarna: varken positivitet eller "
                       "följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller "
                       "ange kolumn: manuell och motivera")]
+    out_source = _check_one_device(con, hist)
     strata, caveat = _strata(d)
     weekday = pd.to_datetime(hist["reading_date"]).dt.day_of_week
     rows, out = [], []
@@ -243,7 +246,22 @@ def _check_positivity(spec: dict, con) -> list[Check]:
                                  f"att du aktivt gör {other}; säkerställ att {other} går att hålla och är säkert"))
     summary = Check("positivitet", OK, "historik per dagstyp: " + "; ".join(rows) +
                     (f" (OBS: {caveat})" if caveat else ""))
-    return [summary, *out]
+    return [summary, *out_source, *out]
+
+
+def _check_one_device(con, hist: pd.DataFrame) -> list[Check]:
+    """Oura and Garmin count steps differently; a series that switches device mid-way is two measures."""
+    if "wearable_source" not in _columns(con):
+        return []
+    src = _recent(con.execute("select reading_date, wearable_source from marts.mart_analysis_days "
+                              "where wearable_source is not null").df(), HISTORY_DAYS)
+    src = src[src["reading_date"].isin(set(hist["reading_date"]))]
+    counts = src["wearable_source"].value_counts().to_dict()
+    if len(counts) > 1:
+        return [Check("positivitet", VARNING,
+                      f"mätningen kommer från flera apparater de senaste {HISTORY_DAYS} dagarna {counts}; "
+                      "använd en apparat under hela studien och skriv vilken i design.foljsamhet")]
+    return []
 
 
 def _expected_valid_pairs(pairs: int, valid_rate: float, analysed_days: int) -> int:
@@ -344,9 +362,12 @@ def _check_observation(study: st.Study, con) -> list[Check]:
         share_exp = weekend[valid["exposed"] == True].mean()
         share_cmp = weekend[valid["exposed"] == False].mean()
         gap = abs(share_exp - share_cmp)
-        out.append(Check("dagtyp", VARNING if gap > 0.25 else OK,
-                         f"helgandel {share_exp:.0%} bland exponerade mot {share_cmp:.0%} bland jämförelsedagar"
-                         + ("; dagstypen kan förklara skillnaden, jämför inom dagstyp" if gap > 0.25 else "")))
+        level = STOPP if gap > DAYTYPE_STOP else VARNING if gap > DAYTYPE_WARN else OK
+        advice = {STOPP: "; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot "
+                         "ledig. Gör ett n1-försök med design.dagar i stället",
+                  VARNING: "; dagstypen kan förklara skillnaden, jämför inom dagstyp", OK: ""}[level]
+        out.append(Check("dagtyp", level, f"helgandel {share_exp:.0%} bland exponerade mot {share_cmp:.0%} "
+                                          f"bland jämförelsedagar{advice}"))
     return out
 
 

@@ -157,3 +157,25 @@ def test_oura_steps_come_from_daily_activity() -> None:
 @pytest.mark.parametrize("bad", [{"typ": "promenad", "borjar": "07:00"}, {"typ": "traning", "borjar": "7"}])
 def test_action_must_be_a_known_type_with_a_clock_time(bad: dict) -> None:
     assert any("design.verkan" in e for e in st.validate(draft(verkan=bad)))
+
+
+def test_observation_where_exposure_follows_day_type_is_stopped(tmp_path: Path) -> None:
+    spec = yaml.safe_load((Path(__file__).parents[1] / "studies" / "000-exempel-promenad" / "studie.yml").read_text())
+    spec.update(id="obs", tes="t", motbevis="m")
+    spec["design"] = {"typ": "observation", "exponering": {"handelse": "hoga_steg", "dagar_efter": 0},
+                      "period": [date(2025, 4, 1), date(2025, 6, 30)], "retrospektiv": True}
+    spec["utfall"] = {"matt": "medel", "fonster": ["07:00", "23:59"]}
+    spec["negativ_kontroll"] = {"matt": "medel", "fonster": ["00:00", "06:00"], "motivering": "x"}
+    spec["analys"] = {"metod": "blockbootstrap", "blocklangd": 7, "niva": 0.95, "minsta_relevanta_effekt": -0.5,
+                      "minsta_underlag": {"exponerade": 10, "jamforelse": 10}}
+    spec["protokoll"] = {"periodeffekt": "x", "andringslogg": []}
+    folder = tmp_path / "obs"
+    folder.mkdir()
+    (folder / "studie.yml").write_text(yaml.safe_dump(spec, allow_unicode=True))
+    db = make_db(tmp_path / "db.duckdb")
+    with duckdb.connect(str(db)) as con:
+        con.execute("alter table marts.mart_analysis_days add column high_steps boolean")
+        con.execute("update marts.mart_analysis_days set high_steps = steps >= 10000")
+    with duckdb.connect(str(db), read_only=True) as con:
+        result = granska.review(st.load(folder / "studie.yml"), con, today=TODAY)
+    assert levels(result, "dagtyp") == {granska.STOPP}
