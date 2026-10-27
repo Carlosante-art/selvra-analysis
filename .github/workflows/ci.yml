@@ -12,8 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
-      - run: make lint
+      - name: Install exactly the locked versions
+        run: uv sync --locked
+      - name: Code limits (complexity, nesting, size, security)
+        run: uv run ruff check --output-format=github src tests analyses
+      - name: Architecture (cycles, layers, analysis never reads collection code)
+        run: uv run lint-imports
+      - name: dbt project parses (cycles, broken refs)
+        run: cd transform && uv run dbt parse --profiles-dir .
       - run: make test
       - name: Pipeline on synthetic data
         run: make demo
@@ -34,7 +40,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: any::iglu
-      - run: uv sync
+      - run: uv sync --locked
       - run: make demo
       - name: Metrics match iglu (live, R)
         run: make validate

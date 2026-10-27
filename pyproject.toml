@@ -20,6 +20,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "import-linter>=2.15",
     "pytest>=8",
     "quarto-cli>=1.10.19",
     "ruff>=0.6",
@@ -66,3 +67,33 @@ max-nested-blocks = 4
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR0913"]
+
+# Architecture limits, checked by `lint-imports` in CI.
+[tool.importlinter]
+root_package = "selvra_analysis"
+
+[[tool.importlinter.contracts]]
+name = "No dependency cycles between modules"
+type = "acyclic_siblings"
+ancestors = ["selvra_analysis"]
+
+[[tool.importlinter.contracts]]
+name = "Studies and reports sit on top of statistics and provenance, never the reverse"
+type = "layers"
+layers = [
+  "selvra_analysis.study | selvra_analysis.report",
+  "selvra_analysis.n1 | selvra_analysis.stats | selvra_analysis.provenance",
+]
+
+[[tool.importlinter.contracts]]
+name = "Analysis reads data through the dbt marts, never through collection code"
+type = "forbidden"
+source_modules = [
+  "selvra_analysis.study", "selvra_analysis.report", "selvra_analysis.stats",
+  "selvra_analysis.n1", "selvra_analysis.provenance", "selvra_analysis.validate_iglu",
+]
+forbidden_modules = [
+  "selvra_analysis.ingest_clarity", "selvra_analysis.ingest_events",
+  "selvra_analysis.ingest_supabase", "selvra_analysis.log_event",
+  "selvra_analysis.dagbok", "selvra_analysis.synthetic", "selvra_analysis.manifest",
+]

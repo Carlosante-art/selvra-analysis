@@ -51,8 +51,10 @@ example:
 test:
 	uv run pytest -q
 
+## Code limits and architecture contracts (the same gates CI runs)
 lint:
 	uv run ruff check src tests analyses
+	uv run lint-imports
 
 ## Dreamer: generera en studiefil från en naturlig fråga (kräver ANTHROPIC_API_KEY)
 ## make dreamer                          — interaktivt
