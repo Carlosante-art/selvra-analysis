@@ -26,6 +26,15 @@ from dataclasses import asdict, dataclass
 import numpy as np
 import pandas as pd
 
+# Empirical coverage of the nominal 95 % interval, measured by simulation: 365 days of AR(1)
+# noise with phi = 0.7, no true effect, exposure in 7-day episodes, 300 data sets
+# (tests/test_calibration.py keeps this measurement honest). The interval is somewhat too
+# narrow under strong day-to-day dependence; reports say so instead of claiming 95 %.
+EMPIRICAL_COVERAGE = {7: 0.873, 14: 0.890}
+COVERAGE_NOTE = ("Nominellt 95 %. I simulering med starkt beroende mellan dagar (AR(1), φ = 0,7) täcker "
+                 "intervallet det sanna värdet i cirka 87–89 % av fallen vid block om 7–14 dagar: det är "
+                 "något för smalt, så ett intervall som precis utesluter noll är svagt stöd.")
+
 
 @dataclass(frozen=True)
 class Estimate:

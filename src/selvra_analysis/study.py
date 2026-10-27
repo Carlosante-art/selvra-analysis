@@ -38,7 +38,7 @@ import yaml
 
 from selvra_analysis import n1
 from selvra_analysis.provenance import PIPELINE_PATHS, ROOT, _git, data_version
-from selvra_analysis.stats import block_bootstrap_difference, daily_series
+from selvra_analysis.stats import COVERAGE_NOTE, block_bootstrap_difference, daily_series
 
 WINDOW_METRICS = {"medel": "mean_mmol", "topp": "peak_mmol", "tid_over_10": "tar_pct"}
 EVENT_COLUMNS = {
@@ -437,7 +437,8 @@ def _report(study: Study, record: dict) -> str:
             f"- **Analys:** skillnad i medelvärde, cirkulär block-bootstrap, block {r['block_length']} dagar.", "",
             "## Resultat", "",
             f"Exponerade dagar {r['n_exposed']}, jämförelsedagar {r['n_comparison']}.", "",
-            "Observationsdata visar samband, inte orsak.",
+            "Observationsdata visar samband, inte orsak.", "",
+            COVERAGE_NOTE,
         ]
         if d.get("retrospektiv"):
             lines.append("Studien är retrospektiv: datan fanns när den skrevs, så förregistreringen skyddar "
