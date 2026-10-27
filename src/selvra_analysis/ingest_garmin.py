@@ -125,6 +125,23 @@ def diagnose(garmin: Garmin, day: str) -> None:
             print(f"{name}: {type(res).__name__} {'tom' if not res else f'längd {len(res)}'}")
 
 
+def diagnose_fields(garmin: Garmin, days: int) -> None:
+    """For each recent day: which of the fields the ingest reads have a value (ja/nej, no values)."""
+    print("\nFält som inläsningen läser, per dag (ja = har värde):")
+    for i in range(days, 0, -1):
+        d = str(date.today() - timedelta(days=i))
+        got = {}
+        for name in ("get_sleep_data", "get_user_summary", "get_hrv_data"):
+            try:
+                got[name] = getattr(garmin, name)(d)
+            except Exception as err:  # noqa: BLE001  (diagnosis)
+                got[name] = None
+                print(f"  {d} {name}: FEL {type(err).__name__}")
+        row = parse_day(d, got["get_sleep_data"], got["get_user_summary"], got["get_hrv_data"])
+        flags = " ".join(f"{k}={'ja' if v is not None else 'nej'}" for k, v in row.items() if k != "reading_date")
+        print(f"  {d}: {flags}")
+
+
 def _login_with_token(token_dir: Path) -> Garmin:
     garmin = Garmin()
     garmin.login(str(token_dir))
@@ -218,7 +235,9 @@ def main(argv: list[str] | None = None) -> None:
             interactive_login(paths["token"])
             return
         if args.felsok:
-            diagnose(_login_with_token(paths["token"]), str(date.today() - timedelta(days=1)))
+            garmin = _login_with_token(paths["token"])
+            diagnose(garmin, str(date.today() - timedelta(days=1)))
+            diagnose_fields(garmin, 7)
             return
         paths["db"].parent.mkdir(parents=True, exist_ok=True)
         load(args.db or paths["db"], args.dagar, paths["token"], paths["snapshots"])
