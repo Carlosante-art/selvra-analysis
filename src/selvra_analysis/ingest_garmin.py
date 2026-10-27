@@ -107,6 +107,24 @@ def interactive_login(token_dir: Path) -> None:
     print(f"Inloggad{f' som {name}' if name else ''}. Nyckeln ligger i {token_dir}.")
 
 
+def diagnose(garmin: Garmin, day: str) -> None:
+    """Print what each endpoint returns for one day: the error, or the shape (keys, no values)."""
+    print(f"Inloggad som: {garmin.get_full_name()!r}")
+    for name in ("get_sleep_data", "get_user_summary", "get_hrv_data", "get_stats"):
+        try:
+            res = getattr(garmin, name)(day)
+        except Exception as err:  # noqa: BLE001  (diagnosis: show every failure as it is)
+            print(f"{name}: FEL {type(err).__name__}: {str(err)[:200]}")
+            continue
+        if isinstance(res, dict):
+            inner = {k: sorted(v)[:12] for k, v in res.items() if isinstance(v, dict)}
+            print(f"{name}: dict, nycklar {sorted(res)[:25]}")
+            for k, v in inner.items():
+                print(f"    {k}: {v}")
+        else:
+            print(f"{name}: {type(res).__name__} {'tom' if not res else f'längd {len(res)}'}")
+
+
 def _login_with_token(token_dir: Path) -> Garmin:
     garmin = Garmin()
     garmin.login(str(token_dir))
@@ -192,11 +210,15 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--dagar", type=int, default=90, help="Antal dagar bakåt (default: 90)")
     parser.add_argument("--person", help="en annan person än du: data i data/personer/<namn>/")
     parser.add_argument("--logga-in", action="store_true", help="logga in personen en gång (kräver --person)")
+    parser.add_argument("--felsok", action="store_true", help="visa vad Garmin svarar för gårdagen (kräver --person)")
     args = parser.parse_args(argv)
     if args.person:
         paths = person_paths(args.person)
         if args.logga_in:
             interactive_login(paths["token"])
+            return
+        if args.felsok:
+            diagnose(_login_with_token(paths["token"]), str(date.today() - timedelta(days=1)))
             return
         paths["db"].parent.mkdir(parents=True, exist_ok=True)
         load(args.db or paths["db"], args.dagar, paths["token"], paths["snapshots"])
