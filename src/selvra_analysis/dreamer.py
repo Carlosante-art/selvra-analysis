@@ -316,7 +316,6 @@ Max 250 ord.
 
 
 def _call_sammanfattning(studie_texter: list[str]) -> str:
-    import anthropic
     client = anthropic.Anthropic()
     user_content = "STUDIER:\n\n" + "\n\n---\n\n".join(studie_texter)
     msg = client.messages.create(
@@ -385,26 +384,35 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
 
     if args.kommando == "sammanfattning":
-        print("\nSyntetiserar studieportföljen...\n", file=sys.stderr)
-        text = sammanfattning(args.studies, args.db)
-        print(text)
-        out = Path("data/rapporter/portfolio.md")
-        out.parent.mkdir(exist_ok=True)
-        out.write_text(text + "\n")
-        print(f"\nSparad: {out}", file=sys.stderr)
+        _main_sammanfattning(args)
         return
-
     if args.kommando == "tolka":
-        folder = args.studie.resolve()
-        print(f"\nTolkar {folder.name}...\n", file=sys.stderr)
-        text = tolka(folder, args.db)
-        print(text)
-        out = folder / "tolkning.md"
-        out.write_text(text + "\n")
-        print(f"\nSparad: {out}", file=sys.stderr)
+        _main_tolka(args)
         return
+    _main_generera(args)
 
-    # generera (default)
+
+def _main_sammanfattning(args: argparse.Namespace) -> None:
+    print("\nSyntetiserar studieportföljen...\n", file=sys.stderr)
+    text = sammanfattning(args.studies, args.db)
+    print(text)
+    out = Path("data/rapporter/portfolio.md")
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(text + "\n")
+    print(f"\nSparad: {out}", file=sys.stderr)
+
+
+def _main_tolka(args: argparse.Namespace) -> None:
+    folder = args.studie.resolve()
+    print(f"\nTolkar {folder.name}...\n", file=sys.stderr)
+    text = tolka(folder, args.db)
+    print(text)
+    out = folder / "tolkning.md"
+    out.write_text(text + "\n")
+    print(f"\nSparad: {out}", file=sys.stderr)
+
+
+def _main_generera(args: argparse.Namespace) -> None:
     fraga = getattr(args, "fraga", None)
     db = getattr(args, "db", DB_DEFAULT)
     if not fraga:

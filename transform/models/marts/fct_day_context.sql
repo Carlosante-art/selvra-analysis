@@ -57,7 +57,7 @@ select
     -- Oura sleep (null om OURA_TOKEN saknas eller saknad dag)
     sl.sleep_score,
     sl.readiness_score,
-    sl.hrv_avg,
+    sl.hrv_avg_ms,
     sl.hr_lowest_bpm,
     sl.total_sleep_seconds,
     sl.deep_sleep_seconds,
@@ -71,5 +71,5 @@ left join inferred_sensor_starts as s
 left join sleep as sl
     on d.reading_date = sl.reading_date
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
-         sl.hrv_avg, sl.hr_lowest_bpm, sl.total_sleep_seconds,
+         sl.hrv_avg_ms, sl.hr_lowest_bpm, sl.total_sleep_seconds,
          sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct

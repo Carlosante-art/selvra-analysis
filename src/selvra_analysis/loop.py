@@ -17,6 +17,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
+import shutil
 import subprocess
 import sys
 from datetime import date
@@ -31,7 +33,9 @@ STUDIES_DIR = Path("studies")
 
 def _kör_live() -> bool:
     print("→ Hämtar senaste data (make live)...", file=sys.stderr)
-    result = subprocess.run(["make", "live"], check=False, capture_output=False)
+    make = shutil.which("make") or "make"
+    # A fixed make target from this repo; no user input.
+    result = subprocess.run([make, "live"], check=False, capture_output=False)  # noqa: S603
     return result.returncode == 0
 
 
@@ -76,7 +80,6 @@ def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     lines.append("")
 
     _load_dotenv()
-    import os
     har_api = bool(os.environ.get("ANTHROPIC_API_KEY"))
 
     if har_api:

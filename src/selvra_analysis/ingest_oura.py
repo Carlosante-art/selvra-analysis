@@ -13,15 +13,19 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import sys
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import duckdb
+import httpx
 import pandas as pd
 
-from selvra_analysis import manifest
+from selvra_analysis.ingest_clarity import OURA_COLUMNS, ensure_raw_tables
 
+SNAPSHOTS = Path("data/snapshots")
 DB_DEFAULT = Path("data/selvra.duckdb")
 OURA_API = "https://api.ouraring.com/v2/usercollection"
 
@@ -40,52 +44,48 @@ def _load_dotenv() -> None:
             os.environ[key] = val.strip().strip('"').strip("'")
 
 
+def _get(token: str, endpoint: str, start: str, end: str) -> list[dict]:
+    resp = httpx.get(f"{OURA_API}/{endpoint}", params={"start_date": start, "end_date": end},
+                     headers={"Authorization": f"Bearer {token}"}, timeout=30)
+    resp.raise_for_status()
+    return resp.json().get("data", [])
+
+
+def parse(daily_sleep: list[dict], daily_readiness: list[dict], sleep_periods: list[dict]) -> pd.DataFrame:
+    """One row per day, with each value from the endpoint that actually holds it.
+
+    Oura's daily_sleep and daily_readiness `contributors` are 1-100 sub-scores, not
+    durations, milliseconds or beats per minute. Measured values (seconds, ms, bpm, %)
+    come from the sleep periods endpoint; the main period of each day is the longest one.
+    """
+    days: dict[str, dict] = {}
+    for item in daily_sleep:
+        if item.get("day"):
+            days.setdefault(item["day"], {})["sleep_score"] = item.get("score")
+    for item in daily_readiness:
+        if item.get("day"):
+            days.setdefault(item["day"], {})["readiness_score"] = item.get("score")
+    main_periods: dict[str, dict] = {}
+    for period in sleep_periods:
+        day = period.get("day")
+        if day and (period.get("total_sleep_duration") or 0) >= (
+                main_periods.get(day, {}).get("total_sleep_duration") or 0):
+            main_periods[day] = period
+    for day, period in main_periods.items():
+        days.setdefault(day, {}).update({
+            "total_sleep_seconds": period.get("total_sleep_duration"),
+            "deep_sleep_seconds": period.get("deep_sleep_duration"),
+            "rem_sleep_seconds": period.get("rem_sleep_duration"),
+            "sleep_efficiency_pct": period.get("efficiency"),
+            "hrv_avg_ms": period.get("average_hrv"),
+            "hr_lowest_bpm": period.get("lowest_heart_rate"),
+        })
+    return pd.DataFrame([{"reading_date": d, **v} for d, v in sorted(days.items())], columns=OURA_COLUMNS)
+
+
 def _fetch(token: str, start: str, end: str) -> pd.DataFrame:
-    try:
-        import httpx
-    except ImportError:
-        raise SystemExit("Installera httpx: uv add httpx")
-
-    headers = {"Authorization": f"Bearer {token}"}
-    rows = []
-
-    for endpoint, key in [("daily_sleep", "sleep"), ("daily_readiness", "readiness")]:
-        resp = httpx.get(
-            f"{OURA_API}/{endpoint}",
-            params={"start_date": start, "end_date": end},
-            headers=headers,
-            timeout=30,
-        )
-        resp.raise_for_status()
-        for item in resp.json().get("data", []):
-            date = item.get("day")
-            if not date:
-                continue
-            if key == "sleep":
-                contributors = item.get("contributors", {})
-                rows.append({
-                    "reading_date": date,
-                    "sleep_score": item.get("score"),
-                    "total_sleep_seconds": contributors.get("total_sleep"),
-                    "rem_sleep_seconds": contributors.get("rem_sleep"),
-                    "deep_sleep_seconds": contributors.get("deep_sleep"),
-                    "efficiency": contributors.get("efficiency"),
-                })
-            else:
-                existing = next((r for r in rows if r["reading_date"] == date), None)
-                if existing:
-                    existing["readiness_score"] = item.get("score")
-                    existing["hrv_avg"] = item.get("contributors", {}).get("hrv_balance")
-                    existing["hr_lowest"] = item.get("contributors", {}).get("resting_heart_rate")
-
-    if not rows:
-        return pd.DataFrame()
-
-    df = pd.DataFrame(rows)
-    for col in ["readiness_score", "hrv_avg", "hr_lowest"]:
-        if col not in df.columns:
-            df[col] = None
-    return df
+    return parse(_get(token, "daily_sleep", start, end), _get(token, "daily_readiness", start, end),
+                 _get(token, "sleep", start, end))
 
 
 def load(db_path: Path, days_back: int = 90) -> int:
@@ -95,7 +95,6 @@ def load(db_path: Path, days_back: int = 90) -> int:
         print("OURA_TOKEN saknas — hoppar över Oura-inläsning.", file=sys.stderr)
         return 0
 
-    from datetime import date, timedelta
     end = str(date.today())
     start = str(date.today() - timedelta(days=days_back))
 
@@ -105,15 +104,20 @@ def load(db_path: Path, days_back: int = 90) -> int:
         print("Inga Oura-data hittades.", file=sys.stderr)
         return 0
 
+    text = df.to_csv(index=False)
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    SNAPSHOTS.mkdir(parents=True, exist_ok=True)
+    (SNAPSHOTS / f"oura_{digest[:16]}.csv").write_text(text)
     with duckdb.connect(str(db_path)) as con:
-        con.execute("CREATE SCHEMA IF NOT EXISTS raw")
+        ensure_raw_tables(con)
         con.register("oura_df", df)
-        con.execute("""
-            CREATE OR REPLACE TABLE raw.oura_sleep AS
-            SELECT * FROM oura_df
-        """)
-        n = con.execute("SELECT COUNT(*) FROM raw.oura_sleep").fetchone()[0]
-        manifest.record(con, "oura_sleep", [(Path("oura_api"), n)])
+        cols = ", ".join(OURA_COLUMNS)
+        con.execute("delete from raw.oura_sleep")
+        con.execute(f"insert into raw.oura_sleep ({cols}) select {cols} from oura_df")  # noqa: S608
+        n = con.execute("select count(*) from raw.oura_sleep").fetchone()[0]
+        con.execute("delete from raw.source_files where kind = 'oura'")
+        con.execute("insert into raw.source_files values ('oura', ?, ?, ?, ?)",
+                    [digest, len(text.encode()), n, datetime.now(UTC).isoformat(timespec="seconds")])
 
     print(f"Laddade {n} Oura-dagar.", file=sys.stderr)
     return n

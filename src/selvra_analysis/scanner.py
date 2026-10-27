@@ -169,7 +169,7 @@ def _trend(df: pd.DataFrame) -> list[Pattern]:
         return []
 
     riktning = "uppåt" if slope_per_week > 0 else "nedåt"
-    patterns = [Pattern(
+    return [Pattern(
         typ="trend",
         beskrivning=(
             f"TIR rör sig {riktning} de senaste 21 dagarna "
@@ -183,7 +183,6 @@ def _trend(df: pd.DataFrame) -> list[Pattern]:
         ],
         vikt=2 if abs(slope_per_week) < 5 else 3,
     )]
-    return patterns
 
 
 def scan(db_path: Path) -> list[Pattern]:

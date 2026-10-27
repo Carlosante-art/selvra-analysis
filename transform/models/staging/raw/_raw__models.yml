@@ -50,6 +50,12 @@ models:
                 min_value: 2.2
                 max_value: 22.2
 
+  - name: stg_oura_sleep
+    description: Oura sleep and readiness per day. Empty when no Oura data has been loaded.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]
+
   - name: stg_personal_events
     description: The personal event log, one row per logged event, dates parsed. Self-reported.
     columns:

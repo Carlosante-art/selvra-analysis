@@ -107,14 +107,24 @@ def read_clarity_csv(path: Path) -> pd.DataFrame:
     return df[RAW_COLUMNS]
 
 
+OURA_COLUMNS = ["reading_date", "sleep_score", "readiness_score", "total_sleep_seconds",
+                "deep_sleep_seconds", "rem_sleep_seconds", "sleep_efficiency_pct", "hrv_avg_ms",
+                "hr_lowest_bpm"]
+
+
 def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
-    """Both CGM sources exist as tables, empty if never loaded, so staging always builds."""
+    """Every raw source exists as a table, empty if never loaded, so staging always builds."""
     con.execute("create schema if not exists raw")
     cols = ", ".join(f"{c} varchar" for c in RAW_COLUMNS)
     con.execute(f"create table if not exists raw.clarity_events ({cols})")
     con.execute(
         "create table if not exists raw.share_readings "
         "(reading_at timestamptz, value_mgdl integer, trend varchar, loaded_at varchar)"
+    )
+    con.execute(
+        "create table if not exists raw.oura_sleep (reading_date date, sleep_score integer, "
+        "readiness_score integer, total_sleep_seconds integer, deep_sleep_seconds integer, "
+        "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double)"
     )
     con.execute(
         "create table if not exists raw.source_files "

@@ -447,37 +447,88 @@ models:
       does_not_measure: anything structured
       epistemics: self-reported
   - name: sleep_score
-    description: Oura sleep score (0–100). Null if OURA_TOKEN is not set.
+    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no Oura data for the
+      day.
     data_type: integer
-    meta: {construct: sleep quality, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: Oura's overall sleep rating
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: sleep as assessed by polysomnography; the algorithm is proprietary and can change with firmware
+      epistemics: interpreted
   - name: readiness_score
-    description: Oura readiness score (0–100). Null if OURA_TOKEN is not set.
+    description: Oura readiness score, 0-100. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: readiness, source_standard: Oura Ring v2 API, epistemics: observed}
-  - name: hrv_avg
-    description: Average HRV from Oura. Null if OURA_TOKEN is not set.
-    data_type: double
-    meta: {construct: heart rate variability, source_standard: Oura Ring v2 API, epistemics: observed}
-  - name: hr_lowest_bpm
-    description: Lowest resting heart rate from Oura. Null if OURA_TOKEN is not set.
-    data_type: double
-    meta: {construct: resting heart rate, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: Oura's recovery rating
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: physiological recovery as clinically defined; proprietary composite
+      epistemics: interpreted
   - name: total_sleep_seconds
-    description: Total sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: Total sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: sleep duration, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: sleep duration estimated by a wearable
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep measured by polysomnography; naps are not included
+      epistemics: derived
   - name: deep_sleep_seconds
-    description: Deep sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: Deep sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: deep sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: wearable estimate of deep (N3) sleep
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
+      epistemics: derived
   - name: rem_sleep_seconds
-    description: REM sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: REM sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: REM sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: wearable estimate of REM sleep
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
+      epistemics: derived
   - name: sleep_efficiency_pct
-    description: Sleep efficiency percentage from Oura. Null if OURA_TOKEN is not set.
+    description: Sleep efficiency of the main sleep period, % of time in bed asleep. Null when there is no Oura
+      data for the day.
     data_type: double
-    meta: {construct: sleep efficiency, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: sleep efficiency
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: sleep quality as experienced
+      epistemics: derived
+  - name: hrv_avg_ms
+    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no Oura data for the day.
+    data_type: double
+    meta:
+      construct: night-time heart rate variability
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: '> 0'
+      iglu_function: null
+      does_not_measure: daytime autonomic state or stress; values are not comparable across devices
+      epistemics: derived
+  - name: hr_lowest_bpm
+    description: Lowest heart rate during the main sleep period, beats per minute. Null when there is no Oura data
+      for the day.
+    data_type: double
+    meta:
+      construct: resting heart rate at night
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 25-120
+      iglu_function: null
+      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
+      epistemics: derived
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -889,34 +940,85 @@ models:
       does_not_measure: anything structured
       epistemics: self-reported
   - name: sleep_score
-    description: Oura sleep score (0–100). Null if OURA_TOKEN is not set.
+    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no Oura data for the
+      day.
     data_type: integer
-    meta: {construct: sleep quality, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: Oura's overall sleep rating
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: sleep as assessed by polysomnography; the algorithm is proprietary and can change with firmware
+      epistemics: interpreted
   - name: readiness_score
-    description: Oura readiness score (0–100). Null if OURA_TOKEN is not set.
+    description: Oura readiness score, 0-100. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: readiness, source_standard: Oura Ring v2 API, epistemics: observed}
-  - name: hrv_avg
-    description: Average HRV from Oura. Null if OURA_TOKEN is not set.
-    data_type: double
-    meta: {construct: heart rate variability, source_standard: Oura Ring v2 API, epistemics: observed}
-  - name: hr_lowest_bpm
-    description: Lowest resting heart rate from Oura. Null if OURA_TOKEN is not set.
-    data_type: double
-    meta: {construct: resting heart rate, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: Oura's recovery rating
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: physiological recovery as clinically defined; proprietary composite
+      epistemics: interpreted
   - name: total_sleep_seconds
-    description: Total sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: Total sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: sleep duration, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: sleep duration estimated by a wearable
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep measured by polysomnography; naps are not included
+      epistemics: derived
   - name: deep_sleep_seconds
-    description: Deep sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: Deep sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: deep sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: wearable estimate of deep (N3) sleep
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
+      epistemics: derived
   - name: rem_sleep_seconds
-    description: REM sleep duration in seconds. Null if OURA_TOKEN is not set.
+    description: REM sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
     data_type: integer
-    meta: {construct: REM sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: wearable estimate of REM sleep
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-86400
+      iglu_function: null
+      does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
+      epistemics: derived
   - name: sleep_efficiency_pct
-    description: Sleep efficiency percentage from Oura. Null if OURA_TOKEN is not set.
+    description: Sleep efficiency of the main sleep period, % of time in bed asleep. Null when there is no Oura
+      data for the day.
     data_type: double
-    meta: {construct: sleep efficiency, source_standard: Oura Ring v2 API, epistemics: observed}
+    meta:
+      construct: sleep efficiency
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: sleep quality as experienced
+      epistemics: derived
+  - name: hrv_avg_ms
+    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no Oura data for the day.
+    data_type: double
+    meta:
+      construct: night-time heart rate variability
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: '> 0'
+      iglu_function: null
+      does_not_measure: daytime autonomic state or stress; values are not comparable across devices
+      epistemics: derived
+  - name: hr_lowest_bpm
+    description: Lowest heart rate during the main sleep period, beats per minute. Null when there is no Oura data
+      for the day.
+    data_type: double
+    meta:
+      construct: resting heart rate at night
+      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      valid_range: 25-120
+      iglu_function: null
+      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
+      epistemics: derived
