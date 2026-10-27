@@ -1,0 +1,32 @@
+id: h04-observation-kvall-efter-traning
+titel: Kvällen efter träning (observation)
+fraga: Är medelglukos 20:00–23:59 en dag med träningspass (pass som avslutas före 19:00) lägre än övriga dagars kvällar?
+tes: En träningsdag är medelglukos 20:00–23:59 minst 0,5 mmol/L lägre än andra dagar.
+motbevis: Hela intervallet visar en skillnad mindre än 0,5 mmol/L (eller ingen, eller högre).
+
+design:
+  typ: observation
+  exponering: {handelse: traning, dagar_efter: 0}
+  period: [2025-04-01, 2025-06-30]
+  retrospektiv: true
+
+utfall:
+  matt: medel
+  fonster: ["20:00", "23:59"]
+  min_tackning_pct: 70
+
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  niva: 0.95
+  minsta_relevanta_effekt: -0.5
+  minsta_underlag: {exponerade: 15, jamforelse: 30}
+
+protokoll:
+  periodeffekt: Blockbootstrap med veckoblock tar hand om autokorrelation; resultatet redovisas också per månad för att se drift (säsong, sensorålder).
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före passet, samma dag. Den kommer före dagens träning och kan inte påverkas av den, men delar dagens kontext (veckodag, säsong, sensor). Visar den en skillnad tränar jag på dagar som redan är annorlunda.

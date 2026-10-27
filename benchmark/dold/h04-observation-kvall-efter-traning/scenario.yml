@@ -17,4 +17,4 @@ glukos:
 tackning: 0.97
 traning:
   p: 0.35
-  natt_effekt: 0.6
+  natt_effekt: 0.0

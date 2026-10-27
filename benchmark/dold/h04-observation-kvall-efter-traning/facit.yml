@@ -1,0 +1,13 @@
+forvantat: GODKANN
+flagga: []
+kategori: giltigt
+motivering: >-
+  En retrospektiv observationsstudie utan dagstypsförväxling. Personen har inget arbetsschema och
+  tränar med samma sannolikhet alla dagar, så exponerade dagar och jämförelsedagar kommer från samma
+  kontext (kausal_validitet Q3 punkt 1, kontextmatchad jämförelse). Utfallet (kvällen 20:00–23:59)
+  ligger efter dagens pass. Den negativa kontrollen är natten före passet samma dag, exakt det
+  forskningen föreslår: "Example: overnight CGM metrics the night before the event day" och "a
+  pre-event 'effect' signals selection or reverse causation" (kausal_validitet Q3 punkt 2–3;
+  designgranskning_n1 §5 O5). Med p 0,35 över 91 dagar väntas omkring 30 exponerade och 60
+  jämförelsedagar, över det låsta minsta_underlag. Blockbootstrap hanterar autokorrelation.
+  Tolkningen är samband, inte orsak, vilket formatet redan säger; det är ingen anledning att stoppa.

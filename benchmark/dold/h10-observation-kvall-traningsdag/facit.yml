@@ -1,0 +1,18 @@
+forvantat: STOPP
+skal: [dagtyp, positivitet]
+kategori: kritiskt
+motivering: >-
+  Personen arbetar rullande schema och tränar bara på lediga dagar (p_arbete 0). Alla exponerade
+  dagar är därför lediga, medan jämförelsedagarna till omkring 85 % är arbetsdagar. Arbetsdagar har
+  omkring 1,5 mmol/L högre dagglukos, så jämförelsen mäter ledighet mot arbete, inte träning. Det
+  finns ingen exponerad arbetsdag alls (en nollcell): "Any zero cell means a structural violation"
+  (kausal_validitet Q1, positivitet). För observationsstudier krävs kontextmatchad jämförelse:
+  "Compare 'days after event' with other days of the same context: workday vs workday ... Do not
+  compare against all other days. The circular block bootstrap handles autocorrelation, but it does
+  not remove confounding" (kausal_validitet Q3 punkt 1; designgranskning_n1 §2 F3). Den negativa
+  kontrollen (natten före passet) ligger rätt i tid och kan på sin höjd avslöja förväxlingen i
+  efterhand; den reparerar inte designen.
+reparation: >-
+  Jämför bara lediga dagar med lediga dagar (träningsdag mot ledig dag utan träning) och begränsa
+  påståendet till lediga dagar, eller gå direkt till ett n1-experiment med lottad träning inom samma
+  dagstyp.
