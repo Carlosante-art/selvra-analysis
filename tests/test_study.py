@@ -34,10 +34,12 @@ def make_db(path: Path, schedule: pd.DataFrame | None, effect: float, seed: int 
     day = date(2025, 4, 1)
     while day <= date(2025, 6, 30):
         level = 8.0 + rng.normal(0, 1.0) + (effect if day in a_days else 0.0)
-        for k in range(36):
-            t = datetime.combine(day, datetime.min.time()) + timedelta(hours=19, minutes=5 * k)
-            rows.append({"reading_at_local": t, "reading_date": day, "glucose_mmol": level,
-                         "flag_compression_low": False, "flag_implausible_jump": False})
+        morning = 7.0 + rng.normal(0, 1.0)  # negative control 07-10: no effect
+        for hour, value in ((19, level), (7, morning)):
+            for k in range(36):
+                t = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, minutes=5 * k)
+                rows.append({"reading_at_local": t, "reading_date": day, "glucose_mmol": value,
+                             "flag_compression_low": False, "flag_implausible_jump": False})
         day += timedelta(days=1)
     df = pd.DataFrame(rows)
     with duckdb.connect(str(path)) as con:
@@ -155,10 +157,12 @@ def test_observation_with_night_window_after_training(folder: Path, tmp_path: Pa
     for day in days:
         after = training.get(day - timedelta(days=1), False)
         level = 8.0 + rng.normal(0, 0.8) - (1.5 if after else 0.0)
-        for k in range(72):
-            t = datetime.combine(day, datetime.min.time()) + timedelta(minutes=5 * k)
-            rows.append({"reading_at_local": t, "reading_date": day, "glucose_mmol": level,
-                         "flag_compression_low": False, "flag_implausible_jump": False})
+        morning = 7.0 + rng.normal(0, 0.8)  # negative control 07-10: no effect
+        for start_min, count, value in ((0, 72, level), (7 * 60, 36, morning)):
+            for k in range(count):
+                t = datetime.combine(day, datetime.min.time()) + timedelta(minutes=start_min + 5 * k)
+                rows.append({"reading_at_local": t, "reading_date": day, "glucose_mmol": value,
+                             "flag_compression_low": False, "flag_implausible_jump": False})
     db = tmp_path / "o.duckdb"
     with duckdb.connect(str(db)) as con:
         con.execute("create schema intermediate; create schema raw; create schema marts")
@@ -206,3 +210,26 @@ def test_observation_refuses_below_minimum_without_spending_the_study(folder: Pa
         with pytest.raises(st.StudyError, match="för lite underlag: 1 exponerade"):
             st.run(s, con, today=date(2026, 10, 27))
     assert not (d / "korningar").exists()
+
+
+def test_study_file_must_name_cent_items_and_a_negative_control(spec: dict) -> None:
+    del spec["negativ_kontroll"]
+    del spec["protokoll"]["overforing"]
+    spec["protokoll"]["andringslogg"] = None
+    errors = "\n".join(st.validate(spec))
+    assert "negativ_kontroll" in errors
+    assert "protokoll.overforing" in errors and "CENT" in errors
+    assert "protokoll.andringslogg" in errors
+
+
+def test_report_shows_negative_control_and_protocol(folder: Path, tmp_path: Path) -> None:
+    s = st.load(folder / "studie.yml")
+    st.lock(s, seed=1)
+    sched = st.n1.read_schedule(folder / "schema.csv")
+    db = make_db(tmp_path / "t.duckdb", sched, effect=-3.0)
+    with duckdb.connect(str(db), read_only=True) as con:
+        record, report = st.run(s, con, today=date(2025, 6, 1))
+    neg = record["negativ_kontroll"]
+    assert neg["ci_low"] <= 0 <= neg["ci_high"], "no effect was put in the morning"
+    assert "## Negativ kontroll" in report and "som förväntat" in report
+    assert "## Protokoll (CENT 2015)" in report and "Ändringar efter låsning:** inga" in report

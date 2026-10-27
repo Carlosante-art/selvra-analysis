@@ -47,6 +47,11 @@ EVENT_COLUMNS = {
     "medicinandring": "had_medication_change",
 }
 REQUIRED_TEXT = ["id", "titel", "fraga", "tes", "motbevis"]
+PROTOCOL_HELP = {
+    "periodeffekt": "hur tidstrender hanteras (CENT 8a), t.ex. att paren balanserar långsam drift",
+    "overforing": "hur eftereffekter hanteras (CENT 3a, 12c), t.ex. tvättdagar och AB mot BA",
+    "stoppregel": "när försöket avbryts i förtid (CENT 7b), t.ex. av säkerhetsskäl",
+}
 # Fewest exposed or comparison days an observational study may be run on. With fewer,
 # a block bootstrap has too few blocks containing exposed days to say anything.
 MIN_DAYS = 10
@@ -99,62 +104,87 @@ def load(path: Path) -> Study:
 
 def validate(spec: dict) -> list[str]:
     """All problems with a study file, in Swedish, or an empty list."""
-    e: list[str] = []
     if not isinstance(spec, dict):
         return ["filen är inte en YAML-karta"]
+    e: list[str] = []
     for key in REQUIRED_TEXT:
         _need(isinstance(spec.get(key), str) and spec[key].strip() != "", e, f"saknar text: {key}")
-    design, outcome, analysis = spec.get("design") or {}, spec.get("utfall") or {}, spec.get("analys") or {}
+    design, analysis = spec.get("design") or {}, spec.get("analys") or {}
     kind = design.get("typ")
     _need(kind in {"n1", "observation"}, e, "design.typ måste vara n1 eller observation")
-
     s = analysis.get("minsta_relevanta_effekt")
     _need(isinstance(s, (int, float)) and s != 0, e,
           "analys.minsta_relevanta_effekt: ett tal skilt från 0; tecknet anger förväntad riktning (A minus B)")
     level = analysis.get("niva", 0.95)
     _need(isinstance(level, float) and 0.5 < level < 1, e, "analys.niva: mellan 0,5 och 1, t.ex. 0.95")
-
     if kind == "n1":
-        for key in ("A", "B"):
-            _need(isinstance(design.get(key), str), e, f"design.{key}: beskriv villkoret exakt")
-        _need(isinstance(design.get("start"), date), e, "design.start: datum ÅÅÅÅ-MM-DD")
-        pairs, days, wash = design.get("par"), design.get("periodlangd_dagar"), design.get("tvatt_dagar", 0)
-        _need(isinstance(pairs, int) and pairs >= 6, e,
-              "design.par: minst 6 (med färre kan testet aldrig nå 5 %)")
-        _need(isinstance(days, int) and days >= 1, e, "design.periodlangd_dagar: heltal ≥ 1")
-        _need(isinstance(wash, int) and isinstance(days, int) and 0 <= wash < days, e,
-              "design.tvatt_dagar: mellan 0 och periodlängden − 1")
-        _need(analysis.get("metod") == "randomiseringstest", e, "analys.metod: randomiseringstest för n1")
-        _need(outcome.get("matt") in WINDOW_METRICS, e, f"utfall.matt: en av {sorted(WINDOW_METRICS)}")
-        window = outcome.get("fonster")
-        _need(isinstance(window, list) and len(window) == 2 and all(isinstance(t, str) for t in window), e,
-              'utfall.fonster: ["HH:MM", "HH:MM"] i lokal tid')
+        _validate_n1(design, analysis, e)
     elif kind == "observation":
-        exp = design.get("exponering") or {}
-        _need(exp.get("handelse") in EVENT_COLUMNS, e, f"design.exponering.handelse: en av {sorted(EVENT_COLUMNS)}")
-        _need(isinstance(exp.get("dagar_efter", 0), int) and exp.get("dagar_efter", 0) >= 0, e,
-              "design.exponering.dagar_efter: heltal ≥ 0")
-        period = design.get("period")
-        _need(isinstance(period, list) and len(period) == 2 and all(isinstance(d, date) for d in period),
-              e, "design.period: [från, till] som datum")
-        _need(isinstance(design.get("retrospektiv"), bool), e,
-              "design.retrospektiv: true om datan redan fanns när studien skrevs")
-        _need(analysis.get("metod") == "blockbootstrap", e, "analys.metod: blockbootstrap för observation")
-        floor = analysis.get("minsta_underlag") or {}
-        _need(all(isinstance(floor.get(k), int) and floor[k] >= MIN_DAYS for k in ("exponerade", "jamforelse")),
-              e, f"analys.minsta_underlag: {{exponerade: N, jamforelse: M}}, var och en minst {MIN_DAYS} dagar. "
-                 "Slutanalysen vägrar köra under det, så studien inte förbrukas på för lite data.")
-        _need(isinstance(analysis.get("blocklangd"), int) and analysis["blocklangd"] >= 1, e,
-              "analys.blocklangd: dagar, heltal ≥ 1")
-        if "fonster" in outcome:
-            _need(outcome.get("matt") in WINDOW_METRICS, e, f"utfall.matt: en av {sorted(WINDOW_METRICS)}")
-            w = outcome.get("fonster")
-            _need(isinstance(w, list) and len(w) == 2 and all(isinstance(t, str) for t in w) and w[0] < w[1],
-                  e, 'utfall.fonster: ["HH:MM", "HH:MM"] inom samma dygn, t.ex. ["00:00", "06:00"]')
-        else:
-            _need(isinstance(outcome.get("kolumn"), str), e,
-                  "utfall: antingen kolumn (i marts.mart_analysis_days) eller matt + fonster")
+        _validate_observation(design, analysis, e)
+    _validate_outcome(spec.get("utfall") or {}, "utfall", kind, e)
+    _validate_protocol(spec, kind, e)
     return e
+
+
+def _validate_n1(design: dict, analysis: dict, e: list[str]) -> None:
+    for key in ("A", "B"):
+        _need(isinstance(design.get(key), str), e, f"design.{key}: beskriv villkoret exakt")
+    _need(isinstance(design.get("start"), date), e, "design.start: datum ÅÅÅÅ-MM-DD")
+    pairs, days, wash = design.get("par"), design.get("periodlangd_dagar"), design.get("tvatt_dagar", 0)
+    _need(isinstance(pairs, int) and pairs >= 6, e, "design.par: minst 6 (med färre kan testet aldrig nå 5 %)")
+    _need(isinstance(days, int) and days >= 1, e, "design.periodlangd_dagar: heltal ≥ 1")
+    _need(isinstance(wash, int) and isinstance(days, int) and 0 <= wash < days, e,
+          "design.tvatt_dagar: mellan 0 och periodlängden − 1")
+    _need(analysis.get("metod") == "randomiseringstest", e, "analys.metod: randomiseringstest för n1")
+
+
+def _validate_observation(design: dict, analysis: dict, e: list[str]) -> None:
+    exp = design.get("exponering") or {}
+    _need(exp.get("handelse") in EVENT_COLUMNS, e, f"design.exponering.handelse: en av {sorted(EVENT_COLUMNS)}")
+    _need(isinstance(exp.get("dagar_efter", 0), int) and exp.get("dagar_efter", 0) >= 0, e,
+          "design.exponering.dagar_efter: heltal ≥ 0")
+    period = design.get("period")
+    _need(isinstance(period, list) and len(period) == 2 and all(isinstance(d, date) for d in period),
+          e, "design.period: [från, till] som datum")
+    _need(isinstance(design.get("retrospektiv"), bool), e,
+          "design.retrospektiv: true om datan redan fanns när studien skrevs")
+    _need(analysis.get("metod") == "blockbootstrap", e, "analys.metod: blockbootstrap för observation")
+    floor = analysis.get("minsta_underlag") or {}
+    _need(all(isinstance(floor.get(k), int) and floor[k] >= MIN_DAYS for k in ("exponerade", "jamforelse")),
+          e, f"analys.minsta_underlag: {{exponerade: N, jamforelse: M}}, var och en minst {MIN_DAYS} dagar. "
+             "Slutanalysen vägrar köra under det, så studien inte förbrukas på för lite data.")
+    _need(isinstance(analysis.get("blocklangd"), int) and analysis["blocklangd"] >= 1, e,
+          "analys.blocklangd: dagar, heltal ≥ 1")
+
+
+def _validate_outcome(outcome: dict, name: str, kind: str | None, e: list[str]) -> None:
+    """An outcome is a local-time window (matt + fonster), or for observation a day-table column."""
+    if "fonster" in outcome or kind == "n1":
+        _need(outcome.get("matt") in WINDOW_METRICS, e, f"{name}.matt: en av {sorted(WINDOW_METRICS)}")
+        w = outcome.get("fonster")
+        _need(isinstance(w, list) and len(w) == 2 and all(isinstance(t, str) for t in w) and w[0] < w[1],
+              e, f'{name}.fonster: ["HH:MM", "HH:MM"] inom samma dygn, t.ex. ["19:00", "22:00"]')
+    else:
+        _need(isinstance(outcome.get("kolumn"), str), e,
+              f"{name}: antingen kolumn (i marts.mart_analysis_days) eller matt + fonster")
+
+
+def _validate_protocol(spec: dict, kind: str | None, e: list[str]) -> None:
+    """CENT 2015 items a machine can check, and a negative control (Lipsitch et al. 2010)."""
+    prot = spec.get("protokoll") or {}
+    required = ["periodeffekt"] + (["overforing", "stoppregel"] if kind == "n1" else [])
+    for key in required:
+        _need(isinstance(prot.get(key), str) and prot[key].strip() != "", e,
+              f"protokoll.{key}: {PROTOCOL_HELP[key]}")
+    _need(isinstance(prot.get("andringslogg"), list), e,
+          "protokoll.andringslogg: lista över ändringar efter låsning (tom lista om inga)")
+    neg = spec.get("negativ_kontroll") or {}
+    _need(bool(neg), e, "negativ_kontroll: ett utfall som exponeringen inte kan påverka, analyserat på "
+                        "samma sätt. Visar det en effekt finns en snedvridning, inte en verkan.")
+    if neg:
+        _validate_outcome(neg, "negativ_kontroll", kind, e)
+        _need(isinstance(neg.get("motivering"), str) and neg["motivering"].strip() != "", e,
+              "negativ_kontroll.motivering: varför exponeringen inte kan påverka detta utfall")
 
 
 # --- Lock -------------------------------------------------------------------------------------
@@ -207,8 +237,8 @@ def check_lock(study: Study) -> dict:
 
 # --- Data -------------------------------------------------------------------------------------
 
-def _daily_outcome(study: Study, con) -> tuple[pd.DataFrame, str]:
-    o = study.spec["utfall"]
+def _daily_outcome(study: Study, con, o: dict | None = None) -> tuple[pd.DataFrame, str]:
+    o = o or study.spec["utfall"]
     if "fonster" in o:
         daily = n1.window_outcomes(con, o["fonster"][0], o["fonster"][1], o.get("min_tackning_pct", 70.0))
         if study.kind == "observation":
@@ -221,7 +251,7 @@ def _daily_outcome(study: Study, con) -> tuple[pd.DataFrame, str]:
         return daily, WINDOW_METRICS[o["matt"]]
     daily = con.execute("select * from marts.mart_analysis_days").df()
     if o["kolumn"] not in daily.columns:
-        raise StudyError(f"utfall.kolumn {o['kolumn']!r} finns inte i mart_analysis_days")
+        raise StudyError(f"kolumnen {o['kolumn']!r} finns inte i mart_analysis_days")
     return daily, o["kolumn"]
 
 
@@ -300,44 +330,54 @@ def decide(estimate: dict, smallest: float) -> str:
     return "obestämt: intervallet rymmer både en relevant och en irrelevant effekt"
 
 
-def run(study: Study, con, today: date | None = None) -> tuple[dict, str]:
-    rec = check_lock(study)
-    today = today or date.today()
-    runs = study.folder / "korningar"
-    if any(runs.glob("*.json")):
-        raise StudyError("slutanalysen är redan körd; den körs en gång")
+def _estimate(study: Study, con, outcome: dict) -> tuple[dict, dict]:
+    """The locked analysis on one outcome. Returns (estimate, extra record fields)."""
     a = study.spec["analys"]
-    daily, col = _daily_outcome(study, con)
-
+    daily, col = _daily_outcome(study, con, outcome)
     if study.kind == "n1":
-        if today <= date.fromisoformat(rec["schedule_end"]):
-            raise StudyError(f"studien pågår till {rec['schedule_end']}; slutanalysen körs efter det")
-        sched = n1.read_schedule(study.schedule_path)
-        periods = n1.period_outcomes(sched, daily, col)
+        periods = n1.period_outcomes(n1.read_schedule(study.schedule_path), daily, col)
         est = n1.randomisation_test(periods, level=a.get("niva", 0.95)).as_dict()
-        extra = {"perioder": periods.to_dict("records")}
-    else:
-        end = study.design["period"][1]
-        if today <= end:
-            raise StudyError(f"perioden pågår till {end}; slutanalysen körs efter det")
-        s = _observation_series(study, daily, col)
-        n_exp, n_cmp = _observation_counts(s)
-        floor = a["minsta_underlag"]
+        return est, {"perioder": periods.to_dict("records")}
+    s = _observation_series(study, daily, col)
+    est = block_bootstrap_difference(s["y"], s["exposed"], block_length=a["blocklangd"],
+                                     seed=a.get("seed", 1), level=a.get("niva", 0.95)).as_dict()
+    return est, {}
+
+
+def _check_ready(study: Study, con, rec: dict, today: date) -> None:
+    """Refuse before anything is written: running, already run, or too little data."""
+    if any((study.folder / "korningar").glob("*.json")):
+        raise StudyError("slutanalysen är redan körd; den körs en gång")
+    end = (date.fromisoformat(rec["schedule_end"]) if study.kind == "n1" else study.design["period"][1])
+    if today <= end:
+        raise StudyError(f"studien pågår till {end}; slutanalysen körs efter det")
+    if study.kind == "observation":
+        daily, col = _daily_outcome(study, con)
+        n_exp, n_cmp = _observation_counts(_observation_series(study, daily, col))
+        floor = study.spec["analys"]["minsta_underlag"]
         if n_exp < floor["exponerade"] or n_cmp < floor["jamforelse"]:
             raise StudyError(
                 f"för lite underlag: {n_exp} exponerade och {n_cmp} jämförelsedagar med giltigt utfall, "
                 f"studien kräver {floor['exponerade']} och {floor['jamforelse']}. Ingenting har körts; "
                 "studien är inte förbrukad.")
-        est = block_bootstrap_difference(s["y"], s["exposed"], block_length=a["blocklangd"],
-                                         seed=a.get("seed", 1), level=a.get("niva", 0.95)).as_dict()
-        extra = {}
 
-    verdict = decide(est, a["minsta_relevanta_effekt"])
+
+def run(study: Study, con, today: date | None = None) -> tuple[dict, str]:
+    rec = check_lock(study)
+    _check_ready(study, con, rec, today or date.today())
+    # Both estimates are computed before anything is written, so a failure spends nothing.
+    est, extra = _estimate(study, con, study.spec["utfall"])
+    try:
+        neg, _ = _estimate(study, con, study.spec["negativ_kontroll"])
+    except ValueError as err:
+        raise StudyError(f"den negativa kontrollen kan inte beräknas ({err}); ingenting har körts") from None
     record = {
         "study": study.spec["id"], "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "lock": rec, "commit": _git("rev-parse", "HEAD"), "data": data_version(con),
-        "result": est, "beslut": verdict, **extra,
+        "result": est, "beslut": decide(est, study.spec["analys"]["minsta_relevanta_effekt"]),
+        "negativ_kontroll": neg, **extra,
     }
+    runs = study.folder / "korningar"
     runs.mkdir(exist_ok=True)
     (runs / f"{record['run_at'].replace(':', '')}.json").write_text(
         json.dumps(record, indent=2, ensure_ascii=False, default=str) + "\n")
@@ -402,6 +442,8 @@ def _report(study: Study, record: dict) -> str:
         if d.get("retrospektiv"):
             lines.append("Studien är retrospektiv: datan fanns när den skrevs, så förregistreringen skyddar "
                          "inte mot att frågan valdes efter att mönstret setts.")
+    lines += _negative_control_lines(sp, record["negativ_kontroll"])
+    lines += _protocol_lines(sp)
     data = record["data"]
     lines += [
         "", "## Spårbarhet", "",
@@ -410,6 +452,37 @@ def _report(study: Study, record: dict) -> str:
         f"- Körd vid commit `{record['commit'][:12]}`",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _outcome_text(o: dict) -> str:
+    if "fonster" in o:
+        return f"{o['matt']} glukos {o['fonster'][0]}–{o['fonster'][1]} lokal tid"
+    return f"`{o['kolumn']}`"
+
+
+def _negative_control_lines(sp: dict, neg: dict) -> list[str]:
+    covers_zero = neg["ci_low"] <= 0 <= neg["ci_high"]
+    verdict = ("intervallet täcker noll, som förväntat" if covers_zero else
+               "intervallet utesluter noll: något annat än exponeringen skiljer grupperna åt, "
+               "och huvudresultatet ska läsas med det i åtanke")
+    return [
+        "", "## Negativ kontroll", "",
+        f"{_outcome_text(sp['negativ_kontroll'])}: {sp['negativ_kontroll']['motivering']}", "",
+        (f"Skattning {_fmt(neg['estimate'])} ({int(neg['level'] * 100)} % intervall {_fmt(neg['ci_low'])} "
+         f"till {_fmt(neg['ci_high'])}); {verdict}."),
+    ]
+
+
+def _protocol_lines(sp: dict) -> list[str]:
+    prot = sp["protokoll"]
+    lines = ["", "## Protokoll (CENT 2015)", ""]
+    for key, label in (("periodeffekt", "Periodeffekt"), ("overforing", "Överföring"),
+                       ("stoppregel", "Stoppregel")):
+        if key in prot:
+            lines.append(f"- **{label}:** {prot[key]}")
+    changes = prot["andringslogg"]
+    lines.append("- **Ändringar efter låsning:** " + ("inga" if not changes else "; ".join(map(str, changes))))
+    return lines
 
 
 # --- CLI --------------------------------------------------------------------------------------

@@ -23,3 +23,14 @@ analys:
   metod: randomiseringstest
   niva: 0.95
   minsta_relevanta_effekt: -1.0   # A minus B; minus = A förväntas lägre
+
+protokoll:
+  periodeffekt: Parade perioder om två dagar intill varandra; långsam drift (säsong, sensorålder) påverkar båda villkoren i ett par lika.
+  overforing: Första dagen i varje period räknas inte (tvätt); skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Avbryts vid upprepad hypoglykemi nivå 2 under promenad eller sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Morgonen kommer före kvällens promenad samma dag och kan inte påverkas av den.

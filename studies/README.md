@@ -48,7 +48,20 @@ analys:
   metod: randomiseringstest            # n1 | blockbootstrap (observation, + blocklangd: 7)
   niva: 0.95
   minsta_relevanta_effekt: -1.0        # A minus B, i utfallets enhet; tecknet = förväntad riktning
+
+protokoll:                             # CENT 2015; kontrolleras av validera
+  periodeffekt: …                      # hur tidstrender hanteras (8a)
+  overforing: …                        # n1: hur eftereffekter hanteras (3a, 12c)
+  stoppregel: …                        # n1: när försöket avbryts i förtid (7b)
+  andringslogg: []                     # ändringar efter låsning; en ändring av filen bryter låset
+
+negativ_kontroll:                      # ett utfall exponeringen inte kan påverka (Lipsitch 2010)
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: …                        # varför
 ```
+
+**Den negativa kontrollen** analyseras på exakt samma sätt som huvudutfallet och redovisas i slutrapporten. Visar den en effekt skiljer något annat än exponeringen grupperna åt, och huvudresultatet ska läsas med det i åtanke.
 
 ## Exempel: träning och natten efter (observation)
 
