@@ -102,8 +102,7 @@ def interactive_login(token_dir: Path) -> None:
     password = getpass.getpass("Lösenord: ")
     garmin = Garmin(email=email, password=password, prompt_mfa=lambda: input("Kod från Garmin (sms/mejl): ").strip())
     token_dir.mkdir(parents=True, exist_ok=True)
-    garmin.login(str(token_dir))
-    garmin.garth.dump(str(token_dir))
+    garmin.login(str(token_dir))  # saves the token to token_dir itself
     name = garmin.get_full_name() if hasattr(garmin, "get_full_name") else ""
     print(f"Inloggad{f' som {name}' if name else ''}. Nyckeln ligger i {token_dir}.")
 
