@@ -1,31 +1,31 @@
 {
   "data_fingerprint": "5977c5055b6cd3aa157da2460d280c924b65dda015f3adc8ebdf0ec2a77c63c4",
   "primary": {
-    "estimate": -0.22962962962962954,
-    "ci_low": -1.393981481482483,
-    "ci_high": 0.9018518518528528,
-    "p_value": 0.666015625,
+    "estimate": 0.3134259259259274,
+    "ci_low": -0.8281746031754592,
+    "ci_high": 1.44777777777898,
+    "p_value": 0.548828125,
     "level": 0.95,
     "n_pairs": 12,
     "n_pairs_dropped": 0,
     "exact": true,
     "min_attainable_p": 0.00048828125,
-    "estimate_ab_pairs": -0.9861111111111098,
-    "estimate_ba_pairs": 0.14861111111111058,
+    "estimate_ab_pairs": -0.13722222222221953,
+    "estimate_ba_pairs": 0.635317460317461,
     "method": "paired randomisation test, CI by test inversion"
   },
   "negative_control": {
-    "estimate": -0.2261574074074074,
-    "ci_low": -1.2951388888903899,
-    "ci_high": 0.8583333333363351,
-    "p_value": 0.6484375,
+    "estimate": -0.004398148148148391,
+    "ci_low": -1.1083333333345347,
+    "ci_high": 1.0796296296316303,
+    "p_value": 0.9921875,
     "level": 0.95,
     "n_pairs": 12,
     "n_pairs_dropped": 0,
     "exact": true,
     "min_attainable_p": 0.00048828125,
-    "estimate_ab_pairs": -1.7291666666666683,
-    "estimate_ba_pairs": 0.5253472222222231,
+    "estimate_ab_pairs": -1.117222222222224,
+    "estimate_ba_pairs": 0.7904761904761912,
     "method": "paired randomisation test, CI by test inversion"
   }
 }

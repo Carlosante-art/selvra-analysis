@@ -1,8 +1,8 @@
 {
   "study": "000-exempel-promenad",
-  "locked_at": "2026-10-27T00:24:59+00:00",
+  "locked_at": "2026-10-27T00:41:57+00:00",
   "spec_sha256": "ea1c4f96a7c02a316d4f3820a4b0b327c0579fa43b03b0a4a21940af7ce8bca0",
-  "pipeline_commit": "b884323aaab64f3ea6abb279d5e2ca92e1bc3691",
-  "schedule_sha256": "faef6f88675b977533b0e4ceb7240a8483890d0f37ae3ee07d0871ab88baa356",
+  "pipeline_commit": "198cb996f950e957119d95fdf325aed13d313d83",
+  "schedule_sha256": "4615a9dc96bedce83a766c4654b3f81fb90d7d7d37894ac0595b2847ae304778",
   "schedule_end": "2025-05-24"
 }
