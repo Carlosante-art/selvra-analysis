@@ -47,6 +47,8 @@ EVENT_COLUMNS = {
     "alkohol": "had_alcohol", "traning": "had_training", "sjukdom": "is_ill",
     "stress": "had_stress", "resa": "is_travelling", "menstruation": "is_menstruating",
     "medicinandring": "had_medication_change",
+    # Derived from Oura steps, never logged: null days (no ring data) fall out of both groups.
+    "hoga_steg": "high_steps",
 }
 REQUIRED_TEXT = ["id", "titel", "fraga", "tes", "motbevis"]
 PROTOCOL_HELP = {

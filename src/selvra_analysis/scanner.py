@@ -97,6 +97,7 @@ def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
         "had_alcohol": "alkohol",
         "is_travelling": "resa",
         "had_medication_change": "medicinandring",
+        "high_steps": "höga steg (≥10 000)",
     }
     patterns = []
     baseline_tir = valid["tir_pct"].mean()

@@ -89,7 +89,10 @@ make tolka studie=studies/NNN/           # verdict → plain language + next ste
 make sammanfattning                      # all studies → one synthesis *
 make minne                               # what Dreamer has learned so far
 make loop                                # fetch → scan → interpret → synthesise *
+make schemalagg                          # cron: run the loop every morning at 07:00
 ```
+
+With Oura connected, context arrives without logging: sleep and steps load on every `make live`, and the exposure `hoga_steg` (a day reaching `high_steps_threshold`, default 10 000 steps) is derived from the data — days without ring data fall out of both study groups instead of counting as unexposed.
 
 The scanner proposes questions without revealing effect sizes — measuring the effect is the study's job, and seeing it first would turn a confirmatory analysis into an exploratory one. Its questions land in [`studies/minne.yml`](studies/minne.yml), Dreamer's persistent memory: every study's question, verdict and lesson, plus open hypotheses. Dreamer reads the memory before designing, so it builds on what is already known instead of repeating it. Dreamer proposes; locking and running remain manual decisions.
 

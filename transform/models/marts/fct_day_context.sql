@@ -63,7 +63,13 @@ select
     sl.deep_sleep_seconds,
     sl.rem_sleep_seconds,
     sl.sleep_efficiency_pct,
-    sl.steps
+    sl.steps,
+    -- Exposure derived from steps: true/false only when Oura data exists for the day,
+    -- null otherwise, so days without data fall out of both study groups.
+    case
+        when sl.steps is not null
+            then sl.steps >= {{ var('high_steps_threshold', 10000) }}
+    end as high_steps
 from days as d
 left join events as e
     on d.reading_date between e.start_date and e.end_date

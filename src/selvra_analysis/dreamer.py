@@ -69,7 +69,8 @@ design:
 
   # För observation:
   exponering:
-    handelse: HÄNDELSETYP  # en av: alkohol, medicinandring, menstruation, resa, sensorbyte, sjukdom, stress, traning
+    handelse: HÄNDELSETYP  # en av: alkohol, hoga_steg, medicinandring, menstruation, resa, sjukdom, stress, traning
+                           # hoga_steg härleds ur Oura-steg (≥10 000), kräver ingen loggning
     dagar_efter: 0         # heltal ≥ 0; 0 = samma dag, 1 = dagen efter
   period: [FRÅN, TILL]     # ISO-datum inom tillgängligt datumspann
   retrospektiv: true/false # true om datan fanns när studien skrevs

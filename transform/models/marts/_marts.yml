@@ -540,6 +540,17 @@ models:
       iglu_function: null
       does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
       epistemics: derived
+  - name: high_steps
+    description: The day reached the step threshold (var high_steps_threshold, default 10 000). Null when there
+      is no Oura data for the day, so such days fall out of both study groups.
+    data_type: boolean
+    meta:
+      construct: a day with at least the threshold number of steps
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false/null
+      iglu_function: null
+      does_not_measure: training; a gym session with few steps is false, a long stroll is true
+      epistemics: derived
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -1043,4 +1054,15 @@ models:
       valid_range: 0-100000
       iglu_function: null
       does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
+      epistemics: derived
+  - name: high_steps
+    description: The day reached the step threshold (var high_steps_threshold, default 10 000). Null when there
+      is no Oura data for the day, so such days fall out of both study groups.
+    data_type: boolean
+    meta:
+      construct: a day with at least the threshold number of steps
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false/null
+      iglu_function: null
+      does_not_measure: training; a gym session with few steps is false, a long stroll is true
       epistemics: derived
