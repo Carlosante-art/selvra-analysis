@@ -1,0 +1,20 @@
+id: 001-traning-natten-efter
+titel: Träning och natten efter (observation)
+fraga: Är medelglukos 00:00–06:00 natten efter träning lägre än nätter utan träning?
+tes: Träning sänker medelglukos natten efter med minst 0,5 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 0,5 mmol/L (eller ingen).
+
+design:
+  typ: observation
+  exponering: {handelse: traning, dagar_efter: 1}
+  period: [2026-10-01, 2026-10-27]
+  retrospektiv: true
+
+utfall:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  minsta_relevanta_effekt: -0.5
