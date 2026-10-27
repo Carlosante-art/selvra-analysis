@@ -1,0 +1,45 @@
+id: h01-promenad-tis-fre
+titel: Lång förmiddagspromenad på lediga dagar och glukos under eftermiddagen
+fraga: Sänker en promenad på 75 minuter kl 10:00 medelglukos 12:00–16:00 jämfört med en stillsam förmiddag?
+tes: Promenaden sänker medelglukos 12:00–16:00 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 75 minuter i jämn takt, start 10:00 ± 15 min, efter frukost 08:00
+  B: Stillsam förmiddag hemma, ingen promenad, högst korta förflyttningar inomhus
+  start: 2025-07-08
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [tisdag, fredag]}
+  dagar_motivering: Tisdagar och fredagar är mina lediga dagar, så då kan jag både ta en lång promenad och hålla mig stilla hemma. Tisdag och fredag ligger minst tre dygn isär, så promenadens eftereffekt hinner klinga av.
+  genomforbarhet: A har sällan förekommit av sig själv på lediga dagar. Promenaden på 75 minuter ger ungefär 7 000 steg utöver en vanlig ledig förmiddag, vilket räcker till 9 000.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 9000}
+    B: {max: 5000}
+  verkan:
+    typ: traning
+    borjar: "10:00"
+
+utfall:
+  matt: medel
+  fonster: ["12:00", "16:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Varje par är två närliggande studiedagar (tisdag och fredag samma vecka); långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Minst tre dygn mellan studiedagar; skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Promenaden startar bara om glukos är över 5,0 mmol/L. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, svår hypoglykemi, ketoner 1,5 eller högre eller sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["06:00", "09:00"]
+  motivering: Tidig morgon kommer före förmiddagens promenad samma dag, och föregående studiedag ligger minst tre dygn bakåt.

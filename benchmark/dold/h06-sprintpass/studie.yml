@@ -1,0 +1,45 @@
+id: h06-sprintpass
+titel: Sprintpass och glukos timmarna efter
+fraga: Höjer ett kort sprintpass kl 17:00 medelglukos 17:30–19:30 jämfört med vila?
+tes: Sprintpasset höjer medelglukos 17:30–19:30 med minst 0,8 mmol/L.
+motbevis: Hela intervallet visar en höjning mindre än 0,8 mmol/L (eller ingen, eller en sänkning).
+
+design:
+  typ: n1
+  A: Sprintpass 25 minuter, start 17:00 ± 15 min — 10 min uppvärmningsjogg, 8 × 15 s maximal sprint med 90 s gångvila, 5 min nedvarvning. Middag 19:45.
+  B: Ingen träning; vila hemma 17:00–19:30. Middag 19:45.
+  start: 2025-07-08
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [tisdag, fredag]}
+  dagar_motivering: Tisdag och fredag har jag tillgång till löparbanan. Studiedagarna ligger minst tre dygn isär, så den sena ökningen av insulinkänslighet efter passet hinner klinga av före nästa studiedag.
+  genomforbarhet: Jag går normalt omkring 6 000 steg om dagen. Sprintpasset med uppvärmning och gångvila ger ungefär 5 000 steg till, så A:s tröskel nås med passet och nästan aldrig utan det.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 9500}
+    B: {max: 7500}
+  verkan:
+    typ: traning
+    borjar: "17:00"
+
+utfall:
+  matt: medel
+  fonster: ["17:30", "19:30"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: 0.8
+
+protokoll:
+  periodeffekt: Varje par är tisdag och fredag samma vecka; långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Minst tre dygn mellan studiedagar; skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Passet startar bara om glukos är 5,0–15 mmol/L och utan ketoner 1,5 eller högre, och inte efter svår hypoglykemi senaste dygnet. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, nattlig hypoglykemi som kräver behandling, svår hypoglykemi eller sjukdom; avbrott redovisas. CGM-larmen är på hela studien.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Morgonen kommer före kvällens pass samma dag, och föregående studiedag ligger minst tre dygn bakåt.

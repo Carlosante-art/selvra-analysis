@@ -1,0 +1,45 @@
+id: h03-kvallspromenad-morgon
+titel: Kvällspromenad och morgonglukos
+fraga: Sänker en promenad på 45 minuter efter middagen medelglukos på morgonen 07:00–10:00 jämfört med en stillsam kväll?
+tes: Kvällspromenaden sänker medelglukos 07:00–10:00 med minst 0,8 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 0,8 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 45 minuter i rask takt, start 18:30 ± 15 min, efter middag 18:00
+  B: Ingen promenad; stillsam kväll hemma efter middag 18:00
+  start: 2025-07-07
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [mandag, torsdag]}
+  dagar_motivering: Måndag och torsdag är jag alltid hemma på kvällen, och de ligger minst tre dygn isär så att promenadens eftereffekt inte når nästa studiedag.
+  genomforbarhet: Jag går normalt omkring 5 500 steg om dagen. Promenaden på 45 minuter ger ungefär 5 000 steg till, så A:s tröskel nås med promenaden och sällan utan den.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 9000}
+    B: {max: 6500}
+  verkan:
+    typ: traning
+    borjar: "18:30"
+
+utfall:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -0.8
+
+protokoll:
+  periodeffekt: Varje par är måndag och torsdag samma vecka; långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Minst tre dygn mellan studiedagar; skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Promenaden startar bara om glukos är över 5,0 mmol/L. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, nattlig hypoglykemi som kräver behandling, svår hypoglykemi eller sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["13:00", "16:00"]
+  motivering: Eftermiddagen kommer före kvällens promenad samma dag och kan inte påverkas av den.

@@ -1,0 +1,16 @@
+forvantat: STOPP
+skal: [overforing]
+kategori: reparerbart
+motivering: >-
+  Datumlistan består av par av intilliggande dagar (måndag–tisdag, torsdag–fredag) med
+  minsta_avstand 1, och varje par lottas A/B. När A (jogging 17:00) faller på måndagen ligger
+  tisdagens utfallsfönster 19:00–23:00 bara omkring 26 timmar efter passet, och tisdagens negativa
+  kontroll 07:00–10:00 omkring 14 timmar efter. Efter aerob träning är insulinkänsligheten förhöjd
+  i upp till 24–48 h och hypoglykemirisken i minst 24 h (Riddell 2017 i t1d_designfaktorer §1);
+  "Day-alternating designs (exercise Monday, control Tuesday) are contaminated by carryover" och
+  "use ≥48 h between an exercise exposure and any control-day outcome window". Protokollets påstående
+  att effekten är över samma kväll stämmer inte med forskningen. Överföringen späder ut kontrasten
+  och kan smitta den negativa kontrollen (designgranskning_n1 §4 C2/C4).
+reparation: >-
+  Höj minsta_avstand till minst 2 (helst 3) och välj datum därefter, t.ex. måndag och torsdag,
+  så att varje analyserad dag ligger minst 48 h efter föregående studiedags pass.

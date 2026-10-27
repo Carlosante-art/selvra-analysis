@@ -1,0 +1,14 @@
+forvantat: STOPP
+skal: [underlag, styrka]
+kategori: reparerbart
+motivering: >-
+  Studiefilen är korrekt, men personens CGM-data är giltig bara omkring 45 % av dagarna. Ett par
+  kräver två giltiga studiedagar, så sannolikheten för ett komplett par är omkring 0,2 och av 8 par
+  väntas bara 1–2 kompletta. Med k kompletta par är minsta möjliga p 1/2^k (två par ger 0,25), så
+  testet kan inte nå nivån 0,95 ens vid en perfekt effekt. Forskningen: "How many valid pairs will
+  you get, after expected losses (illness, sensor gaps, infeasible days)? Does the minimum
+  achievable p beat α?" (designgranskning_n1 §6 S1; kausal_validitet Q2: minst 5–6 par behövs) och
+  ett förregistrerat täckningskrav (§5 O4) som här inte kan uppfyllas.
+reparation: >-
+  Åtgärda sensorbortfallet först (bärande, byten, uppkoppling) och visa en period med hög täckning,
+  eller öka antalet par så att väntat antal kompletta par räcker med marginal.

@@ -1,0 +1,48 @@
+id: h05-jogging-datumlista
+titel: Joggingpass och kvällsglukos
+fraga: Sänker ett joggingpass på 60 minuter kl 17:00 medelglukos 19:00–23:00 jämfört med en vilodag?
+tes: Joggingpasset sänker medelglukos 19:00–23:00 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Jogging 60 minuter i måttlig takt, start 17:00 ± 15 min, middag 18:30
+  B: Ingen träning; vila hemma 17:00–23:00, middag 18:30
+  start: 2025-07-07
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar:
+    datum: [2025-07-07, 2025-07-08, 2025-07-10, 2025-07-11, 2025-07-14, 2025-07-15, 2025-07-17, 2025-07-18,
+            2025-07-21, 2025-07-22, 2025-07-24, 2025-07-25, 2025-07-28, 2025-07-29, 2025-07-31, 2025-08-01]
+    minsta_avstand: 1
+  dagar_motivering: Måndag–tisdag och torsdag–fredag är jag hemma från 16:30 och kan jogga eller vila efter eget val enligt lottningen. Passets glukossänkning är över samma kväll, så en dag mellan studiedagarna räcker.
+  genomforbarhet: Jag går normalt omkring 6 000 steg om dagen. Joggingpasset ger ungefär 8 000 steg till, så A:s tröskel nås med passet och nästan aldrig utan det.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 12000}
+    B: {max: 8000}
+  verkan:
+    typ: traning
+    borjar: "17:00"
+
+utfall:
+  matt: medel
+  fonster: ["19:00", "23:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Varje par är två närliggande studiedagar; långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Varje studiedag är en egen period; passets effekt på glukos är över samma kväll. Skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Passet startar bara om glukos är 5,0–15 mmol/L och utan ketoner 1,5 eller högre. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, nattlig hypoglykemi som kräver behandling, svår hypoglykemi eller sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Morgonen kommer före dagens joggingpass och kan inte påverkas av det.

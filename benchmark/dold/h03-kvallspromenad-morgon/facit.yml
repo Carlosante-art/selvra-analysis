@@ -1,0 +1,15 @@
+forvantat: STOPP
+skal: [tidsordning]
+kategori: kritiskt
+motivering: >-
+  Utfallsfönstret 07:00–10:00 ligger på samma studiedag som promenaden (verkan börjar 18:30), alltså
+  före exponeringen. Med periodlangd 1, tvätt 0 och minst tre dygn mellan studiedagar mäts inte
+  "morgonen efter" (den dagen analyseras inte), utan morgonen innan. Testet jämför då morgnar som
+  ingen promenad kan ha påverkat. Forskningen kräver att exponeringen föregår utfallsfönstret:
+  "Exposure must precede the outcome window ... Measuring before the intervention can act"
+  (designgranskning_n1 §3 I3) och listar "the outcome window precedes the intervention" bland
+  hårda stoppvillkor (§8). Den negativa kontrollen ligger rätt; felet sitter i huvudutfallet.
+reparation: >-
+  Mät ett fönster efter promenaden samma dag (t.ex. 19:00–23:00), eller gör perioden två dagar där
+  villkoret hålls båda kvällarna och morgonen dag 2 analyseras, med en negativ kontroll som verkligen
+  ligger före första exponeringen.

@@ -1,0 +1,45 @@
+id: h08-promenad-oura-garmin
+titel: Kvällspromenad och kvällsglukos
+fraga: Sänker en promenad på 40 minuter efter middagen medelglukos 19:00–22:00 jämfört med att sitta kvar?
+tes: Promenaden sänker medelglukos 19:00–22:00 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 40 minuter i rask takt, start 18:30 ± 15 min, efter middag 18:00
+  B: Ingen promenad; sitter kvar hemma efter middag 18:00 till 22:00
+  start: 2025-07-07
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [mandag, torsdag]}
+  dagar_motivering: Måndag och torsdag är jag alltid hemma på kvällen. De ligger minst tre dygn isär, så promenadens eftereffekt hinner klinga av före nästa studiedag.
+  genomforbarhet: Jag går normalt omkring 6 000 steg om dagen. Promenaden på 40 minuter ger ungefär 4 500 steg till, så A:s tröskel nås med promenaden och sällan utan den.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 9000}
+    B: {max: 7000}
+  verkan:
+    typ: traning
+    borjar: "18:30"
+
+utfall:
+  matt: medel
+  fonster: ["19:00", "22:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Varje par är måndag och torsdag samma vecka; långsam drift (säsong, sensorålder) påverkar båda villkoren i ett par lika.
+  overforing: Minst tre dygn mellan studiedagar; skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Promenaden startar bara om glukos är över 5,0 mmol/L. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, svår hypoglykemi, ketoner 1,5 eller högre eller sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Morgonen kommer före kvällens promenad samma dag, och föregående studiedag ligger minst tre dygn bakåt.

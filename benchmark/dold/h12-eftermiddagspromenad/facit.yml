@@ -1,0 +1,14 @@
+forvantat: STOPP
+skal: [data, positivitet]
+kategori: kritiskt
+motivering: >-
+  Studiefilen ser komplett ut, men personen har ingen wearable (scenariot saknar stegdata), så
+  följsamhetskolumnen steps finns inte i datan. Varken historisk positivitet (förekommer A och B?)
+  eller följsamheten under studien (gjordes villkoret?) kan verifieras; "jag går normalt 5 000
+  steg" kommer ur minnet. Forskningen: frekvensen av A och B ska hämtas "from data, not memory"
+  (designgranskning_n1 §2 F1), villkoren ska vara "measurable from a device" med angiven datakälla
+  (§3 I1; SCRIBE 15, 17: utrustning och procedurell fidelitet), och "no objective adherence measure"
+  står bland hårda stoppvillkor (§8).
+reparation: >-
+  Skaffa och bär en stegmätare under en baslinjeperiod innan studien låses, eller välj en
+  följsamhetskälla som faktiskt finns i datan.

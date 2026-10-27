@@ -1,0 +1,15 @@
+forvantat: STOPP
+skal: [positivitet, dagtyp]
+kategori: kritiskt
+motivering: >-
+  Personen arbetar enligt ett rullande schema (14-dagarscykel). Tisdagar och fredagar är lediga
+  varannan vecka och arbetsdagar varannan vecka (t.ex. ledig 2025-07-11 och 2025-07-15, arbete
+  2025-07-08 och 2025-07-18). På arbetsdagarna går personen omkring 11 000 steg, så B (högst
+  5 000 steg) är strukturellt omöjligt där, och en promenad kl 10:00 går inte heller att genomföra
+  på jobbet. Det är exakt stegexemplets positivitetsbrott (kausal_validitet Q1: "Positivity ...
+  structurally impossible on work days"; designgranskning_n1 §2 F1/F2: positivitet per stratum ska
+  hämtas ur data, inte ur minnet). Dagar_motivering påstår att dagarna är lediga, men schemat i
+  datan säger något annat; begränsningen till veckodagar skapar en blandning av dagstyper.
+reparation: >-
+  Begränsa till faktiska lediga dagar ur schemat med en datumlista (design.dagar.datum) och
+  minsta_avstand, eller definiera villkoren relativt dagstypens baslinje och para inom dagstyp.

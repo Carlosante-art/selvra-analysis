@@ -1,0 +1,48 @@
+id: h11-promenad-lediga-datum
+titel: Kort kvällspromenad på lediga dagar
+fraga: Sänker en promenad på 25 minuter efter middagen medelglukos 19:00–22:00 på lediga dagar jämfört med att sitta kvar?
+tes: Promenaden sänker medelglukos 19:00–22:00 med minst 0,8 mmol/L på lediga dagar.
+motbevis: Hela intervallet visar en sänkning mindre än 0,8 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 25 minuter i lugn takt, start 18:30 ± 15 min, efter middag 18:00
+  B: Ingen promenad; sitter kvar hemma efter middag 18:00 till 22:00
+  start: 2025-07-07
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar:
+    datum: [2025-07-07, 2025-07-11, 2025-07-15, 2025-07-17, 2025-07-20, 2025-07-25, 2025-07-29, 2025-07-31,
+            2025-08-03, 2025-08-08, 2025-08-12, 2025-08-14, 2025-08-17, 2025-08-22, 2025-08-26, 2025-08-28]
+    minsta_avstand: 2
+  dagar_motivering: Jag arbetar rullande schema. Datumen är lediga dagar ur schemat, så båda villkoren jämförs inom samma dagstyp; arbetsdagar slutar för sent för en promenad 18:30. En lugn promenad på 25 minuter har kort eftereffekt, och minst två dygn (48 h) mellan studiedagar räcker.
+  genomforbarhet: En ledig dag går jag omkring 6 000 steg. Promenaden ger ungefär 3 000 steg till, så A:s tröskel nås med promenaden och sällan utan den.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 8000}
+    B: {max: 6500}
+  verkan:
+    typ: traning
+    borjar: "18:30"
+
+utfall:
+  matt: medel
+  fonster: ["19:00", "22:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -0.8
+
+protokoll:
+  periodeffekt: Varje par är två närliggande lediga dagar i listan; långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Minst två dygn mellan studiedagar; skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Promenaden startar bara om glukos är över 5,0 mmol/L. Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) som kan knytas till A, svår hypoglykemi, ketoner 1,5 eller högre eller sjukdom. Ändras schemat så att ett datum blir arbetsdag stryks paret och ersätts från samma lottningsschema; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Morgonen kommer före kvällens promenad samma dag, och föregående studiedag ligger minst två dygn bakåt.

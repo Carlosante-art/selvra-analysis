@@ -1,0 +1,15 @@
+forvantat: STOPP
+skal: [styrka]
+kategori: kritiskt
+motivering: >-
+  Designen är i övrigt korrekt, men personens dag-till-dag-variation i kvällsglukos är stor
+  (sd omkring 2 mmol/L, så parskillnadens sd är omkring 2,8) medan den minsta relevanta effekten är
+  0,3 mmol/L. Med 8 par blir medelskillnadens standardfel omkring 1,0 mmol/L och styrkan att upptäcka
+  0,3 bara några procent; det skulle krävas hundratals par. Forskningen: "Given day-to-day SD of
+  the paired difference and the smallest relevant effect, how many pairs give ~80% power? Simulate
+  from the person's own historical CGM ... An underpowered null read as 'no effect'"
+  (designgranskning_n1 §6 S2, §5 O3) och T1DEXI-variationen som är omkring 2× medeleffekten
+  (t1d_designfaktorer §1). Minsta p (1/256) är inte problemet; styrkan är det.
+reparation: >-
+  Välj ett mindre brusigt mått eller fönster, standardisera middagen, eller höj den minsta relevanta
+  effekten till en nivå där antalet par räcker; annars gör om studien till en skattningsstudie.
