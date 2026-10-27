@@ -25,7 +25,7 @@ from datetime import date
 from pathlib import Path
 
 from selvra_analysis.dreamer import _load_dotenv, sammanfattning, tolka
-from selvra_analysis.scanner import _format, scan
+from selvra_analysis.scanner import _format, scan, spara_hypoteser
 
 DB_DEFAULT = Path("data/selvra.duckdb")
 STUDIES_DIR = Path("studies")
@@ -78,6 +78,10 @@ def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     lines.append("## Mönster i data\n")
     lines.append(_format(patterns))
     lines.append("")
+
+    nya = spara_hypoteser(patterns)
+    if nya:
+        lines.append(f"{nya} nya hypoteser sparade i Dreamer-minnet.\n")
 
     _load_dotenv()
     har_api = bool(os.environ.get("ANTHROPIC_API_KEY"))

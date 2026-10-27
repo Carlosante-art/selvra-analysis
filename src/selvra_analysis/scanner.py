@@ -19,9 +19,12 @@ import duckdb
 import numpy as np
 import pandas as pd
 
+from selvra_analysis.dreamer import lagg_till_hypoteser
+
 DB_DEFAULT = Path("data/selvra.duckdb")
 MIN_DAYS_FOR_BASELINE = 14
 MIN_EVENTS_FOR_CORRELATION = 3
+MIN_SLEEP_DAYS = 14
 
 
 @dataclass
@@ -185,6 +188,32 @@ def _trend(df: pd.DataFrame) -> list[Pattern]:
     )]
 
 
+def _somn(df: pd.DataFrame) -> list[Pattern]:
+    """Oura-sömn mot TIR. Bara om tillräckligt många nätter har data."""
+    if "sleep_score" not in df.columns:
+        return []
+    valid = df[df["is_valid_day"] & df["sleep_score"].notna()].copy()
+    if len(valid) < MIN_SLEEP_DAYS:
+        return []
+
+    r = valid["sleep_score"].corr(valid["tir_pct"])
+    if pd.isna(r) or abs(r) < 0.2:
+        return []
+
+    return [Pattern(
+        typ="korrelation",
+        beskrivning=(
+            f"Sömn: {len(valid)} nätter med Oura-data. Sömnkvalitet och TIR samvarierar. "
+            "Riktning och storlek kräver en studie för att avgöra."
+        ),
+        fragor=[
+            "Påverkar en natt med dålig sömn mitt TIR dagen efter?",
+            "Påverkar kort sömn (under 6 timmar) medelglukos nästa förmiddag?",
+        ],
+        vikt=3 if abs(r) > 0.4 else 2,
+    )]
+
+
 def scan(db_path: Path) -> list[Pattern]:
     df = _load(db_path)
     patterns: list[Pattern] = []
@@ -192,7 +221,14 @@ def scan(db_path: Path) -> list[Pattern]:
     patterns += _event_korrelationer(df)
     patterns += _kluster(df)
     patterns += _trend(df)
+    patterns += _somn(df)
     return sorted(patterns, key=lambda p: -p.vikt)
+
+
+def spara_hypoteser(patterns: list[Pattern]) -> int:
+    """Skriv skanningens studiefrågor till Dreamer-minnets öppna hypoteser."""
+    fragor = [f for p in patterns for f in p.fragor]
+    return lagg_till_hypoteser(fragor)
 
 
 def _format(patterns: list[Pattern]) -> str:
@@ -226,6 +262,10 @@ def main(argv: list[str] | None = None) -> None:
     out.parent.mkdir(exist_ok=True)
     out.write_text(_format(patterns) + "\n")
     print(f"\nSparad: {out}", file=sys.stderr)
+
+    nya = spara_hypoteser(patterns)
+    if nya:
+        print(f"{nya} nya hypoteser i Dreamer-minnet (make minne).", file=sys.stderr)
 
 
 if __name__ == "__main__":

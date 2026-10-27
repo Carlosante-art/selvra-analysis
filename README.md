@@ -75,6 +75,24 @@ uv run python -m selvra_analysis.study kor    studies/NNN/studie.yml   # the sin
 
 The final run refuses if the study file, the schedule or the pipeline changed after locking, if the study folder is not committed, if the study is still running, or if it has already been run. The verdict comes from a fixed rule set by one number written before the start. Format: [`studies/README.md`](studies/README.md).
 
+## The autonomous layer
+
+Around the study engine sits a loop that finds questions, designs studies and interprets results. The LLM steps (marked *) need `ANTHROPIC_API_KEY` in `.env`; everything else runs without it.
+
+```bash
+make log start=2026-10-24 typ=traning    # log one event
+make dagbok                              # morning review: yesterday's numbers, then questions
+make import-kalender fil=kalender.ics    # events from your calendar, keyword-matched
+make skanna                              # patterns in the data → study questions
+make dreamer fraga="..."                 # question → draft studie.yml *
+make tolka studie=studies/NNN/           # verdict → plain language + next step *
+make sammanfattning                      # all studies → one synthesis *
+make minne                               # what Dreamer has learned so far
+make loop                                # fetch → scan → interpret → synthesise *
+```
+
+The scanner proposes questions without revealing effect sizes — measuring the effect is the study's job, and seeing it first would turn a confirmatory analysis into an exploratory one. Its questions land in [`studies/minne.yml`](studies/minne.yml), Dreamer's persistent memory: every study's question, verdict and lesson, plus open hypotheses. Dreamer reads the memory before designing, so it builds on what is already known instead of repeating it. Dreamer proposes; locking and running remain manual decisions.
+
 ## Experiments: n-of-1
 
 Observational analyses show what follows what. To show what *causes* what for one person, the person runs an experiment: paired periods of intervention and comparison, with the order inside each pair drawn at random before the start ([`N1MALL.md`](N1MALL.md), [`n1.py`](src/selvra_analysis/n1.py)).

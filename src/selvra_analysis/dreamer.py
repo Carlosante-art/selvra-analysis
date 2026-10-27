@@ -45,6 +45,9 @@ Tillgängliga kolumner i marts.mart_analysis_days (för utfall.kolumn):
   Rensad (utan artefakter): mean_mmol_clean, tir_pct_clean, tbr_pct_clean
   Episoder: n_hypo_level1_events, n_hypo_level2_events, n_hypo_extended_events
             n_hyper_level1_events, n_hyper_level2_events
+  Sömn och aktivitet (Oura, null om OURA_TOKEN saknas): sleep_score, readiness_score,
+            hrv_avg_ms, hr_lowest_bpm, total_sleep_seconds, deep_sleep_seconds,
+            rem_sleep_seconds, sleep_efficiency_pct, steps
   Tidsfönster (utfall.matt + utfall.fonster): medel, topp, tid_over_10"""
 
 SYSTEM_PROMPT_TEMPLATE = """\
@@ -226,7 +229,24 @@ def _add_study_to_minne(studies_dir: Path, study_id: str, fraga: str) -> None:
             "nasta_steg": "",
         })
         data["studier"] = studier
+        # Frågan är inte längre en öppen hypotes när den blivit en studie.
+        data["oppna_hypoteser"] = [h for h in (data.get("oppna_hypoteser") or []) if h != fraga]
         path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False))
+
+
+def lagg_till_hypoteser(fragor: list[str], studies_dir: Path = STUDIES_DIR) -> int:
+    """Lägg frågor till minnets öppna hypoteser. Returnerar antal nya."""
+    _init_minne(studies_dir)
+    path = _minne_path(studies_dir)
+    data = yaml.safe_load(path.read_text()) or {}
+    hypoteser = data.get("oppna_hypoteser") or []
+    studerade = {s.get("fraga", "") for s in data.get("studier", [])}
+
+    nya = [f for f in fragor if f not in hypoteser and f not in studerade]
+    if nya:
+        data["oppna_hypoteser"] = hypoteser + nya
+        path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False))
+    return len(nya)
 
 
 def _update_minne(
