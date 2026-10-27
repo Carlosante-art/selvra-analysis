@@ -136,6 +136,29 @@ def _validate_n1(design: dict, analysis: dict, e: list[str]) -> None:
     _need(isinstance(wash, int) and isinstance(days, int) and 0 <= wash < days, e,
           "design.tvatt_dagar: mellan 0 och periodlängden − 1")
     _need(analysis.get("metod") == "randomiseringstest", e, "analys.metod: randomiseringstest för n1")
+    if "dagar" in design:
+        _validate_eligible_days(design, e)
+
+
+def _validate_eligible_days(design: dict, e: list[str]) -> None:
+    """Restricted randomisation: only days where both A and B are possible and comparable."""
+    days = design["dagar"] or {}
+    weekdays, dates = days.get("veckodagar"), days.get("datum")
+    _need((weekdays is None) != (dates is None), e,
+          "design.dagar: ange antingen veckodagar (t.ex. [lordag, sondag]) eller datum (lista), inte båda")
+    if weekdays is not None:
+        _need(isinstance(weekdays, list) and weekdays and all(w in n1.WEEKDAYS for w in weekdays), e,
+              f"design.dagar.veckodagar: en lista av {list(n1.WEEKDAYS)}")
+    if dates is not None:
+        _need(isinstance(dates, list) and all(isinstance(x, date) for x in dates), e,
+              "design.dagar.datum: en lista av datum ÅÅÅÅ-MM-DD")
+        if isinstance(dates, list) and isinstance(design.get("par"), int):
+            _need(len(dates) >= 2 * design["par"], e,
+                  f"design.dagar.datum: {len(dates)} datum räcker inte till {design['par']} par")
+    _need(design.get("periodlangd_dagar") == 1 and design.get("tvatt_dagar", 0) == 0, e,
+          "design.dagar kräver periodlangd_dagar: 1 och tvatt_dagar: 0 (varje period är en tillåten dag)")
+    _need(isinstance(design.get("dagar_motivering"), str) and design["dagar_motivering"].strip() != "", e,
+          "design.dagar_motivering: varför bara dessa dagar (vilket villkor är omöjligt eller förväxlat andra dagar)")
 
 
 def _validate_observation(design: dict, analysis: dict, e: list[str]) -> None:
@@ -205,7 +228,11 @@ def lock(study: Study, seed: int | None = None) -> dict:
     if study.kind == "n1":
         d = study.design
         seed = seed if seed is not None else secrets.randbits(32)
-        sched = n1.make_schedule(d["start"], d["par"], d["periodlangd_dagar"], d.get("tvatt_dagar", 0), seed)
+        days = None
+        if "dagar" in d:
+            days = n1.eligible_dates(d["start"], 2 * d["par"], d["dagar"].get("veckodagar"), d["dagar"].get("datum"))
+        sched = n1.make_schedule(d["start"], d["par"], d["periodlangd_dagar"], d.get("tvatt_dagar", 0), seed,
+                                 days=days)
         record["schedule_sha256"] = n1.write_schedule(sched, study.schedule_path, seed)
         record["schedule_end"] = str(sched["date"].max())
     study.lock_path.write_text(json.dumps(record, indent=2) + "\n")

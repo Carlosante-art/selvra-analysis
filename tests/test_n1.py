@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from selvra_analysis.n1 import (
+    eligible_dates,
     make_schedule,
     period_outcomes,
     period_sd,
@@ -96,3 +97,14 @@ def test_period_sd_uses_complete_blocks() -> None:
     })
     # blocks of 2: means 2, 6; the third block has an invalid day
     assert period_sd(daily, "x", 2) == pytest.approx(np.std([2.0, 6.0], ddof=1))
+
+
+def test_eligible_days_restrict_randomisation_to_days_off() -> None:
+    days = eligible_dates(date(2026, 11, 2), 8, weekdays=["lordag", "sondag"])
+    assert [d.weekday() for d in days] == [5, 6] * 4
+    s = make_schedule(date(2026, 11, 2), 4, 1, 0, seed=3, days=days)
+    assert set(s["date"]) == set(days)
+    per_pair = s.groupby("pair")["condition"].apply(sorted)
+    assert all(c == ["A", "B"] for c in per_pair)
+    with pytest.raises(ValueError, match="one-day periods"):
+        make_schedule(date(2026, 11, 2), 4, 2, 1, seed=3, days=days)

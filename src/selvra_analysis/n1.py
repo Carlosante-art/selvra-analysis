@@ -39,11 +39,52 @@ EXACT_MAX_PAIRS = 16
 
 # --- Schedule ---------------------------------------------------------------------------------
 
-def make_schedule(start: date, n_pairs: int, period_days: int, washout_days: int, seed: int) -> pd.DataFrame:
-    """One row per day: pair, period, condition (A/B), and whether the day is washout."""
+WEEKDAYS = {"mandag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lordag": 5, "sondag": 6}
+
+
+def eligible_dates(start: date, n_needed: int, weekdays: list[str] | None = None,
+                   dates: list[date] | None = None) -> list[date]:
+    """The first n_needed days from start on which both conditions are possible.
+
+    Restricted randomisation (Edgington & Onghena): when a condition is impossible or
+    confounded on some days (B = few steps on a work day), randomise only among days
+    where both are possible. Pairs are formed from consecutive eligible days, so the
+    paired randomisation test stays valid; the result applies to those days only.
+    """
+    if dates is not None:
+        pool = sorted(d for d in dates if d >= start)
+        if len(pool) < n_needed:
+            raise ValueError(f"need {n_needed} eligible dates from {start}, got {len(pool)}")
+        return pool[:n_needed]
+    wanted = {WEEKDAYS[w] for w in weekdays or []}
+    out, day = [], start
+    while len(out) < n_needed:
+        if day.weekday() in wanted:
+            out.append(day)
+        day += timedelta(days=1)
+    return out
+
+
+def make_schedule(start: date, n_pairs: int, period_days: int, washout_days: int, seed: int,
+                  days: list[date] | None = None) -> pd.DataFrame:
+    """One row per day: pair, period, condition (A/B), and whether the day is washout.
+
+    With `days` (eligible dates, see eligible_dates) each period is one eligible day and each
+    pair two consecutive eligible days; otherwise periods run on consecutive calendar days.
+    """
     if not 0 <= washout_days < period_days:
         raise ValueError("washout_days must be at least 0 and less than period_days")
     rng = np.random.default_rng(seed)
+    if days is not None:
+        if period_days != 1 or washout_days != 0:
+            raise ValueError("eligible-day schedules use one-day periods without washout")
+        rows = []
+        for pair in range(1, n_pairs + 1):
+            order = ("A", "B") if rng.random() < 0.5 else ("B", "A")
+            for k, condition in enumerate(order):
+                rows.append({"date": days[2 * (pair - 1) + k], "pair": pair, "period": 2 * (pair - 1) + k + 1,
+                             "condition": condition, "order": "".join(order), "washout": False})
+        return pd.DataFrame(rows)
     rows = []
     day = start
     for pair in range(1, n_pairs + 1):
