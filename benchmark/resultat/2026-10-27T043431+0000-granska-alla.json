@@ -1,0 +1,1072 @@
+{
+  "arm": "granska",
+  "modell": null,
+  "uppsattning": "alla",
+  "kord": "2026-10-27T04:34:31+00:00",
+  "manifest_sha256": "27668a745a4093c309d73ee7ad913481b0cf9a2084a5f630f3efd217ced9c462",
+  "sammanfattning": {
+    "fall": 40,
+    "stoppfrekvens": "23/23",
+    "stopp_av_ratt_skal": "23/23",
+    "godkannandefrekvens": "14/17",
+    "godkanda_med_ratt_flaggor": "14/17",
+    "falska_godkannanden": [],
+    "falska_stopp": [
+      "dold2/d05-trasig-sensorvecka",
+      "dold2/d09-maltid-kvall-giltig",
+      "dold2/d12-treperiodsdagar-giltig"
+    ],
+    "ratt_dom_fel_skal": []
+  },
+  "fall": [
+    {
+      "fall": "dold/h01-promenad-tis-fre",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "positivitet",
+          "dagtyp"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Personen arbetar enligt ett rullande schema (14-dagarscykel). Tisdagar och fredagar är lediga varannan vecka och arbetsdagar varannan vecka (t.ex. ledig 2025-07-11 och 2025-07-15, arbete 2025-07-08 och 2025-07-18). På arbetsdagarna går personen omkring 11 000 steg, så B (högst 5 000 steg) är strukturellt omöjligt där, och en promenad kl 10:00 går inte heller att genomföra på jobbet. Det är exakt stegexemplets positivitetsbrott (kausal_validitet Q1: \"Positivity ... structurally impossible on work days\"; designgranskning_n1 §2 F1/F2: positivitet per stratum ska hämtas ur data, inte ur minnet). Dagar_motivering påstår att dagarna är lediga, men schemat i datan säger något annat; begränsningen till veckodagar skapar en blandning av dagstyper.",
+        "reparation": "Begränsa till faktiska lediga dagar ur schemat med en datumlista (design.dagar.datum) och minsta_avstand, eller definiera villkoren relativt dagstypens baslinje och para inom dagstyp."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "positivitet"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: tillåtna veckodagar med arbetspass: A är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör B; säkerställ att B går att hålla och är säkert",
+          "STOPP positivitet: B inträffade inte en enda gång på tillåtna veckodagar med arbetspass under 56 dagar. B är den vanliga dagen och går inte att skapa med en motivering: begränsa design.dagar till dagar där den förekommer.",
+          "VARNING positivitet: A inträffade inte en enda gång på tillåtna veckodagar utan arbetspass under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: tillåtna veckodagar utan arbetspass: B är det vanliga (7 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h02-promenad-arbetsdagar",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Ser ut som stegexemplet men är dess reparation. Alla studiedagar är arbetsdagar (vardagar-schema, måndag och torsdag), så båda villkoren ligger i samma stratum. B (högst 12 000) förekommer naturligt på de flesta arbetsdagar, och A (minst 14 000) definieras relativt arbetsdagens baslinje och nås genom en konkret promenad som genomforbarhet beskriver. Det är precis den lösning forskningen anger: \"Redefine levels so both are feasible in each stratum (e.g., A = +4,000 steps over that day type's personal baseline, B = baseline), or restrict to one stratum\" (designgranskning_n1 §2 F1; kausal_validitet Q2 \"Stratified alternative\"). Minst tre dygn mellan studiedagar uppfyller ≥48 h (t1d_designfaktorer §1). Morgonfönstret ligger före promenaden. Variationen (sd 0,5) mot effekten 1,0 med 8 par ger god styrka och minsta p 1/256."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: A inträffade inte en enda gång på tillåtna veckodagar med arbetspass under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: tillåtna veckodagar med arbetspass: B är det vanliga (14 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h03-kvallspromenad-morgon",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "tidsordning"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Utfallsfönstret 07:00–10:00 ligger på samma studiedag som promenaden (verkan börjar 18:30), alltså före exponeringen. Med periodlangd 1, tvätt 0 och minst tre dygn mellan studiedagar mäts inte \"morgonen efter\" (den dagen analyseras inte), utan morgonen innan. Testet jämför då morgnar som ingen promenad kan ha påverkat. Forskningen kräver att exponeringen föregår utfallsfönstret: \"Exposure must precede the outcome window ... Measuring before the intervention can act\" (designgranskning_n1 §3 I3) och listar \"the outcome window precedes the intervention\" bland hårda stoppvillkor (§8). Den negativa kontrollen ligger rätt; felet sitter i huvudutfallet.",
+        "reparation": "Mät ett fönster efter promenaden samma dag (t.ex. 19:00–23:00), eller gör perioden två dagar där villkoret hålls båda kvällarna och morgonen dag 2 analyseras, med en negativ kontroll som verkligen ligger före första exponeringen."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka",
+          "tidsordning"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP tidsordning: utfallsfönstret slutar 10:00, innan A kan verka",
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (13 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "STOPP styrka: periodens SD 0.45 (egen data, tillåtna dagar); styrka 77% att upptäcka 0.8 med 7 kompletta par; ungefär 9 par behövs"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h04-observation-kvall-efter-traning",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "En retrospektiv observationsstudie utan dagstypsförväxling. Personen har inget arbetsschema och tränar med samma sannolikhet alla dagar, så exponerade dagar och jämförelsedagar kommer från samma kontext (kausal_validitet Q3 punkt 1, kontextmatchad jämförelse). Utfallet (kvällen 20:00–23:59) ligger efter dagens pass. Den negativa kontrollen är natten före passet samma dag, exakt det forskningen föreslår: \"Example: overnight CGM metrics the night before the event day\" och \"a pre-event 'effect' signals selection or reverse causation\" (kausal_validitet Q3 punkt 2–3; designgranskning_n1 §5 O5). Med p 0,35 över 91 dagar väntas omkring 30 exponerade och 60 jämförelsedagar, över det låsta minsta_underlag. Blockbootstrap hanterar autokorrelation. Tolkningen är samband, inte orsak, vilket formatet redan säger; det är ingen anledning att stoppa."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [],
+        "detalj": []
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h05-jogging-datumlista",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "overforing"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Datumlistan består av par av intilliggande dagar (måndag–tisdag, torsdag–fredag) med minsta_avstand 1, och varje par lottas A/B. När A (jogging 17:00) faller på måndagen ligger tisdagens utfallsfönster 19:00–23:00 bara omkring 26 timmar efter passet, och tisdagens negativa kontroll 07:00–10:00 omkring 14 timmar efter. Efter aerob träning är insulinkänsligheten förhöjd i upp till 24–48 h och hypoglykemirisken i minst 24 h (Riddell 2017 i t1d_designfaktorer §1); \"Day-alternating designs (exercise Monday, control Tuesday) are contaminated by carryover\" och \"use ≥48 h between an exercise exposure and any control-day outcome window\". Protokollets påstående att effekten är över samma kväll stämmer inte med forskningen. Överföringen späder ut kontrasten och kan smitta den negativa kontrollen (designgranskning_n1 §4 C2/C4).",
+        "reparation": "Höj minsta_avstand till minst 2 (helst 3) och välj datum därefter, t.ex. måndag och torsdag, så att varje analyserad dag ligger minst 48 h efter föregående studiedags pass."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "overforing"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP overforing: minst 1 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Kräver minst 2, helst 3: lägg tvättdagar eller välj tillåtna dagar som inte ligger intill varandra.",
+          "VARNING positivitet: dagstypen kan inte verifieras ur datan: dagarna är en datumlista men inga arbetspass är loggade, så historiken approximeras med veckodagar; vid rullande schema blandar det lediga dagar och arbetsdagar. Logga passen (typ arbete, t.ex. make import-kalender) och granska igen",
+          "VARNING positivitet: A inträffade inte en enda gång på samma veckodagar som de valda datumen under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: samma veckodagar som de valda datumen: B är det vanliga (31 av 32 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h06-sprintpass",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Ser ovanligt ut (träning som förväntas höja glukos, positiv minsta_relevanta_effekt) men är korrekt. Forskningen säger att \"Sprinting or heavy lifting: glucose typically rises\" och att HIIT dämpar den aeroba sänkningen (Riddell 2017 i t1d_designfaktorer §1), så tecknet +0,8 (A minus B) är den förväntade riktningen, inte ett skrivfel. Fönstret 17:30–19:30 ligger efter passet och före middagen; morgonfönstret före passet är en riktig negativ kontroll. Minst tre dygn mellan studiedagar uppfyller ≥48 h. B förekommer naturligt; A nås med ett konkret, stegmätbart pass (genomforbarhet). Stoppregeln följer Riddells startgränser och Battelinos nivå 2."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (15 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h07-promenad-liten-effekt",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "styrka"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Designen är i övrigt korrekt, men personens dag-till-dag-variation i kvällsglukos är stor (sd omkring 2 mmol/L, så parskillnadens sd är omkring 2,8) medan den minsta relevanta effekten är 0,3 mmol/L. Med 8 par blir medelskillnadens standardfel omkring 1,0 mmol/L och styrkan att upptäcka 0,3 bara några procent; det skulle krävas hundratals par. Forskningen: \"Given day-to-day SD of the paired difference and the smallest relevant effect, how many pairs give ~80% power? Simulate from the person's own historical CGM ... An underpowered null read as 'no effect'\" (designgranskning_n1 §6 S2, §5 O3) och T1DEXI-variationen som är omkring 2× medeleffekten (t1d_designfaktorer §1). Minsta p (1/256) är inte problemet; styrkan är det.",
+        "reparation": "Välj ett mindre brusigt mått eller fönster, standardisera middagen, eller höj den minsta relevanta effekten till en nivå där antalet par räcker; annars gör om studien till en skattningsstudie."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (15 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "STOPP styrka: periodens SD 1.95 (egen data, tillåtna dagar); styrka 6% att upptäcka 0.3 med 8 kompletta par; inte ens 60 par räcker: välj ett utfall närmare mekanismen (kortare fönster) eller gör studien till en skattning och säg det i tesen"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h08-promenad-oura-garmin",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [
+          "apparat"
+        ],
+        "kategori": "giltigt",
+        "motivering": "Designen är giltig: samma dagstyp alla dagar, B förekommer naturligt, A nås med en konkret promenad, minst tre dygn mellan studiedagar, morgonkontrollen ligger före promenaden, och sd 0,5 mot effekten 1,0 med 8 par ger god styrka. Men stegdatan som följsamheten och positiviteten bedöms från kommer från Oura före 2025-05-15 och Garmin efter, så trösklarna 9 000/7 000 är kalibrerade på två olika mätare. Forskningen: använd samma apparat genom hela studien eller logga bytet (kausal_validitet Q1 Stationarity: \"Fix device and regimen during the study, or log changes\"; t1d_designfaktorer §5–6, Battelino \"same device and algorithm throughout\"). Studien själv löper på en apparat (Garmin), så det är en varning, inte ett stopp."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "apparat",
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING apparat: mätningen kommer från flera apparater de senaste 56 dagarna {'garmin': 47, 'oura': 9}; använd en apparat under hela studien och skriv vilken i design.foljsamhet",
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (14 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h09-lunchpromenad-mandag-torsdag",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "underlag",
+          "styrka"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Studiefilen är korrekt, men personens CGM-data är giltig bara omkring 45 % av dagarna. Ett par kräver två giltiga studiedagar, så sannolikheten för ett komplett par är omkring 0,2 och av 8 par väntas bara 1–2 kompletta. Med k kompletta par är minsta möjliga p 1/2^k (två par ger 0,25), så testet kan inte nå nivån 0,95 ens vid en perfekt effekt. Forskningen: \"How many valid pairs will you get, after expected losses (illness, sensor gaps, infeasible days)? Does the minimum achievable p beat α?\" (designgranskning_n1 §6 S1; kausal_validitet Q2: minst 5–6 par behövs) och ett förregistrerat täckningskrav (§5 O4) som här inte kan uppfyllas.",
+        "reparation": "Åtgärda sensorbortfallet först (bärande, byten, uppkoppling) och visa en period med hög täckning, eller öka antalet par så att väntat antal kompletta par räcker med marginal."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "underlag"
+        ],
+        "varningar": [
+          "underlag"
+        ],
+        "detalj": [
+          "VARNING underlag: 47% av de tillåtna dagarna de senaste 90 dagarna hade giltigt utfall; väntat antal kompletta par 1 av 8",
+          "STOPP underlag: med väntat bortfall (1 par) kan testet inte nå p ≤ 0.05; öka design.par"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h10-observation-kvall-traningsdag",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "dagtyp",
+          "positivitet"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Personen arbetar rullande schema och tränar bara på lediga dagar (p_arbete 0). Alla exponerade dagar är därför lediga, medan jämförelsedagarna till omkring 85 % är arbetsdagar. Arbetsdagar har omkring 1,5 mmol/L högre dagglukos, så jämförelsen mäter ledighet mot arbete, inte träning. Det finns ingen exponerad arbetsdag alls (en nollcell): \"Any zero cell means a structural violation\" (kausal_validitet Q1, positivitet). För observationsstudier krävs kontextmatchad jämförelse: \"Compare 'days after event' with other days of the same context: workday vs workday ... Do not compare against all other days. The circular block bootstrap handles autocorrelation, but it does not remove confounding\" (kausal_validitet Q3 punkt 1; designgranskning_n1 §2 F3). Den negativa kontrollen (natten före passet) ligger rätt i tid och kan på sin höjd avslöja förväxlingen i efterhand; den reparerar inte designen.",
+        "reparation": "Jämför bara lediga dagar med lediga dagar (träningsdag mot ledig dag utan träning) och begränsa påståendet till lediga dagar, eller gå direkt till ett n1-experiment med lottad träning inom samma dagstyp."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "dagtyp"
+        ],
+        "varningar": [],
+        "detalj": [
+          "STOPP dagtyp: andel arbetsdagar på den analyserade dagen skiljer 80% mellan exponerade och jämförelsedagar; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot ledig. Jämför inom dagstyp eller gör ett lottat n1-försök med design.dagar"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h11-promenad-lediga-datum",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Ovanlig form men korrekt: en datumlista ur ett rullande schema. Varje datum är en ledig dag enligt 14-dagarscykeln (kontrollerat från start 2025-04-01), så båda villkoren ligger i samma stratum (\"restrict to one stratum\", designgranskning_n1 §2 F1/F2; kausal_validitet Q2: eligibility bestäms i förväg från arbetsschemat, inte efter hur dagen känns). B förekommer naturligt på lediga dagar; A nås med en konkret promenad (genomforbarhet). Minsta avstånd två dygn ger ≥48 h efter en lugn 25-minuterspromenad (t1d_designfaktorer §1–2: kort carryover för lätt gång). Hantering av schemaändringar är förregistrerad (§2 F6). Morgonkontrollen ligger före promenaden. sd 0,4 mot effekten 0,8 med 8 par ger god styrka. Studien ligger helt efter idag."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "overforing"
+        ],
+        "detalj": [
+          "VARNING overforing: minst 2 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Helst 3; redovisa AB mot BA."
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold/h12-eftermiddagspromenad",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "data",
+          "positivitet"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Studiefilen ser komplett ut, men personen har ingen wearable (scenariot saknar stegdata), så följsamhetskolumnen steps finns inte i datan. Varken historisk positivitet (förekommer A och B?) eller följsamheten under studien (gjordes villkoret?) kan verifieras; \"jag går normalt 5 000 steg\" kommer ur minnet. Forskningen: frekvensen av A och B ska hämtas \"from data, not memory\" (designgranskning_n1 §2 F1), villkoren ska vara \"measurable from a device\" med angiven datakälla (§3 I1; SCRIBE 15, 17: utrustning och procedurell fidelitet), och \"no objective adherence measure\" står bland hårda stoppvillkor (§8).",
+        "reparation": "Skaffa och bär en stegmätare under en baslinjeperiod innan studien låses, eller välj en följsamhetskälla som faktiskt finns i datan."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "positivitet"
+        ],
+        "varningar": [],
+        "detalj": [
+          "STOPP positivitet: ingen mätning av steps de senaste 56 dagarna: varken positivitet eller följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller ange kolumn: manuell och motivera"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d01-rullande-b-omojlig",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "positivitet"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Cykeln 4 arbete/3 fritt gör att en del onsdagar och söndagar är arbetsdagar med ~11 500 steg: där kan B (≤5 000) aldrig inträffa, och B är den vanliga dagen som inte kan skapas med en avsiktlig handling. Positivitet måste hålla per dagstyp bland de tillåtna dagarna (Daza 2018), bedömd ur loggade pass — inte ur veckodagen, eftersom schemat rullar.",
+        "reparation": "Begränsa till dagar som enligt loggade pass är lediga, oavsett veckodag."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "positivitet"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: tillåtna veckodagar med arbetspass: A är det vanliga (7 av 8 dagar), så kontrasten skapas helt av att du aktivt gör B; säkerställ att B går att hålla och är säkert",
+          "STOPP positivitet: B inträffade inte en enda gång på tillåtna veckodagar med arbetspass under 56 dagar. B är den vanliga dagen och går inte att skapa med en motivering: begränsa design.dagar till dagar där den förekommer.",
+          "VARNING positivitet: A inträffade inte en enda gång på tillåtna veckodagar utan arbetspass under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: tillåtna veckodagar utan arbetspass: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d02-a-skapas-avsiktligt",
+      "facit": {
+        "forvantat": "GODKANN",
+        "kategori": "giltigt",
+        "motivering": "A förekommer aldrig i historiken, men A är interventionen och skapas med en avsiktlig handling — det är B som måste förekomma naturligt på de tillåtna dagarna, och det gör den (lediga söndagar ~2 900 steg). Att stoppa här vore att förväxla exponeringens historiska frekvens med dess genomförbarhet."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 28 analyserade dagar från 2025-07-06 till 2026-01-11 (190 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: A inträffade inte en enda gång på tillåtna veckodagar utan arbetspass under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: tillåtna veckodagar utan arbetspass: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d03-obs-dagtyp-natt",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "dagtyp"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Höga steg följer arbetspassen (11 200 mot 3 600). Exponerade dagar är arbetsdagar och jämförelsedagar lediga, så kontrasten mäter arbetsdag mot ledig dag, inte stegen. Dagstypen ska bedömas ur loggade pass och på exponeringsdagen — utfallet natten efter ändrar inte det.",
+        "reparation": "Jämför inom dagstyp (arbetsdagar för sig, lediga för sig), eller gör ett n-of-1 med lottade promenader."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "dagtyp"
+        ],
+        "varningar": [],
+        "detalj": [
+          "STOPP dagtyp: andel arbetsdagar på exponeringsdagen skiljer 91% mellan exponerade och jämförelsedagar; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot ledig. Jämför inom dagstyp eller gör ett lottat n1-försök med design.dagar"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d04-obs-steg-utan-dagstyp",
+      "facit": {
+        "forvantat": "GODKANN",
+        "kategori": "giltigt",
+        "motivering": "Ingen arbetsstruktur finns och stegen varierar slumpmässigt kring 7 200 med sd 2 600, så hoga_steg-dagar är inte knutna till någon dagstyp. Dagstypsregeln ska inte stoppa en härledd exponering när sammanblandningen den skyddar mot inte föreligger."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "dagtyp"
+        ],
+        "detalj": [
+          "VARNING dagtyp: andel vardagar på den analyserade dagen skiljer 26% mellan exponerade och jämförelsedagar; dagstypen kan förklara skillnaden, jämför inom dagstyp"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d05-trasig-sensorvecka",
+      "facit": {
+        "forvantat": "GODKANN",
+        "kategori": "giltigt",
+        "motivering": "Täckningen är 90 % och luckorna slumpmässigt fördelade — en egenskap hos sensorn, inte hos lördagarna. Bortfall ska skattas på alla dagar; att slumpen lagt några luckor på tillåtna dagar i historiken får inte stoppa en i övrigt giltig design med god marginal i par."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "positivitet",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 28 analyserade dagar från 2025-07-05 till 2026-01-10 (190 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: A inträffade inte en enda gång på tillåtna veckodagar utan arbetspass under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: tillåtna veckodagar utan arbetspass: B är det vanliga (7 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel",
+          "STOPP styrka: periodens SD 1.06 (egen data, alla dagar, för få tillåtna); styrka 71% att upptäcka 1.5 med 9 kompletta par; ungefär 15 par behövs"
+        ]
+      },
+      "ratt_dom": false,
+      "ratt_skal": false
+    },
+    {
+      "fall": "dold2/d06-datumlista-ologgade-pass",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [
+          "positivitet"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Datumen påstås vara lediga dagar men inga pass är loggade, så dagstypen går inte att verifiera ur data. Det ska synas som varning — designen är genomförbar om påståendet stämmer, men granskningen kan inte kontrollera det, och det måste sägas.",
+        "reparation": "Logga arbetspassen (typ arbete) så att dagstypen kan verifieras per datum."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: dagstypen kan inte verifieras ur datan: dagarna är en datumlista men inga arbetspass är loggade, så historiken approximeras med veckodagar; vid rullande schema blandar det lediga dagar och arbetsdagar. Logga passen (typ arbete, t.ex. make import-kalender) och granska igen"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d07-perfekt-utom-overforing",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "overforing"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Allt annat är exemplariskt — 18 par, stor minsta effekt, korrekt negativ kontroll — men studiedagarna ligger intill varandra och insulinkänsligheten är förhöjd 24–48 h efter aktivitet (Riddell 2017). En B-dag direkt efter en A-dag bär A:s eftereffekt, och den negativa kontrollen natten före en dag som följer på A är också kontaminerad. Styrka kan inte köpa bort överföring.",
+        "reparation": "Minst tre kalenderdagar mellan analyserade dagar, eller tvättdagar mellan perioderna."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "overforing"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP overforing: minst 1 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Kräver minst 2, helst 3: lägg tvättdagar eller välj tillåtna dagar som inte ligger intill varandra. Den nattliga negativa kontrollen ligger då också i förra A-dagens eftereffekt och prövar inget.",
+          "VARNING positivitet: dagstypen kan inte verifieras ur datan: dagarna är en datumlista men inga arbetspass är loggade, så historiken approximeras med veckodagar; vid rullande schema blandar det lediga dagar och arbetsdagar. Logga passen (typ arbete, t.ex. make import-kalender) och granska igen",
+          "VARNING positivitet: A inträffade inte en enda gång på samma veckodagar som de valda datumen under 56 dagar. Motiverat i design.genomforbarhet."
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d08-negkontroll-efter-verkan",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "tidsordning"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Den negativa kontrollen 07:00–08:30 ligger efter verkans början 06:30 — simningen kan redan ha sänkt glukos i kontrollfönstret. En negativ kontroll som exponeringen kan påverka avslöjar ingen snedvridning; den måste sluta före 06:30 (natten) eller sakna mekanism.",
+        "reparation": "Flytta kontrollen till 00:00–06:00 natten före passet."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka",
+          "tidsordning"
+        ],
+        "varningar": [
+          "struktur",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING struktur: följsamheten är självrapporterad (kolumn: manuell); den kan inte kontrolleras mot data och positiviteten kan inte prövas",
+          "VARNING tid: 28 analyserade dagar från 2025-07-07 till 2026-01-17 (195 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "STOPP tidsordning: negativa kontrollen slutar 08:30, efter att A kan börja verka 06:30; den kan då påverkas av A",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel",
+          "STOPP styrka: periodens SD 1.05 (egen data, alla dagar, för få tillåtna); styrka 64% att upptäcka 1 med 14 kompletta par; ungefär 19 par behövs"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d09-maltid-kvall-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "kategori": "giltigt",
+        "motivering": "Verkan är en måltid med kort eftereffekt, kontrollen ligger före verkan, effekten 1,0 mmol/L i ett 4-timmarsfönster är rimlig att upptäcka med 14 par, och villkoren kräver ingen särskild dagstyp. En giltig vardagsdesign som ska passera utan stopp."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "struktur"
+        ],
+        "detalj": [
+          "VARNING struktur: följsamheten är självrapporterad (kolumn: manuell); den kan inte kontrolleras mot data och positiviteten kan inte prövas",
+          "STOPP styrka: periodens SD 1.01 (egen data, tillåtna dagar); styrka 66% att upptäcka 1 med 14 kompletta par; ungefär 18 par behövs"
+        ]
+      },
+      "ratt_dom": false,
+      "ratt_skal": false
+    },
+    {
+      "fall": "dold2/d10-liten-effekt-kort-fonster",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "styrka"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Minsta relevanta effekt 0,3 mmol/L i ett 2-timmarsfönster med dag-till-dag-sd kring 1,3 och bara 8 par: testet kan nästan aldrig skilja effekten från brus. Att köra ändå ger ett förutsägbart obestämt svar och förbrukar studien.",
+        "reparation": "Fler par (i storleksordningen 20+), längre fönster eller större minsta relevant effekt."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "struktur"
+        ],
+        "detalj": [
+          "VARNING struktur: följsamheten är självrapporterad (kolumn: manuell); den kan inte kontrolleras mot data och positiviteten kan inte prövas",
+          "STOPP styrka: periodens SD 1.24 (egen data, tillåtna dagar); styrka 7% att upptäcka 0.3 med 8 kompletta par; inte ens 60 par räcker: välj ett utfall närmare mekanismen (kortare fönster) eller gör studien till en skattning och säg det i tesen"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d11-obs-gles-sensor",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "underlag"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Täckningen är 45 %, så under hälften av nätterna i perioden har giltig data. Med kravet 15 exponerade och 30 jämförelsenätter kan underlaget inte nås inom perioden — studien skulle låsas mot ett facit den aldrig kan samla in.",
+        "reparation": "Längre period, eller vänta tills sensortäckningen är stabil."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "underlag"
+        ],
+        "varningar": [],
+        "detalj": [
+          "STOPP underlag: 8 exponerade och 26 jämförelsedagar med giltigt utfall nu; studien kräver 15 och 30 och datan finns redan, så den kommer att vägras"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "dold2/d12-treperiodsdagar-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "kategori": "giltigt",
+        "motivering": "Perioder om tre dagar med två tvättdagar ger analyserade dagar med god marginal till 24–48 h-eftereffekten, villkoren går alla dagar, och 10 par med 1,5 mmol/L i ett helddagsfönster är realistiskt. En korrekt hanterad överföring ska inte stoppas."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "VARNING positivitet: A inträffade inte en enda gång på vardagar under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: A inträffade inte en enda gång på helger under 56 dagar. Motiverat i design.genomforbarhet.",
+          "STOPP styrka: periodens SD 1.10 (egen data, tillåtna dagar); styrka 78% att upptäcka 1.5 med 10 kompletta par; ungefär 11 par behövs"
+        ]
+      },
+      "ratt_dom": false,
+      "ratt_skal": false
+    },
+    {
+      "fall": "fall/f01-steg-alla-dagar",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "positivitet",
+          "overforing"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "B (≤5 000 steg) förekommer aldrig en arbetsdag och A aldrig en ledig: positivitetsbrott per dagstyp (Daza 2018). Dagarna ligger intill varandra trots 24–48 h eftereffekt efter aktivitet (Riddell 2017).",
+        "reparation": "Begränsa till lediga dagar, minst tre dagar isär."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "overforing",
+          "positivitet"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP overforing: minst 1 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Kräver minst 2, helst 3: lägg tvättdagar eller välj tillåtna dagar som inte ligger intill varandra. Den nattliga negativa kontrollen ligger då också i förra A-dagens eftereffekt och prövar inget.",
+          "VARNING positivitet: vardagar: A är det vanliga (35 av 40 dagar), så kontrasten skapas helt av att du aktivt gör B; säkerställ att B går att hålla och är säkert",
+          "STOPP positivitet: B inträffade inte en enda gång på vardagar under 56 dagar. B är den vanliga dagen och går inte att skapa med en motivering: begränsa design.dagar till dagar där den förekommer.",
+          "STOPP positivitet: A inträffade inte en enda gång på helger under 56 dagar. Antingen är villkoret omöjligt där (begränsa design.dagar eller definiera om villkoret relativt dagstypen) eller så ska design.genomforbarhet förklara hur det ska gå till.",
+          "VARNING positivitet: helger: B är det vanliga (16 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f02-steg-alla-dagar-loggat",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "positivitet",
+          "overforing"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Som f01, med arbetspassen loggade.",
+        "reparation": "Som f01."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "overforing",
+          "positivitet"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP overforing: minst 1 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Kräver minst 2, helst 3: lägg tvättdagar eller välj tillåtna dagar som inte ligger intill varandra. Den nattliga negativa kontrollen ligger då också i förra A-dagens eftereffekt och prövar inget.",
+          "VARNING positivitet: arbetsdagar: A är det vanliga (35 av 40 dagar), så kontrasten skapas helt av att du aktivt gör B; säkerställ att B går att hålla och är säkert",
+          "STOPP positivitet: B inträffade inte en enda gång på arbetsdagar under 56 dagar. B är den vanliga dagen och går inte att skapa med en motivering: begränsa design.dagar till dagar där den förekommer.",
+          "STOPP positivitet: A inträffade inte en enda gång på lediga dagar under 56 dagar. Antingen är villkoret omöjligt där (begränsa design.dagar eller definiera om villkoret relativt dagstypen) eller så ska design.genomforbarhet förklara hur det ska gå till.",
+          "VARNING positivitet: lediga dagar: B är det vanliga (16 av 16 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f03-lordagar-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Bara lördagar (lediga), sju dagar isär, genomförbarheten för A motiverad, styrkan räcker (SD 1,0 mot effekt 1,5 med 16 par)."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2026-02-14 (223 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f04-rullande-loggat-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Lediga dagar ur schemat, loggade pass, tre dagar isär."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2025-11-28 (145 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: A inträffade inte en enda gång på lediga dagar enligt händelseloggen under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: lediga dagar enligt händelseloggen: B är det vanliga (27 av 28 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f05-rullande-ologgat",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [
+          "positivitet"
+        ],
+        "kategori": "giltigt",
+        "motivering": "Designen är rätt, men passen är inte loggade: med rullande schema kan historiken inte delas i arbete och ledigt, så positiviteten är overifierad och ska flaggas, inte tyst godkännas."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "positivitet",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2025-11-28 (145 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: dagstypen kan inte verifieras ur datan: dagarna är en datumlista men inga arbetspass är loggade, så historiken approximeras med veckodagar; vid rullande schema blandar det lediga dagar och arbetsdagar. Logga passen (typ arbete, t.ex. make import-kalender) och granska igen"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f06-rullande-intill",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "overforing"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Lediga dagar kommer i klungor om 2–3; intill varandra överförs träningseffekten (24–48 h, Riddell 2017).",
+        "reparation": "minsta_avstand: 3."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "overforing"
+        ],
+        "varningar": [
+          "positivitet"
+        ],
+        "detalj": [
+          "STOPP overforing: minst 1 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017). Kräver minst 2, helst 3: lägg tvättdagar eller välj tillåtna dagar som inte ligger intill varandra. Den nattliga negativa kontrollen ligger då också i förra A-dagens eftereffekt och prövar inget.",
+          "VARNING positivitet: A inträffade inte en enda gång på lediga dagar enligt händelseloggen under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: lediga dagar enligt händelseloggen: B är det vanliga (27 av 28 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f07-apparatbyte",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [
+          "apparat"
+        ],
+        "kategori": "giltigt",
+        "motivering": "Stegen kommer från två apparater i historiken; ring och klocka räknar olika. Ska flaggas."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "apparat",
+          "positivitet",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2025-11-28 (145 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING apparat: mätningen kommer från flera apparater de senaste 56 dagarna {'oura': 35, 'garmin': 21}; använd en apparat under hela studien och skriv vilken i design.foljsamhet",
+          "VARNING positivitet: A inträffade inte en enda gång på lediga dagar enligt händelseloggen under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: lediga dagar enligt händelseloggen: B är det vanliga (27 av 28 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f08-negkontroll-efter",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "tidsordning"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Kontrollfönstret 07–11 överlappar promenaden som börjar 09:00 och kan påverkas av A.",
+        "reparation": "Fönster som slutar före 09:00."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "tidsordning"
+        ],
+        "varningar": [
+          "positivitet",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2026-02-14 (223 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "STOPP tidsordning: negativa kontrollen slutar 11:00, efter att A kan börja verka 09:00; den kan då påverkas av A",
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f09-for-liten-effekt",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "styrka",
+          "underlag"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Sex par mot en effekt på 0,3 mmol/L med dag-till-dag-SD 1,0 ger mycket låg styrka.",
+        "reparation": "Fler par eller ett utfall närmare mekanismen."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "styrka"
+        ],
+        "varningar": [
+          "positivitet",
+          "styrka"
+        ],
+        "detalj": [
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel",
+          "STOPP styrka: periodens SD 1.00 (egen data, alla dagar, för få tillåtna); styrka 6% att upptäcka 0.3 med 6 kompletta par; inte ens 60 par räcker: välj ett utfall närmare mekanismen (kortare fönster) eller gör studien till en skattning och säg det i tesen"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f10-start-passerad",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "tid"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Starten ligger före idag; schemat kan inte ha lottats före första försöksdagen.",
+        "reparation": "Starta efter låsning."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "tid"
+        ],
+        "varningar": [
+          "positivitet",
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "STOPP tid: start 2025-06-14 är inte i framtiden; schemat måste lottas före första försöksdagen",
+          "VARNING tid: 32 analyserade dagar från 2025-06-14 till 2026-01-17 (218 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING positivitet: A inträffade inte en enda gång på de tillåtna veckodagarna under 56 dagar. Motiverat i design.genomforbarhet.",
+          "VARNING positivitet: de tillåtna veckodagarna: B är det vanliga (8 av 8 dagar), så kontrasten skapas helt av att du aktivt gör A; säkerställ att A går att hålla och är säkert",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f11-ingen-wearable",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "positivitet"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Följsamheten ska mätas med steg men ingen stegdata finns: varken positivitet eller följsamhet kan verifieras.",
+        "reparation": "Koppla en wearable eller ange manuell följsamhet och motivera."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "positivitet"
+        ],
+        "varningar": [
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2026-02-14 (223 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "STOPP positivitet: ingen mätning av steps de senaste 56 dagarna: varken positivitet eller följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller ange kolumn: manuell och motivera",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f12-maltid-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Kort verkan efter en måltid; intilliggande dagar går (AHRQ: kort verkan kräver ingen tvätt). Manuell följsamhet ger varning, inte stopp."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [
+          "struktur"
+        ],
+        "detalj": [
+          "VARNING struktur: följsamheten är självrapporterad (kolumn: manuell); den kan inte kontrolleras mot data och positiviteten kan inte prövas"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f13-obs-hoga-steg-arbetsdag",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "dagtyp"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Höga steg följer arbetsdagen helt; observationsdata kan inte skilja steg från arbetsdag (strukturellt positivitetsbrott).",
+        "reparation": "Lottat n1-försök på lediga dagar."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "dagtyp"
+        ],
+        "varningar": [],
+        "detalj": [
+          "STOPP dagtyp: andel vardagar på exponeringsdagen skiljer 84% mellan exponerade och jämförelsedagar; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot ledig. Jämför inom dagstyp eller gör ett lottat n1-försök med design.dagar"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f14-obs-traning-giltig",
+      "facit": {
+        "forvantat": "GODKANN",
+        "flagga": [],
+        "kategori": "giltigt",
+        "motivering": "Träning oberoende av veckodag, gott om exponerade dagar."
+      },
+      "svar": {
+        "dom": "GODKANN",
+        "stopp": [],
+        "varningar": [],
+        "detalj": []
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f15-obs-for-lite",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "underlag"
+        ],
+        "kategori": "kritiskt",
+        "motivering": "Retrospektiv med för få exponerade dagar; motorn kommer att vägra köra.",
+        "reparation": "Längre period eller prospektivt."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "underlag"
+        ],
+        "varningar": [
+          "dagtyp"
+        ],
+        "detalj": [
+          "STOPP underlag: 8 exponerade och 82 jämförelsedagar med giltigt utfall nu; studien kräver 10 och 10 och datan finns redan, så den kommer att vägras",
+          "VARNING dagtyp: andel vardagar på den analyserade dagen skiljer 32% mellan exponerade och jämförelsedagar; dagstypen kan förklara skillnaden, jämför inom dagstyp"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    },
+    {
+      "fall": "fall/f16-saknar-foljsamhet",
+      "facit": {
+        "forvantat": "STOPP",
+        "skal": [
+          "struktur"
+        ],
+        "kategori": "reparerbart",
+        "motivering": "Ingen följsamhetsmätning angiven.",
+        "reparation": "Ange design.foljsamhet."
+      },
+      "svar": {
+        "dom": "STOPP",
+        "stopp": [
+          "struktur"
+        ],
+        "varningar": [
+          "styrka",
+          "tid"
+        ],
+        "detalj": [
+          "STOPP struktur: design.foljsamhet saknas: hur verifieras varje dags villkor ur data? (t.ex. {kolumn: steps, A: {min: 10000}, B: {max: 5000}}, eller {kolumn: manuell})",
+          "VARNING tid: 32 analyserade dagar från 2025-07-07 till 2026-02-14 (223 kalenderdagar); över fyra månader ger säsong, sensorbyten och formförändring tid att glida, paren balanserar bara långsam drift",
+          "VARNING styrka: variationen skattas på alla dagar eftersom de tillåtna är för få; skiljer sig dagstyperna åt i variation blir styrkan fel"
+        ]
+      },
+      "ratt_dom": true,
+      "ratt_skal": true
+    }
+  ]
+}
