@@ -169,7 +169,7 @@ clarity as (
         transmitter_id,
         source_device_id,
         source_file,
-        'clarity'                     as source
+        'clarity'                     as data_source
     from deduplicated
 
 )

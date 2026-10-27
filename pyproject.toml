@@ -24,6 +24,8 @@ dev = [
     "pytest>=8",
     "quarto-cli>=1.10.19",
     "ruff>=0.6",
+    "sqlfluff>=4.4.0",
+    "sqlfluff-templater-dbt>=4.4.0",
 ]
 
 [build-system]

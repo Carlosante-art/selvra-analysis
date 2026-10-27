@@ -6,14 +6,10 @@ DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
 DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 
-<<<<<<< HEAD
-.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok reproduce
-=======
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: verify-real reproduce demo build build-live live rapport test lint dashboard validate validate-real example log dagbok
->>>>>>> a25fc7f (Quality gate 9: dbt architecture rules (dbt-project-evaluator 1.x))
+.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -70,9 +66,10 @@ test:
 	uv run pytest -q
 
 ## Code limits and architecture contracts (the same gates CI runs)
-lint:
+lint: $(DBT_PACKAGES)
 	uv run ruff check src tests analyses
 	uv run lint-imports
+	cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run sqlfluff lint models tests macros
 
 ## Dreamer: generera en studiefil från en naturlig fråga (kräver ANTHROPIC_API_KEY)
 ## make dreamer                          — interaktivt

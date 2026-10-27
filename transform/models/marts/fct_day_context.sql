@@ -17,12 +17,20 @@ events as (
 
 ),
 
-inferred_sensor_starts as (
+sensor_sessions as (
 
-    select distinct arg_min(reading_date, reading_at) as reading_date
+    select arg_min(reading_date, reading_at) as start_date
     from {{ ref('int_cgm_flagged') }}
     where sensor_session_id > 1
     group by sensor_session_id
+
+),
+
+-- Two inferred sessions can start on the same day; one row per day.
+inferred_sensor_starts as (
+
+    select distinct start_date as reading_date
+    from sensor_sessions
 
 )
 

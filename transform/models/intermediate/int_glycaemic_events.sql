@@ -51,36 +51,51 @@ with readings as (
 
 ),
 
+{{ name }}_keyed as (
+
+    select
+        *,
+        rn - row_number() over (partition by segment_id, beyond order by rn) as run_key
+    from {{ name }}_marked
+
+),
+
 {{ name }}_runs as (
 
-    select segment_id, beyond, min(rn) as run_start, count(*) as run_length, any_value(segment_n) as segment_n
-    from (
-        select *, rn - row_number() over (partition by segment_id, beyond order by rn) as run_key
-        from {{ name }}_marked
-    )
+    select
+        segment_id,
+        beyond,
+        min(rn) as run_start,
+        count(*) as run_length,
+        any_value(segment_n) as segment_n
+    from {{ name }}_keyed
     group by segment_id, beyond, run_key
 
 ),
 
 -- Each qualifying start ends just before the first qualifying return that follows it.
 -- Starts that share an end belong to one event, which begins at the earliest of them.
+{{ name }}_starts as (
+
+    select
+        s.segment_id,
+        s.run_start as start_rn,
+        coalesce(min(e.run_start), any_value(s.segment_n) + 1) - 1 as last_rn
+    from {{ name }}_runs as s
+    left join {{ name }}_runs as e
+        on e.segment_id = s.segment_id
+       and not e.beyond
+       and e.run_length >= {{ n_end }}
+       and e.run_start > s.run_start
+    where s.beyond and s.run_length >= {{ n_start }}
+    group by s.segment_id, s.run_start
+
+),
+
 {{ name }}_events as (
 
     select segment_id, min(start_rn) as start_rn, last_rn
-    from (
-        select
-            s.segment_id,
-            s.run_start as start_rn,
-            coalesce(min(e.run_start), any_value(s.segment_n) + 1) - 1 as last_rn
-        from {{ name }}_runs as s
-        left join {{ name }}_runs as e
-            on e.segment_id = s.segment_id
-           and not e.beyond
-           and e.run_length >= {{ n_end }}
-           and e.run_start > s.run_start
-        where s.beyond and s.run_length >= {{ n_start }}
-        group by s.segment_id, s.run_start
-    )
+    from {{ name }}_starts
     group by segment_id, last_rn
 
 )
@@ -112,7 +127,7 @@ select
     round(avg(r.glucose_mmol), 2)                                          as mean_mmol,
     bool_or(r.is_artefact)                                                 as contains_artefact
 from all_events as e
-join readings as r
+inner join readings as r
     on r.segment_id = e.segment_id
    and r.rn between e.start_rn and e.last_rn
 group by all

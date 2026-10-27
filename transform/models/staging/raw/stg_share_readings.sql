@@ -18,8 +18,8 @@ select
     end, 1)                                                             as glucose_mmol,
     cast(s.value_mgdl as varchar)                                       as glucose_raw,
     case when s.value_mgdl < 40 then 'low' when s.value_mgdl > 400 then 'high' end as censored,
-    null::varchar                                                       as transmitter_id,
-    null::varchar                                                       as source_device_id,
+    cast(null as varchar)                                               as transmitter_id,
+    cast(null as varchar)                                               as source_device_id,
     'dexcom_share'                                                      as source_file,
-    'dexcom_share'                                                      as source
+    'dexcom_share'                                                      as data_source
 from {{ source('raw', 'share_readings') }} as s

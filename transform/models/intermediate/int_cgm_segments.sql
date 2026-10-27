@@ -29,7 +29,8 @@ marked as (
         prev_reading_at is null
             or gap_minutes > {{ var('segment_gap_minutes') }}                as starts_segment,
         prev_reading_at is null
-            or transmitter_id is distinct from prev_transmitter_id
+            -- transmitter_id is never '' (staging turns '' into null), so this is IS DISTINCT FROM
+            or coalesce(transmitter_id, '') <> coalesce(prev_transmitter_id, '')
             or gap_minutes >= {{ var('sensor_change_gap_minutes') }}         as starts_sensor_session
     from with_gaps
 

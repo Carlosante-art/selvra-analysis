@@ -69,6 +69,17 @@ day_lengths as (
     from daily
 
 )
+,
+
+joined as (
+
+    select
+        d.*,
+        e.* exclude (reading_date)  -- noqa: RF02
+    from day_lengths as d
+    left join events as e on d.reading_date = e.reading_date
+
+)
 
 select
     reading_date,
@@ -100,6 +111,5 @@ select
     coalesce(n_hyper_level2_events, 0)                                  as n_hyper_level2_events,
     coalesce(n_hypo_level1_events_clean, 0)                             as n_hypo_level1_events_clean,
     coalesce(n_hypo_level2_events_clean, 0)                             as n_hypo_level2_events_clean
-from day_lengths
-left join events using (reading_date)
+from joined
 order by reading_date

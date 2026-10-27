@@ -1,0 +1,32 @@
+[sqlfluff]
+templater = dbt
+dialect = duckdb
+max_line_length = 120
+# Gate on structure, ambiguity and references: what can make a query wrong or hard to review.
+# Layout (indentation, aligned `as`) is a style choice and is not gated.
+rules = aliasing, ambiguous, convention, references, structure
+# CV06: trailing semicolons are not used in dbt models.
+# ST07: USING joins are clearer here than ON with repeated column names.
+# AL07: short table aliases (r, s, e) are kept in the episode and flag models.
+# AM04: `select *` over models whose columns are fixed by contracts (the marts) or unit tests.
+# ST06, ST09: column and join order are style, not correctness.
+exclude_rules = CV06, ST07, AL07, AM04, ST06, ST09
+
+[sqlfluff:templater:dbt]
+project_dir = .
+profiles_dir = .
+
+[sqlfluff:rules:structure.subquery]
+forbid_subquery_in = both
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+extended_capitalisation_policy = lower

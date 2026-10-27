@@ -29,26 +29,26 @@ checks as (
     select 'two runs' as check_name,
            (select count(*) from runs) = 2 as ok
     union all
-    select 'first run Jan 1-3, 3 days',
-           exists (select 1 from runs where start_date = date '2025-01-01' and end_date = date '2025-01-03' and n_days = 3)
+    select 'first run Jan 1-3, 3 days' as check_name,
+           exists (select 1 from runs where start_date = date '2025-01-01' and end_date = date '2025-01-03' and n_days = 3) as ok
     union all
-    select 'second run Jan 6-9, 4 days',
-           exists (select 1 from runs where start_date = date '2025-01-06' and end_date = date '2025-01-09' and n_days = 4)
+    select 'second run Jan 6-9, 4 days' as check_name,
+           exists (select 1 from runs where start_date = date '2025-01-06' and end_date = date '2025-01-09' and n_days = 4) as ok
     union all
-    select 'four window rows per run',
-           (select count(*) from windows) = 8
+    select 'four window rows per run' as check_name,
+           (select count(*) from windows) = 8 as ok
     union all
-    select 'day +1 after first run is Jan 4',
-           exists (select 1 from windows where run_id = 1 and offset_day = 1 and window_date = date '2025-01-04')
+    select 'day +1 after first run is Jan 4' as check_name,
+           exists (select 1 from windows where run_id = 1 and offset_day = 1 and window_date = date '2025-01-04') as ok
     union all
-    select 'day +2 after first run has no data',
-           exists (select 1 from windows where run_id = 1 and offset_day = 2 and reading_date is null)
+    select 'day +2 after first run has no data' as check_name,
+           exists (select 1 from windows where run_id = 1 and offset_day = 2 and reading_date is null) as ok
     union all
-    select 'day +3 after first run is inside the other run',
-           exists (select 1 from windows where run_id = 1 and offset_day = 3 and in_other_run)
+    select 'day +3 after first run is inside the other run' as check_name,
+           exists (select 1 from windows where run_id = 1 and offset_day = 3 and in_other_run) as ok
     union all
-    select 'day -1 before second run is Jan 5',
-           exists (select 1 from windows where run_id = 2 and offset_day = -1 and window_date = date '2025-01-05')
+    select 'day -1 before second run is Jan 5' as check_name,
+           exists (select 1 from windows where run_id = 2 and offset_day = -1 and window_date = date '2025-01-05') as ok
 )
 
 select check_name from checks where not ok
