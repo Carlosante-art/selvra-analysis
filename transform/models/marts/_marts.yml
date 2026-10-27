@@ -446,6 +446,38 @@ models:
       iglu_function: null
       does_not_measure: anything structured
       epistemics: self-reported
+  - name: sleep_score
+    description: Oura sleep score (0–100). Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: sleep quality, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: readiness_score
+    description: Oura readiness score (0–100). Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: readiness, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: hrv_avg
+    description: Average HRV from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: heart rate variability, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: hr_lowest_bpm
+    description: Lowest resting heart rate from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: resting heart rate, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: total_sleep_seconds
+    description: Total sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: sleep duration, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: deep_sleep_seconds
+    description: Deep sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: deep sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: rem_sleep_seconds
+    description: REM sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: REM sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: sleep_efficiency_pct
+    description: Sleep efficiency percentage from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: sleep efficiency, source_standard: Oura Ring v2 API, epistemics: observed}
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -856,3 +888,35 @@ models:
       iglu_function: null
       does_not_measure: anything structured
       epistemics: self-reported
+  - name: sleep_score
+    description: Oura sleep score (0–100). Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: sleep quality, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: readiness_score
+    description: Oura readiness score (0–100). Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: readiness, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: hrv_avg
+    description: Average HRV from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: heart rate variability, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: hr_lowest_bpm
+    description: Lowest resting heart rate from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: resting heart rate, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: total_sleep_seconds
+    description: Total sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: sleep duration, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: deep_sleep_seconds
+    description: Deep sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: deep sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: rem_sleep_seconds
+    description: REM sleep duration in seconds. Null if OURA_TOKEN is not set.
+    data_type: integer
+    meta: {construct: REM sleep, source_standard: Oura Ring v2 API, epistemics: observed}
+  - name: sleep_efficiency_pct
+    description: Sleep efficiency percentage from Oura. Null if OURA_TOKEN is not set.
+    data_type: double
+    meta: {construct: sleep efficiency, source_standard: Oura Ring v2 API, epistemics: observed}
