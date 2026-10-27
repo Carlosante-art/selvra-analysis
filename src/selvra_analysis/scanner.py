@@ -1,0 +1,233 @@
+"""Scanner: hitta mönster i data och föreslå studier.
+
+Skannar mart_analysis_days efter avvikelser, kluster och händelsekorrelationer.
+Föreslår studiefrågor utan att avslöja effektstorlekar (det är studiens jobb).
+
+Usage:
+    uv run python -m selvra_analysis.scanner
+    make skanna
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+import duckdb
+import numpy as np
+import pandas as pd
+
+DB_DEFAULT = Path("data/selvra.duckdb")
+MIN_DAYS_FOR_BASELINE = 14
+MIN_EVENTS_FOR_CORRELATION = 3
+
+
+@dataclass
+class Pattern:
+    typ: str          # avvikelse | korrelation | kluster | trend
+    beskrivning: str
+    fragor: list[str]
+    vikt: int         # 1-3, hur intressant
+
+
+def _load(db_path: Path) -> pd.DataFrame:
+    with duckdb.connect(str(db_path), read_only=True) as con:
+        return con.execute("SELECT * FROM marts.mart_analysis_days ORDER BY reading_date").df()
+
+
+def _baseline_avvikelser(df: pd.DataFrame) -> list[Pattern]:
+    valid = df[df["is_valid_day"]].copy()
+    if len(valid) < MIN_DAYS_FOR_BASELINE:
+        return []
+
+    mean_tir = valid["tir_pct"].mean()
+    sd_tir = valid["tir_pct"].std()
+    threshold_low = mean_tir - 1.5 * sd_tir
+    threshold_high = mean_tir + 1.5 * sd_tir
+
+    bad = valid[valid["tir_pct"] < threshold_low]
+    good = valid[valid["tir_pct"] > threshold_high]
+    patterns = []
+
+    if len(bad) >= 3:
+        bad_no_event = bad[bad["n_events"] == 0]
+        pct = len(bad_no_event) / len(bad) * 100
+        patterns.append(Pattern(
+            typ="avvikelse",
+            beskrivning=(
+                f"{len(bad)} dagar med TIR markant under din baseline ({mean_tir:.0f}%). "
+                f"{len(bad_no_event)} av dem ({pct:.0f}%) saknar loggad händelse — "
+                "okänd faktor påverkar kontrollen."
+            ),
+            fragor=[
+                "Finns det ett mönster i veckodag för de sämsta dagarna?",
+                "Föregås dåliga dagar konsekvent av en viss händelsetyp?",
+            ],
+            vikt=2,
+        ))
+
+    if len(good) >= 3:
+        patterns.append(Pattern(
+            typ="avvikelse",
+            beskrivning=(
+                f"{len(good)} dagar med TIR markant över din baseline. "
+                "Vad är annorlunda de dagarna?"
+            ),
+            fragor=["Vad skiljer dina bästa dagar från resten?"],
+            vikt=1,
+        ))
+
+    return patterns
+
+
+def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
+    valid = df[df["is_valid_day"]].copy()
+    if len(valid) < MIN_DAYS_FOR_BASELINE:
+        return []
+
+    event_cols = {
+        "had_training": "traning",
+        "had_stress": "stress",
+        "is_ill": "sjukdom",
+        "had_alcohol": "alkohol",
+        "is_travelling": "resa",
+        "had_medication_change": "medicinandring",
+    }
+    patterns = []
+    baseline_tir = valid["tir_pct"].mean()
+
+    for col, namn in event_cols.items():
+        exposed = valid[valid[col] == True]["tir_pct"]
+        if len(exposed) < MIN_EVENTS_FOR_CORRELATION:
+            continue
+        control = valid[valid[col] == False]["tir_pct"]
+        diff = exposed.mean() - control.mean()
+        patterns.append(Pattern(
+            typ="korrelation",
+            beskrivning=(
+                f"{namn.capitalize()}: {len(exposed)} loggade dagar. "
+                f"TIR skiljer sig från övriga dagar (baseline {baseline_tir:.0f}%). "
+                "Sambandets riktning och storlek kräver en studie för att avgöra."
+            ),
+            fragor=[
+                f"Påverkar {namn} mitt TIR samma dag?",
+                f"Påverkar {namn} mitt TIR dagen efter?",
+                f"Påverkar {namn} medelglukos natten efter (00:00–06:00)?",
+            ],
+            vikt=3 if abs(diff) > 5 else 2,
+        ))
+
+    return patterns
+
+
+def _kluster(df: pd.DataFrame) -> list[Pattern]:
+    valid = df[df["is_valid_day"]].copy()
+    patterns = []
+
+    valid = valid.sort_values("reading_date").reset_index(drop=True)
+    valid["bad"] = valid["tir_pct"] < 40
+
+    run_len = 0
+    longest = 0
+    for _, row in valid.iterrows():
+        if row["bad"]:
+            run_len += 1
+            longest = max(longest, run_len)
+        else:
+            run_len = 0
+
+    if longest >= 4:
+        patterns.append(Pattern(
+            typ="kluster",
+            beskrivning=(
+                f"Längsta sammanhängande period med TIR < 40%: {longest} dagar. "
+                "Utdragna perioder med dålig kontroll indikerar ofta en bakomliggande faktor."
+            ),
+            fragor=[
+                "Vad inledde den längsta dåliga perioden?",
+                "Är utdragna dåliga perioder kopplade till sjukdom eller stress?",
+            ],
+            vikt=3,
+        ))
+
+    return patterns
+
+
+def _trend(df: pd.DataFrame) -> list[Pattern]:
+    valid = df[df["is_valid_day"]].tail(21).copy()
+    if len(valid) < 14:
+        return []
+
+    x = np.arange(len(valid))
+    y = valid["tir_pct"].values
+    slope = np.polyfit(x, y, 1)[0]
+    slope_per_week = slope * 7
+
+    if abs(slope_per_week) < 2:
+        return []
+
+    riktning = "uppåt" if slope_per_week > 0 else "nedåt"
+    patterns = [Pattern(
+        typ="trend",
+        beskrivning=(
+            f"TIR rör sig {riktning} de senaste 21 dagarna "
+            f"({slope_per_week:+.1f} procentenheter per vecka). "
+            + ("Vad driver förbättringen?" if slope_per_week > 0
+               else "Vad driver försämringen?")
+        ),
+        fragor=[
+            "Har något förändrats i din rutin de senaste tre veckorna?",
+            "Finns det en händelse som sammanfaller med trendbrottet?",
+        ],
+        vikt=2 if abs(slope_per_week) < 5 else 3,
+    )]
+    return patterns
+
+
+def scan(db_path: Path) -> list[Pattern]:
+    df = _load(db_path)
+    patterns: list[Pattern] = []
+    patterns += _baseline_avvikelser(df)
+    patterns += _event_korrelationer(df)
+    patterns += _kluster(df)
+    patterns += _trend(df)
+    return sorted(patterns, key=lambda p: -p.vikt)
+
+
+def _format(patterns: list[Pattern]) -> str:
+    if not patterns:
+        return "Inga mönster hittade — för lite data eller jämn kontroll."
+    lines = ["# Skanning — mönster i datan", ""]
+    for i, p in enumerate(patterns, 1):
+        vikt_str = "●" * p.vikt + "○" * (3 - p.vikt)
+        lines += [f"## {i}. {p.typ.capitalize()}  {vikt_str}", "", p.beskrivning, ""]
+        if p.fragor:
+            lines.append("**Möjliga studiefrågor:**")
+            for f in p.fragor:
+                lines.append(f"- {f}")
+        lines.append("")
+    lines += [
+        "---",
+        "Kör `make dreamer fraga=\"...\"` för att designa en studie kring en fråga ovan.",
+    ]
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--db", type=Path, default=DB_DEFAULT)
+    args = parser.parse_args(argv)
+
+    patterns = scan(args.db)
+    print(_format(patterns))
+
+    out = Path("data/rapporter/skanning.md")
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(_format(patterns) + "\n")
+    print(f"\nSparad: {out}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

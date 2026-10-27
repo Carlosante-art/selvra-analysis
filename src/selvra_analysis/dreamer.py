@@ -291,6 +291,65 @@ def tolka(folder: Path, db_path: Path) -> str:
     return _call_tolka(studie_yml, slutrapport, status_text)
 
 
+SAMMANFATTNING_PROMPT = """\
+Du är Dreamer, syntes-lagret i Selvra-analysmotorn.
+
+Du får en lista med studier och deras resultat (eller nuvarande status om de inte är klara).
+Skriv en syntes på svenska — vad har vi lärt oss, vad är fortfarande öppet, och vad bör
+undersökas härnäst.
+
+Strukturera i tre avsnitt med dessa exakta rubriker:
+
+## Vad vi vet
+Sammanfatta slutsatserna från genomförda studier. Var konkret om effektstorlekar.
+Markera tydligt om en studie är retrospektiv (svagare bevis) eller randomiserad (starkare).
+
+## Vad som är öppet
+Studier som pågår eller har för lite data. Vad saknas för att de ska kunna avgöras?
+
+## Föreslagna nästa steg
+Max tre konkreta förslag, prioriterade. Varje förslag är en handlingsbar mening.
+
+Skriv på svenska. Var ärlig om vad data kan och inte kan visa.
+Max 250 ord.
+"""
+
+
+def _call_sammanfattning(studie_texter: list[str]) -> str:
+    import anthropic
+    client = anthropic.Anthropic()
+    user_content = "STUDIER:\n\n" + "\n\n---\n\n".join(studie_texter)
+    msg = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=768,
+        system=SAMMANFATTNING_PROMPT,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    return msg.content[0].text.strip()
+
+
+def sammanfattning(studies_dir: Path, db_path: Path) -> str:
+    folders = sorted(
+        [f for f in studies_dir.iterdir() if f.is_dir() and (f / "studie.yml").exists()],
+        key=lambda f: f.name,
+    )
+    if not folders:
+        return "Inga studier hittade i " + str(studies_dir)
+
+    texter = []
+    for folder in folders:
+        studie = (folder / "studie.yml").read_text()
+        if (folder / "slutrapport.md").exists():
+            rapport = (folder / "slutrapport.md").read_text()
+            texter.append(f"STUDIE: {folder.name}\n\nFIL:\n{studie}\n\nRAPPORT:\n{rapport}")
+        elif (folder / "las.json").exists():
+            texter.append(f"STUDIE: {folder.name} (låst, pågår)\n\nFIL:\n{studie}")
+        else:
+            texter.append(f"STUDIE: {folder.name} (ej låst)\n\nFIL:\n{studie}")
+
+    return _call_sammanfattning(texter)
+
+
 def write_study(study_id: str, spec: dict) -> Path:
     folder = STUDIES_DIR / study_id
     folder.mkdir(parents=True, exist_ok=True)
@@ -311,6 +370,10 @@ def main(argv: list[str] | None = None) -> None:
     tol.add_argument("studie", type=Path, help="Sökväg till studiemappen")
     tol.add_argument("--db", type=Path, default=DB_DEFAULT)
 
+    sam = sub.add_parser("sammanfattning", help="Syntetisera alla studier till en portfolio-översikt")
+    sam.add_argument("--studies", type=Path, default=STUDIES_DIR)
+    sam.add_argument("--db", type=Path, default=DB_DEFAULT)
+
     # Bakåtkompatibilitet: dreamer [--fraga "..."] utan subkommando = generera
     parser.add_argument("--fraga", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--db", type=Path, default=DB_DEFAULT)
@@ -320,6 +383,16 @@ def main(argv: list[str] | None = None) -> None:
     _load_dotenv()
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
+
+    if args.kommando == "sammanfattning":
+        print("\nSyntetiserar studieportföljen...\n", file=sys.stderr)
+        text = sammanfattning(args.studies, args.db)
+        print(text)
+        out = Path("data/rapporter/portfolio.md")
+        out.parent.mkdir(exist_ok=True)
+        out.write_text(text + "\n")
+        print(f"\nSparad: {out}", file=sys.stderr)
+        return
 
     if args.kommando == "tolka":
         folder = args.studie.resolve()

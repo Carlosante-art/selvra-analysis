@@ -32,6 +32,12 @@ inferred_sensor_starts as (
     select distinct start_date as reading_date
     from sensor_sessions
 
+),
+
+sleep as (
+
+    select * from {{ ref('stg_oura_sleep') }}
+
 )
 
 select
@@ -47,10 +53,23 @@ select
     bool_or(e.event_type = 'medicinandring')   is true as had_medication_change,
     bool_or(e.event_type = 'annat')            is true as had_other_event,
     count(e.event_id)                                  as n_events,
-    string_agg(e.note, '; ')                           as notes
+    string_agg(e.note, '; ')                           as notes,
+    -- Oura sleep (null om OURA_TOKEN saknas eller saknad dag)
+    sl.sleep_score,
+    sl.readiness_score,
+    sl.hrv_avg,
+    sl.hr_lowest_bpm,
+    sl.total_sleep_seconds,
+    sl.deep_sleep_seconds,
+    sl.rem_sleep_seconds,
+    sl.sleep_efficiency_pct
 from days as d
 left join events as e
     on d.reading_date between e.start_date and e.end_date
 left join inferred_sensor_starts as s
     on d.reading_date = s.reading_date
-group by d.reading_date, s.reading_date
+left join sleep as sl
+    on d.reading_date = sl.reading_date
+group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
+         sl.hrv_avg, sl.hr_lowest_bpm, sl.total_sleep_seconds,
+         sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct

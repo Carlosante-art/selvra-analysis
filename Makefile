@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: demo build build-live live rapport dreamer tolka test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: demo build build-live live rapport dreamer tolka sammanfattning skanna import-kalender loop test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -29,6 +29,7 @@ build: $(DBT_PACKAGES)
 ## ANALYSIS_USER_ID in .env. Clarity exports already loaded are kept and take precedence.
 build-live: $(DBT_PACKAGES)
 	uv run python -m selvra_analysis.ingest_supabase --db $(DB)
+	uv run python -m selvra_analysis.ingest_oura --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 
@@ -80,6 +81,23 @@ dreamer:
 ## Tolka en slutrapport och ge nästa steg: make tolka studie=studies/001-traning-natten-efter/
 tolka:
 	uv run python -m selvra_analysis.dreamer tolka "$(studie)"
+
+## Syntetisera alla studier till en portfolio-översikt
+sammanfattning:
+	uv run python -m selvra_analysis.dreamer sammanfattning
+
+## Skanna data efter mönster och föreslå studiefrågor
+skanna:
+	uv run python -m selvra_analysis.scanner
+
+## Importera händelser från iCal: make import-kalender fil=~/kalender.ics
+## Förhandsgranska: make import-kalender fil=~/kalender.ics forhandsgranska=1
+import-kalender:
+	uv run python -m selvra_analysis.import_kalender "$(fil)" $(if $(forhandsgranska),--forhandsgranska,)
+
+## Autonom loop: hämta data → skanna → tolka → syntetisera
+loop:
+	uv run python -m selvra_analysis.loop
 
 ## Dagbok: visa gårdagens CGM-siffror och logga händelser interaktivt
 dagbok:
