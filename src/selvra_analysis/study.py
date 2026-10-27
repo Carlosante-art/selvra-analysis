@@ -503,6 +503,8 @@ def _check_data_complete(con, end: date, strict: bool) -> None:
         latest = con.execute("select max(cast(reading_at_local as date)) "
                              "from intermediate.int_cgm_flagged").fetchone()[0]
     except duckdb.CatalogException:  # a day-level outcome read only from the marts
+        latest = None
+    if latest is None:  # wearable-only mode: no CGM readings, the mart carries freshness
         latest = con.execute("select max(reading_date) from marts.mart_analysis_days").fetchone()[0]
     if latest is None or latest < end or (strict and latest == end):
         raise StudyError(f"datan når bara till {latest}, studien slutade {end}; ladda ny data (make live) "
