@@ -26,7 +26,7 @@ from selvra_analysis import study as st
 FORSLAG_ID = "p01-promenad-vilopuls"
 ANTAL_DAGAR = 24
 AVSTAND_DAGAR = 3
-START_OM_DAGAR = 14
+START_OM_DAGAR = 4
 
 INBJUDAN = ("Selvra ser att underlaget nu räcker för att pröva en fråga på riktigt: "
             "sänker en promenaddag nattens vilopuls? Upplägget är granskat och klart "
