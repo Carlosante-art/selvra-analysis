@@ -5,7 +5,7 @@ DEMO_DB ?= data/demo.duckdb
 DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
 
-.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok
+.PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok reproduce
 
 ## Synthetic data end to end: generate, load, transform, test
 demo:
@@ -43,6 +43,10 @@ validate:
 ## The same check on your own data (needs R and iglu)
 validate-real:
 	uv run python -m selvra_analysis.validate_iglu --db $(DB)
+
+## The example study's result, recomputed and compared value by value with the stored one
+reproduce:
+	uv run python -m selvra_analysis.reproduce --db $(DEMO_DB)
 
 ## Worked example of the full analysis workflow, on synthetic data
 example:

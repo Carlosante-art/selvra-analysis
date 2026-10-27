@@ -27,6 +27,8 @@ jobs:
         run: make validate
       - name: Example analysis end to end
         run: make example
+      - name: Example study result reproduces exactly
+        run: make reproduce
 
   iglu:
     # Independent check on every push: iglu computes the same metrics in R from the same readings.

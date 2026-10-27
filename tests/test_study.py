@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -236,3 +237,19 @@ def test_report_shows_negative_control_and_protocol(folder: Path, tmp_path: Path
     assert "som förväntat" in report
     assert "## Protokoll (CENT 2015)" in report
     assert "Ändringar efter låsning:** inga" in report
+
+
+def test_every_computed_number_in_the_report_comes_from_the_run_record(folder: Path, tmp_path: Path) -> None:
+    """Text-to-number traceability (Sandve et al. 2013, rule 9): signed numbers in the report are
+    computed results; each must be the formatting of a value stored in the run record."""
+    s = st.load(folder / "studie.yml")
+    st.lock(s, seed=1)
+    db = make_db(tmp_path / "t.duckdb", st.n1.read_schedule(folder / "schema.csv"), effect=-2.0)
+    with duckdb.connect(str(db), read_only=True) as con:
+        record, report = st.run(s, con, today=date(2025, 6, 1))
+    recorded = {st._fmt(v) for part in ("result", "negativ_kontroll")
+                for v in record[part].values() if isinstance(v, float)}
+    recorded.add(st._fmt(s.spec["analys"]["minsta_relevanta_effekt"]))
+    in_report = set(re.findall(r"[+-]\d+,\d{2}", report))
+    assert in_report, "the report should contain computed numbers"
+    assert in_report <= recorded, f"numbers not traceable to the record: {in_report - recorded}"
