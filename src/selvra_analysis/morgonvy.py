@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -25,6 +26,10 @@ from selvra_analysis.prioritera import lasta_studier, rankade_hypoteser, utkast
 
 DB_DEFAULT = Path("data/selvra.duckdb")
 UT = Path("dashboard/index.html")
+# Windows-kopia så vyn alltid finns ett dubbelklick bort. Sätt SELVRA_MORGONVY_KOPIA
+# för annan plats; tom sträng stänger av.
+KOPIA = Path(os.environ.get("SELVRA_MORGONVY_KOPIA",
+                            "/mnt/c/Users/karik/Downloads/selvra-morgonvy.html"))
 STUDIES = Path("studies")
 
 LOW, HIGH = 3.9, 10.0
@@ -489,13 +494,26 @@ def render(db_path: Path) -> str:
 </div></body></html>"""
 
 
+def skriv_kopia(html: str) -> None:
+    """Kopia till Windows om sökvägen är nåbar; tyst nej annars (t.ex. i CI)."""
+    if not str(KOPIA) or not KOPIA.parent.exists():
+        return
+    try:
+        KOPIA.write_text(html)
+        print(f"Kopia: {KOPIA}", file=sys.stderr)
+    except OSError as err:
+        print(f"Kunde inte skriva kopian: {err}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--db", type=Path, default=DB_DEFAULT)
     args = parser.parse_args(argv)
     UT.parent.mkdir(exist_ok=True)
-    UT.write_text(render(args.db))
+    html = render(args.db)
+    UT.write_text(html)
     print(f"Morgonvyn: {UT}", file=sys.stderr)
+    skriv_kopia(html)
 
 
 if __name__ == "__main__":

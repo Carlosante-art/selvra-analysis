@@ -32,6 +32,7 @@ import duckdb
 from selvra_analysis.dreamer import _load_dotenv, sammanfattning, tolka
 from selvra_analysis.morgonvy import UT as MORGONVY_UT
 from selvra_analysis.morgonvy import render as rendera_morgonvy
+from selvra_analysis.morgonvy import skriv_kopia
 from selvra_analysis.prioritera import rapport as prioritering
 from selvra_analysis.scanner import _format, scan, spara_hypoteser
 from selvra_analysis.study import StudyError
@@ -151,7 +152,9 @@ def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     lines.extend(_llm_steg(db_path))
 
     MORGONVY_UT.parent.mkdir(exist_ok=True)
-    MORGONVY_UT.write_text(rendera_morgonvy(db_path))
+    morgon_html = rendera_morgonvy(db_path)
+    MORGONVY_UT.write_text(morgon_html)
+    skriv_kopia(morgon_html)
     print(f"→ Morgonvyn: {MORGONVY_UT}", file=sys.stderr)
     lines.append(f"Morgonvyn renderad: {MORGONVY_UT}\n")
 
