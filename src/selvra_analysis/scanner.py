@@ -250,6 +250,76 @@ def _somn(df: pd.DataFrame) -> list[Pattern]:
     )]
 
 
+MIN_WEARABLE_DAGAR = 14
+
+
+def _vilopuls_trend(df: pd.DataFrame) -> list[Pattern]:
+    """Vilopulsens riktning senaste tre veckorna — wearable-motsvarigheten till TIR-trenden."""
+    if "hr_lowest_bpm" not in df.columns:
+        return []
+    v = df[df["hr_lowest_bpm"].notna()].tail(21)
+    if len(v) < MIN_WEARABLE_DAGAR:
+        return []
+    lutning = float(np.polyfit(np.arange(len(v)), v["hr_lowest_bpm"].values, 1)[0]) * 7
+    if abs(lutning) < 1.0:
+        return []
+    riktning = "uppåt" if lutning > 0 else "nedåt"
+    return [Pattern(
+        typ="trend",
+        beskrivning=(f"Vilopulsen rör sig {riktning} de senaste tre veckorna "
+                     f"({lutning:+.1f} slag per vecka)."),
+        fragor=["Har något förändrats i rutinen de senaste tre veckorna?",
+                "Påverkar en promenaddag nattens vilopuls?"],
+        vikt=2 if abs(lutning) < 2.5 else 3,
+    )]
+
+
+def _somn_under_normalt(df: pd.DataFrame) -> list[Pattern]:
+    """Nätter i följd under personens eget P10 — inte en norm, hans egen baslinje."""
+    if "total_sleep_seconds" not in df.columns:
+        return []
+    v = df[df["total_sleep_seconds"].notna()].copy()
+    if len(v) < MIN_WEARABLE_DAGAR:
+        return []
+    p10 = float(v["total_sleep_seconds"].quantile(0.10))
+    svit = 0
+    for x in reversed(v["total_sleep_seconds"].tolist()):
+        if x < p10:
+            svit += 1
+        else:
+            break
+    if svit < 2:
+        return []
+    return [Pattern(
+        typ="kluster",
+        beskrivning=(f"{svit} nätter i följd under din egen tionde percentil för sömnlängd "
+                     f"({p10 / 3600:.1f} h)."),
+        fragor=["Sammanfaller korta nätter med någon händelse dagen före?"],
+        vikt=2,
+    )]
+
+
+def _steg_nattpuls(df: pd.DataFrame) -> list[Pattern]:
+    """Steg i dag mot nattens vilopuls — frågan som kan bli ett riktigt försök."""
+    if "steps" not in df.columns or "hr_lowest_bpm" not in df.columns:
+        return []
+    v = df[["steps", "hr_lowest_bpm"]].copy()
+    v["puls_natten_efter"] = v["hr_lowest_bpm"].shift(-1)
+    v = v.dropna()
+    if len(v) < MIN_WEARABLE_DAGAR:
+        return []
+    r = float(v["steps"].corr(v["puls_natten_efter"]))
+    if abs(r) < 0.25:
+        return []
+    return [Pattern(
+        typ="korrelation",
+        beskrivning=(f"Dagens steg och nattens vilopuls samvarierar över {len(v)} dygn. "
+                     "Riktning och storlek kräver ett lottat försök för att avgöra."),
+        fragor=["Sänker en dag med minst 8 000 steg nattens vilopuls?"],
+        vikt=3 if abs(r) > 0.4 else 2,
+    )]
+
+
 def scan(db_path: Path) -> list[Pattern]:
     df = _load(db_path)
     patterns: list[Pattern] = []
@@ -258,6 +328,9 @@ def scan(db_path: Path) -> list[Pattern]:
     patterns += _kluster(df)
     patterns += _trend(df)
     patterns += _somn(df)
+    patterns += _vilopuls_trend(df)
+    patterns += _somn_under_normalt(df)
+    patterns += _steg_nattpuls(df)
     return sorted(patterns, key=lambda p: -p.vikt)
 
 

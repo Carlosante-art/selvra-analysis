@@ -28,6 +28,7 @@ from cryptography.hazmat.primitives import serialization
 from py_vapid import Vapid01
 from pywebpush import WebPushException, webpush
 
+from selvra_analysis.forslag import forslagsrad
 from selvra_analysis.ingest_garmin import load as load_garmin
 from selvra_analysis.ingest_garmin import person_paths
 from selvra_analysis.morgonmejl import FETCH_DAYS, compose, read_days
@@ -104,6 +105,9 @@ def _report(person: str, fetch: bool) -> dict:
         load_garmin(paths["db"], FETCH_DAYS, paths["token"], paths["snapshots"])
     today = date.today()
     subject, body = compose(conf["namn"], read_days(paths["db"]), today)
+    rad = forslagsrad(person, paths["db"], today, bygg=fetch)
+    if rad:
+        body = body.rstrip() + "\n\n" + rad + "\n"
     return payload(subject, body, today)
 
 
