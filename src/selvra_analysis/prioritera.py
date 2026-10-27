@@ -35,6 +35,7 @@ HYPOTES_KOLUMNER = {
     "resa": "is_travelling", "resor": "is_travelling",
     "medicin": "had_medication_change",
     "mens": "is_menstruating",
+    "arbete": "is_workday", "arbetsdag": "is_workday", "skift": "is_workday",
     "steg": "high_steps",
     "sömn": "sleep_score", "somn": "sleep_score", "sover": "sleep_score",
 }
