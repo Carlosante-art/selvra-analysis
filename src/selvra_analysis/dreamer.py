@@ -1,9 +1,11 @@
 """Dreamer: generera och tolka studier från naturliga frågor.
 
-Två kommandon:
+Fyra kommandon:
 
   generera (default) — tar en fråga, returnerar studie.yml
-  tolka              — läser en slutrapport, ger klartext + nästa steg
+  tolka              — läser en slutrapport, ger klartext + nästa steg, uppdaterar minnet
+  sammanfattning     — syntetiserar alla studier
+  minne              — visar vad Dreamer vet sedan tidigare
 
 Kräver ANTHROPIC_API_KEY i miljön (eller i .env).
 
@@ -11,8 +13,10 @@ Usage:
     uv run python -m selvra_analysis.dreamer
     uv run python -m selvra_analysis.dreamer --fraga "Påverkar stress mitt TIR?"
     uv run python -m selvra_analysis.dreamer tolka studies/001-traning-natten-efter/
+    uv run python -m selvra_analysis.dreamer minne
     make dreamer
     make tolka studie=studies/001-traning-natten-efter/
+    make minne
 """
 
 from __future__ import annotations
@@ -32,6 +36,7 @@ from selvra_analysis.study import MIN_DAYS, StudyError, load, status, validate
 DB_DEFAULT = Path("data/selvra.duckdb")
 STUDIES_DIR = Path("studies")
 MAX_RETRIES = 3
+MINNE_FILE = "minne.yml"
 
 MART_COLUMNS_DOC = """\
 Tillgängliga kolumner i marts.mart_analysis_days (för utfall.kolumn):
@@ -88,7 +93,7 @@ analys:
   niva: 0.95
   blocklangd: 7            # dagar, för blockbootstrap
   minsta_relevanta_effekt: -0.5  # tal ≠ 0; negativt = förväntat lägre med exponering
-  minsta_underlag: {exponerade: 15, jamforelse: 30}  # endast observation; var och en minst {min_days}
+  minsta_underlag: {{exponerade: 15, jamforelse: 30}}  # endast observation; var och en minst {min_days}
 
 protokoll:                 # CENT 2015
   periodeffekt: ...        # hur tidstrender hanteras
@@ -111,8 +116,173 @@ REGLER:
 - För TIR/TAR/TBR i procent är ±5 procentenheter rimlig minsta effekt.
 - Den negativa kontrollen måste ligga där exponeringen inte kan verka: före den i tid,
   eller ett utfall utan mekanism. Samma analys körs på den; en effekt där avslöjar snedvridning.
+- Generera INTE studier som redan finns i minnet nedan.
 """
 
+
+# ---------------------------------------------------------------------------
+# Minne
+# ---------------------------------------------------------------------------
+
+def _minne_path(studies_dir: Path) -> Path:
+    return studies_dir / MINNE_FILE
+
+
+def _load_minne(studies_dir: Path) -> str:
+    path = _minne_path(studies_dir)
+    if not path.exists():
+        return ""
+    try:
+        data = yaml.safe_load(path.read_text()) or {}
+    except yaml.YAMLError:
+        return ""
+
+    studier = data.get("studier", [])
+    hypoteser = data.get("oppna_hypoteser", [])
+
+    if not studier and not hypoteser:
+        return ""
+
+    lines = ["MINNE (tidigare studier och öppna hypoteser):"]
+    if studier:
+        lines.append("\nGenomförda och pågående studier:")
+        for s in studier:
+            beslut = s.get("beslut", "?")
+            lines.append(f"  [{s.get('id', '?')}] {s.get('fraga', '')} → {beslut}")
+            if s.get("lardom"):
+                lines.append(f"    Lärdom: {s['lardom']}")
+            if s.get("nasta_steg"):
+                lines.append(f"    Nästa steg: {s['nasta_steg']}")
+    if hypoteser:
+        lines.append("\nÖppna hypoteser (ännu inte studerade):")
+        for h in hypoteser:
+            lines.append(f"  - {h}")
+    lines.append("\nUndvik att generera studier som redan finns ovan.")
+    return "\n".join(lines)
+
+
+def _init_minne(studies_dir: Path) -> None:
+    path = _minne_path(studies_dir)
+    if path.exists():
+        return
+
+    studier = []
+    for folder in sorted(studies_dir.glob("[0-9][0-9][0-9]-*")):
+        if not (folder / "studie.yml").exists():
+            continue
+        try:
+            spec = yaml.safe_load((folder / "studie.yml").read_text()) or {}
+        except yaml.YAMLError:
+            continue
+
+        if (folder / "slutrapport.md").exists():
+            st = "klar"
+            beslut = "obestämt"
+        elif (folder / "las.json").exists():
+            st = "pågår"
+            beslut = "pågår"
+        else:
+            st = "ej_last"
+            beslut = "pågår"
+
+        studier.append({
+            "id": folder.name,
+            "fraga": spec.get("fraga", folder.name),
+            "status": st,
+            "beslut": beslut,
+            "lardom": "",
+            "nasta_steg": "",
+        })
+
+    data = {"studier": studier, "oppna_hypoteser": []}
+    path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False))
+
+
+def _add_study_to_minne(studies_dir: Path, study_id: str, fraga: str) -> None:
+    path = _minne_path(studies_dir)
+    if not path.exists():
+        _init_minne(studies_dir)
+    data = yaml.safe_load(path.read_text()) or {}
+    studier = data.get("studier", [])
+    if not any(s.get("id") == study_id for s in studier):
+        studier.append({
+            "id": study_id,
+            "fraga": fraga,
+            "status": "ej_last",
+            "beslut": "pågår",
+            "lardom": "",
+            "nasta_steg": "",
+        })
+        data["studier"] = studier
+        path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False))
+
+
+def _update_minne(
+    studies_dir: Path,
+    study_id: str,
+    lardom: str,
+    nasta_steg: str,
+    beslut: str,
+) -> None:
+    path = _minne_path(studies_dir)
+    if not path.exists():
+        _init_minne(studies_dir)
+    data = yaml.safe_load(path.read_text()) or {}
+    studier = data.get("studier", [])
+
+    for s in studier:
+        if s.get("id") == study_id:
+            s["lardom"] = lardom
+            s["nasta_steg"] = nasta_steg
+            s["beslut"] = beslut
+            s["status"] = "klar"
+            break
+    else:
+        studier.append({
+            "id": study_id,
+            "fraga": study_id,
+            "status": "klar",
+            "beslut": beslut,
+            "lardom": lardom,
+            "nasta_steg": nasta_steg,
+        })
+
+    data["studier"] = studier
+    path.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False))
+
+
+def show_minne(studies_dir: Path) -> str:
+    path = _minne_path(studies_dir)
+    if not path.exists():
+        return "Inget minne ännu. Kör `make dreamer` eller `make tolka` för att bygga upp det."
+    data = yaml.safe_load(path.read_text()) or {}
+    studier = data.get("studier", [])
+    hypoteser = data.get("oppna_hypoteser", [])
+
+    labels = {"klar": "klar", "pågår": "pågår", "ej_last": "ej låst"}
+    lines = [f"=== Dreamer-minne ({len(studier)} studie(r)) ===\n"]
+    for s in studier:
+        st = labels.get(s.get("status", "?"), s.get("status", "?"))
+        beslut = s.get("beslut", "?")
+        lines.append(f"[{s.get('id', '?')}]  {st} / {beslut}")
+        lines.append(f"  Fråga: {s.get('fraga', '')}")
+        if s.get("lardom"):
+            lines.append(f"  Lärdom: {s['lardom']}")
+        if s.get("nasta_steg"):
+            lines.append(f"  Nästa: {s['nasta_steg']}")
+        lines.append("")
+
+    if hypoteser:
+        lines.append("Öppna hypoteser:")
+        for h in hypoteser:
+            lines.append(f"  - {h}")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Hjälpfunktioner
+# ---------------------------------------------------------------------------
 
 def _load_dotenv() -> None:
     env = Path(".env")
@@ -161,10 +331,13 @@ def _next_id(fraga: str) -> str:
     return f"{n:03d}-{slug}"
 
 
-def _call_llm(fraga: str, context: str, error_feedback: str = "") -> str:
+def _call_llm(fraga: str, context: str, error_feedback: str = "", minne_text: str = "") -> str:
     client = anthropic.Anthropic()
 
-    user_content = f"{context}\n\nFRÅGA: {fraga}"
+    user_content = context
+    if minne_text:
+        user_content = minne_text + "\n\n" + user_content
+    user_content += f"\n\nFRÅGA: {fraga}"
     if error_feedback:
         user_content += f"\n\nFEL I FÖREGÅENDE FÖRSÖK — rätta dessa och försök igen:\n{error_feedback}"
 
@@ -186,8 +359,10 @@ def _parse_yaml(text: str) -> dict | None:
         return None
 
 
-def generate(fraga: str, db_path: Path) -> tuple[str, dict]:
+def generate(fraga: str, db_path: Path, studies_dir: Path = STUDIES_DIR) -> tuple[str, dict]:
+    _init_minne(studies_dir)
     context = _context(db_path)
+    minne_text = _load_minne(studies_dir)
     study_id = _next_id(fraga)
     error_feedback = ""
 
@@ -195,7 +370,7 @@ def generate(fraga: str, db_path: Path) -> tuple[str, dict]:
         if attempt > 1:
             print(f"  Försök {attempt}/{MAX_RETRIES}...", file=sys.stderr)
 
-        raw = _call_llm(fraga, context, error_feedback)
+        raw = _call_llm(fraga, context, error_feedback, minne_text)
         spec = _parse_yaml(raw)
 
         if spec is None:
@@ -215,13 +390,21 @@ def generate(fraga: str, db_path: Path) -> tuple[str, dict]:
     )
 
 
+# ---------------------------------------------------------------------------
+# Tolka
+# ---------------------------------------------------------------------------
+
 TOLKA_PROMPT = """\
 Du är Dreamer, tolkningslagret i Selvra-analysmotorn.
 
 Du får en slutrapport från en genomförd studie och aktuell datastatus.
-Din uppgift: förklara vad resultatet betyder på klartext svenska, och ge ett konkret nästa steg.
+Din uppgift: förklara vad resultatet betyder på klartext svenska, ge ett konkret nästa steg,
+och extrahera en lärdom för minnet.
 
-Strukturera svaret i tre korta avsnitt — inga rubriker, bara löpande text:
+Formatera svaret EXAKT så här — XML-taggarna är obligatoriska:
+
+<tolkning>
+Tre korta avsnitt utan rubriker, löpande text:
 
 1. VAD RESULTATET SÄGER (2-3 meningar): förklara beslutet (tesen håller / motbevisad / obestämt)
    i termer som inte kräver statistikkunskaper. Nämn skattningen och intervallet konkret.
@@ -234,16 +417,32 @@ Strukturera svaret i tre korta avsnitt — inga rubriker, bara löpande text:
    - Om obestämt + tillräcklig data men hög variation: föreslå n1-experiment
    - Om tesen håller: föreslå att bekräfta med n1 för att skilja samband från orsak
    - Om motbevisad: föreslå att undersöka en annan hypotes
+</tolkning>
 
+<minne>
+beslut: håller
+lärdom: EN mening om vad vi faktiskt lärde oss av denna studie
+nasta_steg: EN mening om vad som bör göras härnäst
+</minne>
+
+Välj ett av: håller | motbevisad | obestämt — för beslut.
 Var ärlig om begränsningar. Observationsstudier visar samband, inte orsak.
-Skriv på svenska. Max 150 ord totalt.
+Skriv tolkning på svenska. Max 150 ord i <tolkning>-blocket.
 """
 
 
-def _call_tolka(studie_yml: str, slutrapport: str, status_text: str) -> str:
+def _call_tolka(
+    studie_yml: str,
+    slutrapport: str,
+    status_text: str,
+    minne_text: str = "",
+) -> tuple[str, dict]:
     client = anthropic.Anthropic()
 
-    user_content = f"""\
+    user_content = ""
+    if minne_text:
+        user_content = minne_text + "\n\n"
+    user_content += f"""\
 STUDIEFIL:
 {studie_yml}
 
@@ -255,15 +454,34 @@ DATASTATUS:
 """
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=512,
+        max_tokens=768,
         system=TOLKA_PROMPT,
         messages=[{"role": "user", "content": user_content}],
     )
-    return msg.content[0].text.strip()
+    raw = msg.content[0].text.strip()
+
+    tolkning_match = re.search(r"<tolkning>(.*?)</tolkning>", raw, re.DOTALL)
+    tolkning = tolkning_match.group(1).strip() if tolkning_match else raw
+
+    minne_data: dict = {"beslut": "obestämt", "lardom": "", "nasta_steg": ""}
+    minne_match = re.search(r"<minne>(.*?)</minne>", raw, re.DOTALL)
+    if minne_match:
+        for line in minne_match.group(1).splitlines():
+            if ":" in line:
+                k, _, v = line.partition(":")
+                k = k.strip()
+                v = v.strip()
+                if k == "beslut":
+                    minne_data["beslut"] = v
+                elif k == "lärdom":
+                    minne_data["lardom"] = v
+                elif k == "nasta_steg":
+                    minne_data["nasta_steg"] = v
+
+    return tolkning, minne_data
 
 
 def _study_status_text(folder: Path, db_path: Path) -> str:
-    """The engine's own status report, computed in-process (it never shows the effect)."""
     try:
         study = load((folder / "studie.yml").resolve())
         with duckdb.connect(str(db_path), read_only=True) as con:
@@ -272,7 +490,7 @@ def _study_status_text(folder: Path, db_path: Path) -> str:
         return f"Status kunde inte tas fram: {err}"
 
 
-def tolka(folder: Path, db_path: Path) -> str:
+def tolka(folder: Path, db_path: Path, studies_dir: Path = STUDIES_DIR) -> str:
     slutrapport_path = folder / "slutrapport.md"
     studie_path = folder / "studie.yml"
 
@@ -287,9 +505,24 @@ def tolka(folder: Path, db_path: Path) -> str:
     studie_yml = studie_path.read_text()
     slutrapport = slutrapport_path.read_text()
     status_text = _study_status_text(folder, db_path)
+    minne_text = _load_minne(studies_dir)
 
-    return _call_tolka(studie_yml, slutrapport, status_text)
+    text, minne_data = _call_tolka(studie_yml, slutrapport, status_text, minne_text)
 
+    _update_minne(
+        studies_dir,
+        folder.name,
+        minne_data.get("lardom", ""),
+        minne_data.get("nasta_steg", ""),
+        minne_data.get("beslut", "obestämt"),
+    )
+
+    return text
+
+
+# ---------------------------------------------------------------------------
+# Sammanfattning
+# ---------------------------------------------------------------------------
 
 SAMMANFATTNING_PROMPT = """\
 Du är Dreamer, syntes-lagret i Selvra-analysmotorn.
@@ -315,10 +548,12 @@ Max 250 ord.
 """
 
 
-def _call_sammanfattning(studie_texter: list[str]) -> str:
-    import anthropic
+def _call_sammanfattning(studie_texter: list[str], minne_text: str = "") -> str:
     client = anthropic.Anthropic()
-    user_content = "STUDIER:\n\n" + "\n\n---\n\n".join(studie_texter)
+    user_content = ""
+    if minne_text:
+        user_content = minne_text + "\n\n"
+    user_content += "STUDIER:\n\n" + "\n\n---\n\n".join(studie_texter)
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=768,
@@ -336,6 +571,7 @@ def sammanfattning(studies_dir: Path, db_path: Path) -> str:
     if not folders:
         return "Inga studier hittade i " + str(studies_dir)
 
+    minne_text = _load_minne(studies_dir)
     texter = []
     for folder in folders:
         studie = (folder / "studie.yml").read_text()
@@ -347,7 +583,7 @@ def sammanfattning(studies_dir: Path, db_path: Path) -> str:
         else:
             texter.append(f"STUDIE: {folder.name} (ej låst)\n\nFIL:\n{studie}")
 
-    return _call_sammanfattning(texter)
+    return _call_sammanfattning(texter, minne_text)
 
 
 def write_study(study_id: str, spec: dict) -> Path:
@@ -358,55 +594,11 @@ def write_study(study_id: str, spec: dict) -> Path:
     return path
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    sub = parser.add_subparsers(dest="kommando")
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
 
-    gen = sub.add_parser("generera", help="Generera en studiefil från en fråga (default)")
-    gen.add_argument("--fraga", default=None, help="Frågan på svenska")
-    gen.add_argument("--db", type=Path, default=DB_DEFAULT)
-
-    tol = sub.add_parser("tolka", help="Tolka en slutrapport och ge nästa steg")
-    tol.add_argument("studie", type=Path, help="Sökväg till studiemappen")
-    tol.add_argument("--db", type=Path, default=DB_DEFAULT)
-
-    sam = sub.add_parser("sammanfattning", help="Syntetisera alla studier till en portfolio-översikt")
-    sam.add_argument("--studies", type=Path, default=STUDIES_DIR)
-    sam.add_argument("--db", type=Path, default=DB_DEFAULT)
-
-    # Bakåtkompatibilitet: dreamer [--fraga "..."] utan subkommando = generera
-    parser.add_argument("--fraga", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--db", type=Path, default=DB_DEFAULT)
-
-    args = parser.parse_args(argv)
-
-    _load_dotenv()
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
-
-    if args.kommando == "sammanfattning":
-        print("\nSyntetiserar studieportföljen...\n", file=sys.stderr)
-        text = sammanfattning(args.studies, args.db)
-        print(text)
-        out = Path("data/rapporter/portfolio.md")
-        out.parent.mkdir(exist_ok=True)
-        out.write_text(text + "\n")
-        print(f"\nSparad: {out}", file=sys.stderr)
-        return
-
-    if args.kommando == "tolka":
-        folder = args.studie.resolve()
-        print(f"\nTolkar {folder.name}...\n", file=sys.stderr)
-        text = tolka(folder, args.db)
-        print(text)
-        out = folder / "tolkning.md"
-        out.write_text(text + "\n")
-        print(f"\nSparad: {out}", file=sys.stderr)
-        return
-
-    # generera (default)
-    fraga = getattr(args, "fraga", None)
-    db = getattr(args, "db", DB_DEFAULT)
+def _run_generera(fraga: str | None, db: Path) -> None:
     if not fraga:
         print("Vad vill du veta? (Skriv din fråga på svenska)")
         try:
@@ -429,12 +621,78 @@ def main(argv: list[str] | None = None) -> None:
 
     if svar in ("", "j", "ja", "y", "yes"):
         path = write_study(study_id, spec)
+        _add_study_to_minne(STUDIES_DIR, study_id, fraga)
         print(f"\nSparad: {path}")
+        print("Minnet uppdaterat.")
         print("Granska fråga, tes, motbevis, minsta relevanta effekt och negativ kontroll innan du låser.")
         print("Dreamer föreslår; besluten är dina. Det du låser är det du står för.")
         print(f"Nästa steg: uv run python -m selvra_analysis.study las {path}")
     else:
         print("Avbröt — inget skrevs.")
+
+
+def _run_tolka(folder: Path, db: Path) -> None:
+    print(f"\nTolkar {folder.name}...\n", file=sys.stderr)
+    text = tolka(folder, db)
+    print(text)
+    out = folder / "tolkning.md"
+    out.write_text(text + "\n")
+    print(f"\nSparad: {out}", file=sys.stderr)
+    print("Minnet uppdaterat.", file=sys.stderr)
+
+
+def _run_sammanfattning(studies: Path, db: Path) -> None:
+    print("\nSyntetiserar studieportföljen...\n", file=sys.stderr)
+    text = sammanfattning(studies, db)
+    print(text)
+    out = Path("data/rapporter/portfolio.md")
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(text + "\n")
+    print(f"\nSparad: {out}", file=sys.stderr)
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = parser.add_subparsers(dest="kommando")
+
+    gen = sub.add_parser("generera", help="Generera en studiefil från en fråga (default)")
+    gen.add_argument("--fraga", default=None, help="Frågan på svenska")
+    gen.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    tol = sub.add_parser("tolka", help="Tolka en slutrapport och ge nästa steg, uppdaterar minnet")
+    tol.add_argument("studie", type=Path, help="Sökväg till studiemappen")
+    tol.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    sam = sub.add_parser("sammanfattning", help="Syntetisera alla studier till en portfolio-översikt")
+    sam.add_argument("--studies", type=Path, default=STUDIES_DIR)
+    sam.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    min_p = sub.add_parser("minne", help="Visa vad Dreamer vet sedan tidigare")
+    min_p.add_argument("--studies", type=Path, default=STUDIES_DIR)
+
+    # Bakåtkompatibilitet: dreamer [--fraga "..."] utan subkommando = generera
+    parser.add_argument("--fraga", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--db", type=Path, default=DB_DEFAULT)
+
+    args = parser.parse_args(argv)
+
+    if args.kommando == "minne":
+        print(show_minne(args.studies))
+        return
+
+    _load_dotenv()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
+
+    if args.kommando == "sammanfattning":
+        _run_sammanfattning(args.studies, args.db)
+        return
+
+    if args.kommando == "tolka":
+        _run_tolka(args.studie.resolve(), args.db)
+        return
+
+    _run_generera(getattr(args, "fraga", None), getattr(args, "db", DB_DEFAULT))
 
 
 if __name__ == "__main__":
