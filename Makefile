@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: morgon morgon-skicka benchmark benchmark-llm dashboard-data demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: morgon morgon-skicka benchmark benchmark-llm motortest motortest-llm dashboard-data demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -42,6 +42,13 @@ live: build-live dashboard
 DAGAR ?= 30
 rapport:
 	uv run python -m selvra_analysis.report --dagar $(DAGAR) --db $(DB)
+
+## Motortest: falsk-fynd-frekvens och detektion för hela beslutskedjan, på egen data
+motortest:
+	uv run python -m selvra_analysis.motortest
+
+motortest-llm:
+	uv run python -m selvra_analysis.motortest llm
 
 ## Benchmark for the design review: make benchmark (granska), make benchmark-llm (needs ANTHROPIC_API_KEY)
 benchmark:

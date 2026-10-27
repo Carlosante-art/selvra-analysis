@@ -52,3 +52,19 @@ innan något annat görs åt saken. Produktionen är benchmarkens viktigaste kä
 Stoppfrekvens utan godkännandefrekvens är meningslös (stoppa allt ger 100 %).
 Falska godkännanden och falska stopp redovisas alltid tillsammans, med antal
 fall i nämnaren.
+
+## 7. Chaos monkey
+
+Inför varje större släpp: en ny session utan kontext (`claude -p`, neutral, utan
+minne av projektet) instrueras att attackera tesen och motorn — hitta sätt att
+få igenom trasiga studier, lura domslutet eller knäcka antagandena. Varje äkta
+fynd blir ett fryst fall eller en gate innan nästa släpp. Idé: F. Aiboud Nygren.
+
+## 8. Hela kedjan testas mot skapad sanning
+
+Granskningsbenchmarken testar designgranskningen; motortestet
+(`make motortest`) testar själva domslutet på riktig data där sanningen är
+skapad: omblandade exponeringar (rätt svar: inget definitivt besked) och
+planterade effekter (rätt svar: hitta dem). Falsk-fynd-frekvens och
+detektionsgrad redovisas alltid tillsammans, per exponeringsantal. Körs om
+efter varje ändring i statistik- eller beslutslagret.

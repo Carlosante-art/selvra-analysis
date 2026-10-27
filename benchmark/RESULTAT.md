@@ -124,6 +124,38 @@ Kvarvarande avvikelser mot facit är d09 och j04, båda skiljedömda som facitfe
 **Granskningen har därmed inga kända äkta fel: 30/30 stopp av rätt skäl, 0 falska godkännanden,
 0 skiljedömda falska stopp.** Nästa ärliga mått kräver dold4 av en blind författare.
 
+## 2026-10-27: motortestet — hela beslutskedjan mot skapad sanning, på riktig data
+
+Nytt lager (PROTOKOLL regel 8, idé ur F. Aiboud Nygrens analys): granskningsbenchmarken
+testar designgranskningen; motortestet testar domslutet självt — samma
+`block_bootstrap_difference` och samma `decide` som studiemotorn, ingen kopia — på de 80
+riktiga nätterna, där sanningen är skapad: omblandade exponeringar (placebo) och planterade
+sänkningar. 200 repetitioner per konfiguration, seedat. `resultat/motortest-…-kod.json`.
+
+**Placebo (falskt fynd = "tesen håller"; "motbevisad" under nollan är ett korrekt friande):**
+
+| exponeringar | håller (falskt fynd) | motbevisad | obestämt |
+|---|---|---|---|
+| 5 | 6,5 % | 4 % | 89,5 % |
+| 10 | 3,0 % | 4,5 % | 92,5 % |
+| 15 | 3,0 % | 7,5 % | 89,5 % |
+
+Inom motorns tillåtna område (minsta_underlag ≥ 10) ligger falsk-fynd-frekvensen på 3 % —
+konsistent med den dokumenterade 87 %-täckningen. Vid n=5 (under motorns golv) stiger den
+till 6,5 %: golvet MIN_DAYS=10 är därmed uppmätt motiverat, inte bara principiellt.
+
+**Planterade effekter (detektionsgrad):** −0,5: 6–13 % · −1,0: 9–16 % · −1,5: 11–21 %
+(n=10–15; n=5-kolumnen domineras av samma mekanism som placebo-fynden och är brus).
+
+**Fyndet bakom siffrorna:** nattseriens verkliga SD är **4,97 mmol/L** (medel 11,1;
+lag-1-autokorrelation 0,07). Med det bruset är effekter under ~3 mmol/L i praktiken
+odetekterbara i observationsdesign med ≤15 exponeringar. Det är inte motorns svaghet —
+placebo-kalibreringen stämmer — det är den ärliga styrkan på just denna persons data,
+och det förklarar varje "obestämt" hittills. Konsekvenser: (1) granskarens stränga
+par-krav är uppmätt rättfärdigade; (2) kortare utfallsfönster närmare mekanismen och
+sekventiella designer (METODPLAN §2) är vägen till svar, inte fler nätter av samma sort;
+(3) varje framtida ändring i statistik- eller beslutslagret körs om genom motortestet.
+
 ## 2026-10-27: språkmodellen, båda armarna
 
 Körd med `claude-opus-5-5` — frontier-modellen, inte en liten — på samtliga 52 fall

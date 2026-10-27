@@ -1,0 +1,68 @@
+{
+  "arm": "kod",
+  "reps": 200,
+  "seed": 1,
+  "giltiga_natter": 80,
+  "utfall": "natt 00-06",
+  "minsta_effekt": -0.5,
+  "resultat": {
+    "placebo": {
+      "5": {
+        "tesen håller": 13,
+        "tesen motbevisad": 8,
+        "obestämt": 179,
+        "reps": 200
+      },
+      "10": {
+        "tesen motbevisad": 9,
+        "obestämt": 185,
+        "tesen håller": 6,
+        "reps": 200
+      },
+      "15": {
+        "tesen håller": 6,
+        "tesen motbevisad": 15,
+        "obestämt": 179,
+        "reps": 200
+      }
+    },
+    "planterat": {
+      "0.5|5": {
+        "traffar": 26,
+        "reps": 200
+      },
+      "0.5|10": {
+        "traffar": 11,
+        "reps": 200
+      },
+      "0.5|15": {
+        "traffar": 12,
+        "reps": 200
+      },
+      "1.0|5": {
+        "traffar": 31,
+        "reps": 200
+      },
+      "1.0|10": {
+        "traffar": 18,
+        "reps": 200
+      },
+      "1.0|15": {
+        "traffar": 20,
+        "reps": 200
+      },
+      "1.5|5": {
+        "traffar": 41,
+        "reps": 200
+      },
+      "1.5|10": {
+        "traffar": 22,
+        "reps": 200
+      },
+      "1.5|15": {
+        "traffar": 26,
+        "reps": 200
+      }
+    }
+  }
+}
