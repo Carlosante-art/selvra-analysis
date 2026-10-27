@@ -118,6 +118,10 @@ def _strata(design: dict, workdays: set[date] | None) -> tuple[list[Stratum], st
     days = design.get("dagar") or {}
     if days.get("veckodagar"):
         wd = {n1.WEEKDAYS[w] for w in days["veckodagar"]}
+        if workdays:
+            # A rotating roster can make an allowed weekday a work day every other week.
+            return [("tillåtna veckodagar med arbetspass", lambda x: x.weekday() in wd and x in workdays),
+                    ("tillåtna veckodagar utan arbetspass", lambda x: x.weekday() in wd and x not in workdays)], None
         return [("de tillåtna veckodagarna", lambda x: x.weekday() in wd)], None
     if days.get("datum"):
         if workdays:
@@ -245,36 +249,53 @@ def _check_positivity(spec: dict, con) -> list[Check]:
                       "följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller "
                       "ange kolumn: manuell och motivera")]
     out_source = _check_one_device(con, hist)
-    strata, caveat = _strata(d, _workdays(con))
+    workdays = _workdays(con)
+    strata, caveat = _strata(d, workdays)
     rows, out = [], []
+    if caveat and not workdays:
+        out.append(Check("positivitet", VARNING, "dagstypen kan inte verifieras ur datan: " + caveat))
     justified = isinstance(d.get("genomforbarhet"), str) and d["genomforbarhet"].strip() != ""
     for name, pred in strata:
         x = hist.loc[hist["reading_date"].map(pred), "x"]
-        n = len(x)
-        n_a = int(x.map(lambda v: st.meets(float(v), f["A"])).sum())
-        n_b = int(x.map(lambda v: st.meets(float(v), f["B"])).sum())
-        rows.append(f"{name}: {n} dagar, A uppfyllt {n_a}, B uppfyllt {n_b}, median {x.median():.0f}"
-                    if n else f"{name}: inga dagar med mätning")
-        if n < MIN_STRATUM_DAYS:
-            out.append(Check("positivitet", VARNING, f"{name}: bara {n} dagar med mätning; för lite för att bedöma"))
-            continue
-        for cond, k in (("A", n_a), ("B", n_b)):
-            if k == 0:
-                out.append(Check("positivitet", VARNING if justified else STOPP,
-                                 f"{cond} inträffade inte en enda gång på {name} under {HISTORY_DAYS} dagar. "
-                                 + ("Motiverat i design.genomforbarhet." if justified else
-                                    "Antingen är villkoret omöjligt där (begränsa design.dagar eller definiera "
-                                    "om villkoret relativt dagstypen) eller så ska design.genomforbarhet "
-                                    "förklara hur det ska gå till.")))
-        for cond, k in (("A", n_a), ("B", n_b)):
-            if k >= 0.8 * n:
-                other = "B" if cond == "A" else "A"
-                out.append(Check("positivitet", VARNING,
-                                 f"{name}: {cond} är det vanliga ({k} av {n} dagar), så kontrasten skapas helt av "
-                                 f"att du aktivt gör {other}; säkerställ att {other} går att hålla och är säkert"))
+        row, checks = _stratum_positivity(name, x, f, justified, several=len(strata) > 1)
+        rows.append(row)
+        out += checks
     summary = Check("positivitet", OK, "historik per dagstyp: " + "; ".join(rows) +
                     (f" (OBS: {caveat})" if caveat else ""))
     return [summary, *out_source, *out]
+
+
+def _stratum_positivity(name: str, x: pd.Series, f: dict, justified: bool, several: bool) -> tuple[str, list[Check]]:
+    """Both conditions in one day type. Only A, the deliberate intervention, can be justified
+    when it never occurred: B is the ordinary day (F4), so a B that never happens on a day type
+    means that day type does not belong in the study."""
+    n = len(x)
+    n_a = int(x.map(lambda v: st.meets(float(v), f["A"])).sum())
+    n_b = int(x.map(lambda v: st.meets(float(v), f["B"])).sum())
+    row = f"{name}: {n} dagar, A uppfyllt {n_a}, B uppfyllt {n_b}, median {x.median():.0f}" if n else \
+        f"{name}: inga dagar med mätning"
+    if n == 0 and several:
+        return row, []
+    if n < MIN_STRATUM_DAYS:
+        return row, [Check("positivitet", VARNING, f"{name}: bara {n} dagar med mätning; för lite för att bedöma")]
+    out = []
+    for cond, k in (("A", n_a), ("B", n_b)):
+        if k == 0:
+            excused = justified and cond == "A"
+            out.append(Check("positivitet", VARNING if excused else STOPP,
+                             f"{cond} inträffade inte en enda gång på {name} under {HISTORY_DAYS} dagar. " + (
+                                 "Motiverat i design.genomforbarhet." if excused else
+                                 "B är den vanliga dagen och går inte att skapa med en motivering: begränsa "
+                                 "design.dagar till dagar där den förekommer." if cond == "B" else
+                                 "Antingen är villkoret omöjligt där (begränsa design.dagar eller definiera om "
+                                 "villkoret relativt dagstypen) eller så ska design.genomforbarhet förklara hur "
+                                 "det ska gå till.")))
+        elif k >= 0.8 * n:
+            other = "B" if cond == "A" else "A"
+            out.append(Check("positivitet", VARNING,
+                             f"{name}: {cond} är det vanliga ({k} av {n} dagar), så kontrasten skapas helt av att "
+                             f"du aktivt gör {other}; säkerställ att {other} går att hålla och är säkert"))
+    return row, out
 
 
 def _check_one_device(con, hist: pd.DataFrame) -> list[Check]:
@@ -325,10 +346,12 @@ def _check_power(study: st.Study, con) -> list[Check]:
         return [*out, Check("styrka", STOPP, "ingen glukoshistorik att skatta variationen från")]
     strata, _ = _strata(d, _workdays(con))
     end = daily["reading_date"].max()
-    calendar = [end - timedelta(days=i) for i in range(SD_HISTORY_DAYS) if _in_any(strata, end - timedelta(days=i))]
     in_stratum = daily[daily["reading_date"].map(lambda x: _in_any(strata, x))]
     valid = in_stratum[in_stratum["is_valid_day"] == True][col].dropna()
-    rate = len(valid) / len(calendar) if calendar else 0.0
+    # Data loss is a property of the sensor and the routine, not of the day type, so it is
+    # estimated on every day of the history; one weekday gives too few days to estimate it.
+    span = (end - daily["reading_date"].min()).days + 1
+    rate = len(daily[daily["is_valid_day"] == True][col].dropna()) / span
     k_eff = _expected_valid_pairs(pairs, rate, analysed)
     out.append(Check("underlag", VARNING if rate < 0.8 else OK,
                      f"{rate:.0%} av de tillåtna dagarna de senaste {SD_HISTORY_DAYS} dagarna hade giltigt utfall; "
@@ -371,6 +394,49 @@ def _check_data(con) -> list[Check]:
 
 # --- observation checks ------------------------------------------------------------------------
 
+def _daytype_gap(day_is_work: pd.Series, exposed: pd.Series) -> float | None:
+    work = day_is_work.reindex(exposed.index).astype(float)
+    if not exposed.any() or exposed.all():
+        return None
+    return abs(work[exposed].mean() - work[~exposed].mean())
+
+
+def _check_daytype(study: st.Study, con, s: pd.DataFrame) -> list[Check]:
+    """Do exposed and comparison days differ in day type?
+
+    Day type is work or off from logged shifts when there are any (a rotating roster makes the
+    weekday meaningless), otherwise weekday or weekend. It is checked on the analysed day and
+    on the exposure day, which differ when the outcome is the day after: high steps on work
+    days confound the night after even if the night itself falls on any weekday.
+    """
+    valid = s[s["y"].notna() & s["exposed"].notna()]
+    exposed = valid["exposed"].astype(bool)
+    workdays = _workdays(con)
+    if workdays:
+        def is_work(idx: pd.Index) -> pd.Series:
+            return pd.Series([x.date() in workdays for x in idx], index=idx)
+        label = "andel arbetsdagar"
+    else:
+        def is_work(idx: pd.Index) -> pd.Series:
+            return pd.Series(idx.day_of_week < 5, index=idx)
+        label = "andel vardagar"
+    lag = study.design["exponering"].get("dagar_efter", 0)
+    gaps = {"den analyserade dagen": _daytype_gap(is_work(valid.index), exposed)}
+    if lag:
+        shifted = valid.index - pd.Timedelta(days=lag)
+        gaps["exponeringsdagen"] = _daytype_gap(pd.Series(is_work(shifted).to_numpy(), index=valid.index), exposed)
+    gaps = {k: v for k, v in gaps.items() if v is not None}
+    if not gaps:
+        return []
+    where, gap = max(gaps.items(), key=lambda kv: kv[1])
+    level = STOPP if gap > DAYTYPE_STOP else VARNING if gap > DAYTYPE_WARN else OK
+    advice = {STOPP: "; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot ledig. "
+                     "Jämför inom dagstyp eller gör ett lottat n1-försök med design.dagar",
+              VARNING: "; dagstypen kan förklara skillnaden, jämför inom dagstyp", OK: ""}[level]
+    return [Check("dagtyp", level, f"{label} på {where} skiljer {gap:.0%} mellan exponerade och "
+                                   f"jämförelsedagar{advice}")]
+
+
 def _check_observation(study: st.Study, con) -> list[Check]:
     daily, col = st._daily_outcome(study, con)
     s = st._observation_series(study, daily, col)
@@ -383,18 +449,7 @@ def _check_observation(study: st.Study, con) -> list[Check]:
                      f"{n_exp} exponerade och {n_cmp} jämförelsedagar med giltigt utfall nu; "
                      f"studien kräver {floor.get('exponerade')} och {floor.get('jamforelse')}"
                      + (" och datan finns redan, så den kommer att vägras" if short and retro else "")))
-    valid = s[s["y"].notna() & s["exposed"].notna()]
-    weekend = pd.Series(valid.index.day_of_week.isin(WEEKEND), index=valid.index)
-    if valid["exposed"].any() and (~valid["exposed"].astype(bool)).any():
-        share_exp = weekend[valid["exposed"] == True].mean()
-        share_cmp = weekend[valid["exposed"] == False].mean()
-        gap = abs(share_exp - share_cmp)
-        level = STOPP if gap > DAYTYPE_STOP else VARNING if gap > DAYTYPE_WARN else OK
-        advice = {STOPP: "; exponeringen följer dagstypen och skillnaden går inte att skilja från arbetsdag mot "
-                         "ledig. Gör ett n1-försök med design.dagar i stället",
-                  VARNING: "; dagstypen kan förklara skillnaden, jämför inom dagstyp", OK: ""}[level]
-        out.append(Check("dagtyp", level, f"helgandel {share_exp:.0%} bland exponerade mot {share_cmp:.0%} "
-                                          f"bland jämförelsedagar{advice}"))
+    out += _check_daytype(study, con, s)
     return out
 
 

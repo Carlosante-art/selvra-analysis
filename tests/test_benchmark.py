@@ -55,3 +55,15 @@ def test_scenario_builds_the_tables_the_review_reads(tmp_path: Path) -> None:
         n = con.execute("select count(*) from intermediate.int_cgm_flagged").fetchone()[0]
     assert days[:2] == [(True, True), (False, False)], "rotating roster from the cycle"
     assert n == 14 * 288
+
+
+def test_the_review_answers_every_development_case_correctly(tmp_path: Path) -> None:
+    """Regression guard: a change to granska that lets a known flaw through, or stops a valid
+    design, fails the build. The held-out set is not run here; it is the honest measure."""
+    wrong = []
+    for case in bm.cases("fall"):
+        _, facit = bm._load(case)
+        result = bm.score(facit, bm.run_granska(case, tmp_path))
+        if not result["ratt_skal"]:
+            wrong.append(case.name)
+    assert wrong == []
