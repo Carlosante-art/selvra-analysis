@@ -69,6 +69,59 @@ def _trend(con, dagar: int = 14) -> list[tuple[str, float]]:
     return [(str(r.reading_date), float(r.tir_pct)) for r in df.itertuples()][::-1]
 
 
+AGP_DAGAR = 14
+ZONER = (("Mycket högt", "> 13,9", "tar_level2", "#f97316", "< 5%"),
+         ("Högt", "10,1–13,9", "tar_level1", "#fdba74", "< 25%"),
+         ("I mål", "3,9–10,0", "tir", "#4ade80", "> 70%"),
+         ("Lågt", "3,0–3,8", "tbr_level1", "#f87171", "< 4%"),
+         ("Mycket lågt", "< 3,0", "tbr_level2", "#dc2626", "< 1%"))
+
+
+def _agp_band(con) -> list[dict]:
+    """Percentiler per halvtimme över de senaste 14 dagarna — AGP-standardens kurva."""
+    return con.execute(
+        "with b as (select cast((extract(hour from reading_at_local) * 60 "
+        "+ extract(minute from reading_at_local)) / 30 as integer) as bin, glucose_mmol "
+        "from intermediate.int_cgm_readings where reading_date > "
+        "(select max(reading_date) - ? from marts.mart_analysis_days)) "
+        "select bin, quantile_cont(glucose_mmol, 0.05) as p05, "
+        "quantile_cont(glucose_mmol, 0.25) as p25, median(glucose_mmol) as p50, "
+        "quantile_cont(glucose_mmol, 0.75) as p75, quantile_cont(glucose_mmol, 0.95) as p95 "
+        "from b group by bin order by bin", [AGP_DAGAR]).df().to_dict("records")
+
+
+def _agp_stats(con) -> dict:
+    """Poolade 14-dagarsmått enligt konsensus: medel, GMI, CV, aktiv tid, fem zoner."""
+    r = con.execute(
+        "with p as (select glucose_mmol from intermediate.int_cgm_readings "
+        "where reading_date > (select max(reading_date) - ? from marts.mart_analysis_days)) "
+        "select count(*) as n, avg(glucose_mmol) as medel, "
+        "stddev_samp(glucose_mmol) / avg(glucose_mmol) * 100 as cv, "
+        "100.0 * count(*) filter (where glucose_mmol > 13.9) / count(*) as tar_level2, "
+        "100.0 * count(*) filter (where glucose_mmol > 10.0 and glucose_mmol <= 13.9) / count(*) as tar_level1, "
+        "100.0 * count(*) filter (where glucose_mmol >= 3.9 and glucose_mmol <= 10.0) / count(*) as tir, "
+        "100.0 * count(*) filter (where glucose_mmol >= 3.0 and glucose_mmol < 3.9) / count(*) as tbr_level1, "
+        "100.0 * count(*) filter (where glucose_mmol < 3.0) / count(*) as tbr_level2 "
+        "from p", [AGP_DAGAR]).df().iloc[0].to_dict()
+    mgdl = r["medel"] * 18.016
+    r["gmi"] = 3.31 + 0.02392 * mgdl
+    r["aktiv"] = min(100.0, 100.0 * r["n"] / (AGP_DAGAR * 288))
+    return r
+
+
+def _sista_dagar(con, n: int = 7) -> dict[str, list[tuple[float, float]]]:
+    df = con.execute(
+        "select reading_date, extract(hour from reading_at_local) * 60 "
+        "+ extract(minute from reading_at_local) as minut, glucose_mmol "
+        "from intermediate.int_cgm_readings where reading_date > "
+        "(select max(reading_date) - ? from marts.mart_analysis_days) "
+        "order by reading_date, minut", [n]).df()
+    ut: dict[str, list[tuple[float, float]]] = {}
+    for r in df.itertuples():
+        ut.setdefault(str(r.reading_date), []).append((float(r.minut), float(r.glucose_mmol)))
+    return ut
+
+
 def _domar() -> list[dict]:
     ut = []
     for mapp in sorted(STUDIES.glob("[0-9][0-9][0-9]-*"), reverse=True):
@@ -159,7 +212,92 @@ def _spark(trend: list[tuple[str, float]]) -> str:
     return "".join(delar)
 
 
+def _band_polygon(band: list[dict], lo_k: str, hi_k: str, w: int) -> str:
+    n = len(band)
+    fram = [f"{(b['bin'] + 0.5) / 48 * w:.1f},{_y(b[hi_k]):.1f}" for b in band]
+    bak = [f"{(b['bin'] + 0.5) / 48 * w:.1f},{_y(b[lo_k]):.1f}" for b in reversed(band)]
+    return " ".join(fram + bak) if n else ""
+
+
+def _svg_agp(band: list[dict]) -> str:
+    w, h = 1000, 250
+    delar = [f'<svg viewBox="0 0 {w} {h + 26}" class="kurva" preserveAspectRatio="none">']
+    delar.append(f'<rect x="0" y="{_y(HIGH):.0f}" width="{w}" '
+                 f'height="{_y(LOW) - _y(HIGH):.0f}" fill="rgba(74,222,128,0.06)"/>')
+    for g in (LOW, HIGH):
+        delar.append(f'<line x1="0" y1="{_y(g):.0f}" x2="{w}" y2="{_y(g):.0f}" '
+                     'stroke="rgba(74,222,128,0.35)" stroke-dasharray="5 6"/>')
+    if band:
+        delar.append(f'<polygon points="{_band_polygon(band, "p05", "p95", w)}" '
+                     'fill="rgba(255,255,255,0.07)"/>')
+        delar.append(f'<polygon points="{_band_polygon(band, "p25", "p75", w)}" '
+                     'fill="rgba(255,92,10,0.22)"/>')
+        median = " ".join(f"{(b['bin'] + 0.5) / 48 * w:.1f},{_y(b['p50']):.1f}" for b in band)
+        delar.append(f'<polyline points="{median}" fill="none" stroke="#fafafa" '
+                     'stroke-width="2.4" stroke-linejoin="round"/>')
+    for g, et in ((4, "4"), (10, "10"), (15, "15"), (20, "20")):
+        delar.append(f'<text x="6" y="{_y(g) - 5:.0f}" class="ax">{et}</text>')
+    for m, et in ((0, "00"), (360, "06"), (720, "12"), (1080, "18"), (1400, "24")):
+        delar.append(f'<text x="{m / 1440 * w:.0f}" y="{h + 20}" class="ax">{et}</text>')
+    delar.append("</svg>")
+    return "".join(delar)
+
+
+def _zonstapel(s: dict) -> str:
+    h = 230
+    delar = [f'<svg viewBox="0 0 70 {h}" class="zonbar">']
+    y = 0.0
+    for _, _, nyckel, farg, _ in ZONER:
+        andel = max(float(s.get(nyckel) or 0), 0)
+        hh = andel / 100 * h
+        if hh > 0.5:
+            delar.append(f'<rect x="0" y="{y:.1f}" width="26" height="{max(hh, 2):.1f}" '
+                         f'fill="{farg}" rx="2"/>')
+        y += hh
+    delar.append("</svg>")
+    rader = "".join(
+        f'<div class="zonrad"><span class="zonprick" style="background:{farg}"></span>'
+        f'<span class="zonnamn">{namn} <span class="dim">{omr}</span></span>'
+        f'<span class="zonpct">{float(s.get(nyckel) or 0):.0f}%</span>'
+        f'<span class="zonmal dim">{mal}</span></div>'
+        for namn, omr, nyckel, farg, mal in ZONER)
+    return f'<div class="zonwrap">{"".join(delar)}<div class="zonlista">{rader}</div></div>'
+
+
+def _miniatyrer(dagar: dict[str, list[tuple[float, float]]]) -> str:
+    kort = []
+    for datum, punkter in sorted(dagar.items())[-7:]:
+        w, h = 140, 44
+        vag = " ".join(f"{m / 1440 * w:.1f},{_y(g, h):.1f}" for m, g in punkter)
+        kort.append(
+            f'<div class="mini"><svg viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
+            f'<rect x="0" y="{_y(HIGH, h):.1f}" width="{w}" '
+            f'height="{_y(LOW, h) - _y(HIGH, h):.1f}" fill="rgba(74,222,128,0.08)"/>'
+            f'<polyline points="{vag}" fill="none" stroke="rgba(250,250,250,0.8)" '
+            f'stroke-width="1.1"/></svg>'
+            f'<span class="ax">{datum[5:]}</span></div>')
+    return '<div class="minirad">' + "".join(kort) + "</div>"
+
+
 # --- Sektioner --------------------------------------------------------------------------------
+
+def _sek_agp(con) -> str:
+    band = _agp_band(con)
+    if not band:
+        return ""
+    s = _agp_stats(con)
+    return f"""
+<section class="kort hero-kort">
+  <div class="kort-rubrik"><h2>AGP · {AGP_DAGAR} dagar</h2>
+  <div class="agp-matt mono dim">aktiv CGM {s['aktiv']:.0f}% · medel {s['medel']:.1f} mmol/L ·
+  GMI {s['gmi']:.1f}% · CV {s['cv']:.0f}%</div></div>
+  <div class="agp-grid">
+    <div>{_svg_agp(band)}</div>
+    {_zonstapel(s)}
+  </div>
+  {_miniatyrer(_sista_dagar(con))}
+</section>"""
+
 
 def _sek_igar(con, d: date) -> str:
     s = _stats(con, d)
@@ -170,7 +308,7 @@ def _sek_igar(con, d: date) -> str:
     steg = f"{s['steps']:,.0f}".replace(",", " ") if s.get("steps") == s.get("steps") and s.get("steps") is not None else "–"
     return f"""
 <section class="kort hero-kort">
-  <div class="kort-rubrik"><h2>Igår · {d}</h2><div class="spark-wrap">{_spark(_trend(con))}<span class="ax">TIR 14 dagar</span></div></div>
+  <div class="kort-rubrik"><h2>Igår · {d}</h2><div class="spark-wrap">{_spark(_trend(con))}<span class="ax">TIR {AGP_DAGAR} dagar</span></div></div>
   {_svg_kurva(_kurva(con, d))}
   {_tir_bar(s['tbr_pct'], s['tir_pct'], s['tar_pct'])}
   <div class="matris">
@@ -277,6 +415,22 @@ color:var(--dim);margin-bottom:14px}
 .matris div{display:flex;flex-direction:column}
 .num{font-size:26px;font-weight:600;letter-spacing:-0.02em}
 .et{font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--svag);margin-top:2px}
+.agp-grid{display:grid;grid-template-columns:1fr 290px;gap:22px;align-items:start}
+.agp-matt{font-size:12px}
+.zonwrap{display:flex;gap:14px;align-items:stretch}
+.zonbar{width:30px;height:230px;flex-shrink:0}
+.zonlista{display:flex;flex-direction:column;justify-content:space-between;padding:2px 0;flex:1}
+.zonrad{display:grid;grid-template-columns:10px 1fr auto auto;gap:8px;align-items:center;
+font-size:12px}
+.zonprick{width:9px;height:9px;border-radius:3px;display:inline-block}
+.zonnamn .dim{font-family:'Geist Mono',monospace;font-size:10.5px}
+.zonpct{font-weight:600;font-size:14px;text-align:right}
+.zonmal{font-family:'Geist Mono',monospace;font-size:10px}
+.minirad{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:16px}
+.mini{display:flex;flex-direction:column;gap:3px}
+.mini svg{width:100%;height:40px;background:rgba(255,255,255,0.02);border:1px solid var(--kant);
+border-radius:6px}
+.mini .ax{font-size:9.5px;color:var(--svag);font-family:'Geist Mono',monospace}
 .dom{border-top:1px solid var(--kant);padding:13px 0}
 .dom:first-of-type{border-top:0;padding-top:2px}
 .dom-topp{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -295,7 +449,7 @@ footer{margin-top:28px;font-family:'Geist Mono',monospace;font-size:11px;color:v
 display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 a{color:var(--dim)}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.matris{grid-template-columns:repeat(3,1fr)}
-.num{font-size:21px}}
+.num{font-size:21px}.agp-grid{grid-template-columns:1fr}.minirad{grid-template-columns:repeat(4,1fr)}}
 """
 
 MARKE = ('<svg viewBox="0 0 32 32" fill="none"><path d="M6.5 11 V21 M25.5 11 V21 M6.5 16 H25.5" '
@@ -306,6 +460,7 @@ MARKE = ('<svg viewBox="0 0 32 32" fill="none"><path d="M6.5 11 V21 M25.5 11 V21
 def render(db_path: Path) -> str:
     with duckdb.connect(str(db_path), read_only=True) as con:
         d = _dag(con)
+        agp = _sek_agp(con) if d else ""
         igar = _sek_igar(con, d) if d else '<section class="kort"><p class="dim">Ingen data.</p></section>'
         narmast = _sek_narmast(con)
         gora = _sek_gora(con)
@@ -322,6 +477,7 @@ def render(db_path: Path) -> str:
 <header><div class="logo">{MARKE}Selvra <span class="dim" style="font-weight:400">· morgonvy</span></div>
 <div class="datum">renderad {nu}</div></header>
 <div class="grid">
+{agp}
 {igar}
 {_sek_domar()}
 {narmast}
