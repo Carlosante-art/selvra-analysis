@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [overforing]
+kategori: reparerbart
+motivering: Paren läggs på två lediga dagar i rad (minsta_avstand 1). I ett AB-par mäts B-dagens fönster 18–24 bara ca 25–31 timmar efter A-dagens pass. Insulinkänsligheten är förhöjd upp till 24–48 timmar efter träning och hypoglykemirisken minst 24 timmar (t1d §1, Riddell 2017). Anteckningen rekommenderar minst 48 timmar mellan ett träningspass och kontrolldagens utfall och säger att dag-alternerande träningsdesigner kontamineras av överföring. Samma överföring syns i B-dagens negativa kontroll 07–10. Protokollets motivering ("över till nästa kväll") strider mot detta (designgranskning_n1 §4 C2/C4). Positivitet och tidsordning inom dagen är i övrigt korrekta.
+reparation: Höj minsta_avstand till minst 2–3 kalenderdagar (t.ex. första och fjärde dagen i varje ledighet), eller lägg in en tvättdag mellan dagarna i paret.

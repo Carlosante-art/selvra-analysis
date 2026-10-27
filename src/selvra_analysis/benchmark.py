@@ -37,7 +37,7 @@ from selvra_analysis import study as st
 from selvra_analysis.provenance import ROOT
 
 BENCH = ROOT / "benchmark"
-SETS = ("fall", "dold", "dold2")
+SETS = ("fall", "dold", "dold2", "dold3")
 MANIFEST = BENCH / "FRYST.sha256"
 RESULTS = BENCH / "resultat"
 DEFAULT_MODEL = os.environ.get("SELVRA_BENCHMARK_MODEL", "claude-opus-5-5")

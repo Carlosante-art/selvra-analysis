@@ -1,0 +1,47 @@
+id: j05-morgonpass-negkontroll-overlapp
+titel: Morgonlöpning före frukost och dagglukos
+fraga: Sänker 30 minuters lugn löpning kl 07 före frukost medelglukos 11–17 med minst 1,0 mmol/L jämfört med ingen träning?
+tes: Morgonlöpningen sänker medelglukos 11–17 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Lugn löpning 30 min, start 07:00 ± 15 min, före frukost; frukost kl 08:00 som vanligt
+  B: Ingen träning; frukost kl 08:00 som vanligt
+  start: 2025-07-05
+  par: 12
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar:
+    datum: [2025-07-05, 2025-07-08, 2025-07-15, 2025-07-18, 2025-07-25, 2025-07-28,
+            2025-08-04, 2025-08-07, 2025-08-14, 2025-08-17, 2025-08-24, 2025-08-27,
+            2025-09-03, 2025-09-06, 2025-09-13, 2025-09-16, 2025-09-23, 2025-09-26,
+            2025-10-03, 2025-10-06, 2025-10-13, 2025-10-16, 2025-10-23, 2025-10-26]
+    minsta_avstand: 3
+  dagar_motivering: Lediga dagar ur schemat (5 på, 5 av). Första och fjärde dagen i varje ledighet, så att två studiedagar alltid ligger minst tre dagar isär och mer än 48 timmar efter ett pass.
+  foljsamhet:
+    kolumn: manuell          # passet loggas som träning i klockan
+  verkan:
+    typ: traning
+    borjar: "07:00"
+
+utfall:
+  matt: medel
+  fonster: ["11:00", "17:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Paren består av två lediga dagar i samma eller nästa ledighet; långsam drift påverkar båda villkoren lika. Schemat lottas en gång vid låsning.
+  overforing: Minst tre kalenderdagar mellan studiedagarna (minst 48 timmar efter passet, Riddell 2017).
+  stoppregel: Passet startas inte under 5,0 mmol/L eller vid oförklarat över 15 mmol/L med ketoner minst 1,5. Avbryts vid hypoglykemi nivå 2 eller svår hypoglykemi; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["06:00", "09:00"]
+  motivering: Tidig morgon, före passet och frukosten, som dagens villkor inte kan påverka.

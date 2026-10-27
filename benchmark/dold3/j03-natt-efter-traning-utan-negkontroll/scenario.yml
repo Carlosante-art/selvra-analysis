@@ -1,0 +1,22 @@
+start: 2025-04-01
+dagar: 91
+idag: 2025-07-01
+seed: 103
+arbete:
+  monster: rullande
+  cykel: [1,1,0,0,0,1,1,1,0,0,1,0]
+  loggat: true
+steg:
+  arbete: 8500
+  ledig: 6500
+  sd: 1500
+glukos:
+  dag: 8.4
+  natt: 7.6
+  sd: 1.0
+  arbete: 0.3
+tackning: 0.93
+traning:
+  p: 0.35
+  p_arbete: 0.35
+  natt_effekt: 0.5

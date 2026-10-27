@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [dagtyp, positivitet]
+kategori: kritiskt
+motivering: Personen tränar bara på lediga dagar (helger; ingen träning alls på arbetsdagar), och arbetsdagar har ca 1,2 mmol/L högre dagglukos. Exponerade dagar är alltså nästan uteslutande lediga dagar och jämförelsedagarna mest arbetsdagar. Jämförelsen mäter därmed ledig dag mot arbetsdag snarare än träning, i samma riktning som tesen. Anteckningarna säger att man ska jämföra dagar efter händelsen med andra dagar i samma kontext och inte med alla övriga dagar (kausal_validitet Q3 punkt 1). Träning på arbetsdagar är en tom cell, ett strukturellt positivitetsbrott som inte går att modellera bort, så påståendet måste begränsas till lediga dagar (Q1 positivitetstabell; Daza 2018; Hernán & Robins). Underlaget räcker (ca 15 exponerade dagar) och den negativa kontrollen ligger före passet.
+reparation: Begränsa jämförelsen till lediga dagar (träningshelgdag mot helgdag utan träning) och kontrollera att minsta underlag fortfarande nås, eller gör om frågan till ett n1-experiment med lottade lediga dagar.

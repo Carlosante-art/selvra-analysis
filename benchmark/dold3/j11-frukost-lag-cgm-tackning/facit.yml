@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [underlag, styrka]
+kategori: kritiskt
+motivering: Designen ser korrekt ut, men personen har giltig CGM-data bara ca hälften av dagarna. Ett par är komplett bara om båda de analyserade dagarna har data, ca 0,5 × 0,5 = 25 procent, så av 14 planerade par väntas ca 3–4 kompletta. Med k par är minsta möjliga tvåsidiga p 2/2^k, och med 3–4 par är det 0,25–0,125, så testet kan inte nå α = 0,05 ens vid en perfekt effekt. Anteckningarna kräver att antalet giltiga par räknas efter väntat bortfall från sensorluckor innan låsning (designgranskning_n1 §6 S1, "Does the minimum achievable p beat α?"; §5 O4; SPENT 20c). Studien saknar dessutom plan för bortfallet. Felet är ett och detsamma (täckningen) och syns både som för lite underlag och som för låg styrka.
+reparation: Åtgärda CGM-täckningen först (sensorförsörjning, rutin vid byte), eller planera betydligt fler par utifrån den faktiska täckningen så att väntade kompletta par blir minst 6 med marginal, och skriv en regel för perioder utan data.

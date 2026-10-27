@@ -1,0 +1,45 @@
+id: j08-steg-lordagar-efter-apparatbyte
+titel: Lördagsvandring och eftermiddagsglukos
+fraga: Sänker en vandring på minst två timmar på lördagsförmiddagen medelglukos 13–20 med minst 1,0 mmol/L jämfört med en lördag utan promenad?
+tes: Vandringen sänker medelglukos 13–20 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Vandring eller promenad minst 2 timmar med start 10:00 ± 30 min, minst 11 000 steg under dagen
+  B: Ingen promenad, högst 7 000 steg under dagen
+  start: 2025-07-05
+  par: 10
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [lordag]}
+  dagar_motivering: Bara lördagar. Jag arbetar vardagar vid skrivbord, och på söndagar har jag fasta åtaganden. En vecka mellan studiedagarna ger ingen överföring mellan pass.
+  genomforbarhet: A har förekommit sällan eller inte alls på lördagar. Den uppnås med en planerad tvåtimmarspromenad (ca 13 000 steg). B motsvarar en vanlig lördag hemma.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 11000}
+    B: {max: 7000}
+  verkan:
+    typ: traning
+    borjar: "10:00"
+
+utfall:
+  matt: medel
+  fonster: ["13:00", "20:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Paren är två lördagar i rad; säsongsdrift över en vecka är liten och påverkar båda villkoren lika. Schemat lottas en gång vid låsning.
+  overforing: En vecka mellan studiedagarna, långt mer än 48 timmar efter ett pass.
+  stoppregel: Vandringen startas inte under 5,0 mmol/L, kolhydrater tas med. Avbryts vid hypoglykemi nivå 2, svår hypoglykemi senaste dygnet eller ketoner minst 1,5 mmol/L; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före lördagen kommer före vandringen och kan inte påverkas av dagens villkor; förra studiedagen ligger en vecka bort.

@@ -1,0 +1,47 @@
+id: j07-kvallspass-intilliggande-lediga-dagar
+titel: Kvällscykling på lediga dagar och kvällsglukos
+fraga: Sänker 45 minuters cykling kl 17 medelglukos 18–24 samma kväll med minst 1,0 mmol/L jämfört med vila?
+tes: Cyklingen sänker medelglukos 18–24 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Cykling 45 min i måttlig intensitet, start 17:00 ± 30 min
+  B: Ingen träning, vila på kvällen
+  start: 2025-07-03
+  par: 10
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar:
+    datum: [2025-07-03, 2025-07-04, 2025-07-11, 2025-07-12, 2025-07-19, 2025-07-20,
+            2025-07-27, 2025-07-28, 2025-08-04, 2025-08-05, 2025-08-12, 2025-08-13,
+            2025-08-20, 2025-08-21, 2025-08-28, 2025-08-29, 2025-09-05, 2025-09-06,
+            2025-09-13, 2025-09-14]
+    minsta_avstand: 1
+  dagar_motivering: Lediga dagar ur schemat (4 på, 4 av), andra och tredje dagen i varje ledighet. Två lediga dagar i rad gör att paret delar sömn, mat och sammanhang, och på arbetsdagar (lager, ca 12 500 steg) går B inte.
+  foljsamhet:
+    kolumn: manuell          # passet loggas som träning i klockan
+  verkan:
+    typ: traning
+    borjar: "17:00"
+
+utfall:
+  matt: medel
+  fonster: ["18:00", "23:59"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Paren är två intilliggande lediga dagar, så drift och sammanhang tar ut varandra inom paret. Schemat lottas en gång vid låsning.
+  overforing: Passet ligger på kvällen och effekten bedöms vara över till nästa kväll, så minsta avstånd 1 dag räcker. Skattningen redovisas separat för AB- och BA-par.
+  stoppregel: Passet startas inte under 5,0 mmol/L. Kvällsmål utan insulin efter passet enligt vanlig rutin. Avbryts vid nattlig hypoglykemi nivå 2 eller svår hypoglykemi; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Förmiddagen kommer före dagens pass och kan inte påverkas av dagens villkor.

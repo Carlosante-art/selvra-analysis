@@ -1,0 +1,45 @@
+id: j04-sex-par-stark-effekt
+titel: Kort promenad efter frukost och frukosttoppen
+fraga: Sänker en promenad på 15 minuter direkt efter frukost toppvärdet 07:30–10:30 med minst 1,5 mmol/L jämfört med att sitta?
+tes: Promenaden sänker toppen 07:30–10:30 med minst 1,5 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,5 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Fast frukost kl 07:30 (50 g havregryn med mjölk, ca 45 g kolhydrater, bolus enligt vanlig kvot), därefter promenad 15 min i lugn takt med start 07:45
+  B: Samma frukost kl 07:30 och samma bolus, sitter stilla 15 min efteråt
+  start: 2025-07-03
+  par: 6
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar:
+    datum: [2025-07-03, 2025-07-06, 2025-07-09, 2025-07-12, 2025-07-15, 2025-07-18,
+            2025-07-21, 2025-07-24, 2025-07-27, 2025-07-30, 2025-08-02, 2025-08-05]
+    minsta_avstand: 3
+  dagar_motivering: Jag har inga arbetsdagar, så båda villkoren går varje dag. Var tredje dag i stället för varje dag så att ingen studiedag ligger inom 48 timmar efter föregående promenad.
+  foljsamhet:
+    kolumn: manuell          # start- och sluttid för promenaden noteras i händelseloggen
+  verkan:
+    typ: traning
+    borjar: "07:45"
+
+utfall:
+  matt: topp
+  fonster: ["07:30", "10:30"]
+  min_tackning_pct: 80
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+
+protokoll:
+  periodeffekt: Paren är två studiedagar tre dagar isär, så långsam drift påverkar båda villkoren lika. Sex par ger minsta tvåsidiga p 2/64 ≈ 0,031, under 0,05.
+  overforing: Tre kalenderdagar mellan studiedagarna; en lugn promenad på 15 minuter har kort eftereffekt.
+  stoppregel: Promenaden startas inte under 5,0 mmol/L. Avbryts vid hypoglykemi nivå 2 under förmiddagen eller vid sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före kommer före frukosten och promenaden samma dag; föregående promenad ligger minst 64 timmar bort.

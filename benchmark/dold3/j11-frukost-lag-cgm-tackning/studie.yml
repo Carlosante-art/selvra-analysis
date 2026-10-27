@@ -1,0 +1,40 @@
+id: j11-frukost-lag-cgm-tackning
+titel: Proteinfrukost eller gröt
+fraga: Sänker en proteinrik frukost medelglukos 07:30–10:30 med minst 1,5 mmol/L jämfört med havregrynsgröt?
+tes: Proteinfrukosten sänker medelglukos 07:30–10:30 med minst 1,5 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,5 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Frukost kl 07:30 ± 15 min med 2 ägg, 100 g keso och 1 knäckebröd (ca 15 g kolhydrater), bolus enligt vanlig kvot
+  B: Frukost kl 07:30 ± 15 min med havregrynsgröt på 60 g gryn och mjölk (ca 50 g kolhydrater), bolus enligt vanlig kvot
+  start: 2025-07-07
+  par: 14
+  periodlangd_dagar: 2
+  tvatt_dagar: 1
+  foljsamhet:
+    kolumn: manuell          # frukosten loggas med foto och tid
+  verkan:
+    typ: maltid
+    borjar: "07:30"
+
+utfall:
+  matt: medel
+  fonster: ["07:30", "10:30"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+
+protokoll:
+  periodeffekt: Parade perioder om två dagar intill varandra; långsam drift påverkar båda villkoren i ett par lika. Schemat lottas en gång vid låsning.
+  overforing: Första dagen i varje period räknas inte (tvätt).
+  stoppregel: Avbryts vid hypoglykemi nivå 2 under förmiddagen eller vid sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före frukosten kan inte påverkas av dagens frukost.

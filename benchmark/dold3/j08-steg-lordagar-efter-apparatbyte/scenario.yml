@@ -1,0 +1,25 @@
+start: 2025-04-01
+dagar: 91
+idag: 2025-07-01
+seed: 108
+arbete:
+  monster: vardagar
+  loggat: true
+steg:
+  arbete: 5500
+  ledig: 7500
+  sd: 2000
+apparat:
+  fore: oura
+  efter: garmin
+  byte: 2025-06-10
+glukos:
+  dag: 8.3
+  natt: 7.5
+  sd: 0.6
+  arbete: 0.3
+tackning: 0.94
+traning:
+  p: 0.25
+  p_arbete: 0.1
+  natt_effekt: 0.2

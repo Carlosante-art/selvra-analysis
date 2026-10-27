@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [data, positivitet]
+kategori: kritiskt
+motivering: Följsamheten ska verifieras med kolumnen steps, men personen har ingen wearable (scenariot saknar steg) och det finns ingen stegdata alls, varken historiskt eller för studien. Villkoren A (minst 12 000) och B (högst 5 000) kan därför inte verifieras på någon dag, och det går inte att kontrollera ur egen data att de går att genomföra. Anteckningarna kräver ett objektivt följsamhetsmått ur en faktisk datakälla (designgranskning_n1 §3 I1, SCRIBE 17, "measurable from a device") och att genomförbarheten per dagstyp hämtas ur data, inte minnet (§2 F1). Skälet är fel datakälla, och följden är att villkoret inte går att verifiera på de tillåtna dagarna. Resten av designen (lördagar, en veckas avstånd, negativ kontroll före verkan, 10 par) är giltig.
+reparation: Byt foljsamhet till kolumn manuell med en loggad start- och sluttid för promenaden, eller skaffa en stegräknare och samla data före låsning så att trösklarna kan kontrolleras.

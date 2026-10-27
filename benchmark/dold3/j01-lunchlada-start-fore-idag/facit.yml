@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [tid]
+kategori: reparerbart
+motivering: Studien startar 2025-06-23, åtta dagar före granskningens idag (2025-07-01). Resten av designen är rimlig (fast måltid, tvättdag, negativ kontroll före lunchen, 12 par). Ett randomiserat n1-försök ska lottas och låsas innan data samlas in (Manolov & Solanas 2008 via designgranskning_n1 §6, "randomisation ... must occur before data collection"); CENT 8c kräver hela den avsedda sekvensen i förväg. Med start före idag ligger de första perioderna redan i den data som fanns när filen skrevs, så tesen kommer inte före datan.
+reparation: Flytta start till ett datum efter idag (t.ex. 2025-07-07) och lotta schemat vid låsning.

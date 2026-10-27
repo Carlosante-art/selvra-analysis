@@ -1,0 +1,45 @@
+id: j09-stegvillkor-utan-wearable
+titel: Lång lördagspromenad och eftermiddagsglukos
+fraga: Sänker en promenad på två timmar på lördagsförmiddagen medelglukos 13–19 med minst 1,0 mmol/L jämfört med en lördag utan promenad?
+tes: Promenaden sänker medelglukos 13–19 med minst 1,0 mmol/L.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Promenad 10:00–12:00, minst 12 000 steg under dagen
+  B: Ingen promenad, högst 5 000 steg under dagen
+  start: 2025-07-05
+  par: 10
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [lordag]}
+  dagar_motivering: Bara lördagar, då jag är ledig och kan välja fritt mellan villkoren. En vecka mellan studiedagarna ger ingen överföring.
+  genomforbarhet: Två timmar i ca 5 km/h ger ca 12 000–13 000 steg (ca 110 steg per minut), och en lördag utan promenad bedöms ligga under 5 000 steg.
+  foljsamhet:
+    kolumn: steps
+    A: {min: 12000}
+    B: {max: 5000}
+  verkan:
+    typ: traning
+    borjar: "10:00"
+
+utfall:
+  matt: medel
+  fonster: ["13:00", "19:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Paren är två lördagar i rad; säsongsdrift över en vecka påverkar båda villkoren lika. Schemat lottas en gång vid låsning.
+  overforing: En vecka mellan studiedagarna, långt mer än 48 timmar efter en promenad.
+  stoppregel: Promenaden startas inte under 5,0 mmol/L, kolhydrater tas med. Avbryts vid hypoglykemi nivå 2 eller svår hypoglykemi; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före lördagen kommer före promenaden och kan inte påverkas av dagens villkor.

@@ -1,0 +1,5 @@
+forvantat: STOPP
+skal: [struktur]
+kategori: reparerbart
+motivering: Studiefilen saknar blocket negativ_kontroll, som krävs för alla studier, även observationsstudier. I en observationsstudie är den negativa kontrollen det huvudsakliga verktyget för att upptäcka confounding och selektion in i exponering (kausal_validitet Q3, Lipsitch 2010; designgranskning_n1 §5 O5). Övrigt är rimligt; träning är lika vanlig på båda dagstyperna, cirka 30 exponerade nätter, retrospektiv period inom datan.
+reparation: Lägg till negativ_kontroll (matt, fonster, motivering) med ett utfall som delar confounding men som träningen inte kan påverka, och motivera dess placering i tid.

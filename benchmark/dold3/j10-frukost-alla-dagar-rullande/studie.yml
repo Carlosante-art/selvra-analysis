@@ -1,0 +1,40 @@
+id: j10-frukost-alla-dagar-rullande
+titel: Äggfrukost eller gröt
+fraga: Sänker en kolhydratsnål äggfrukost medelglukos 07–11 med minst 1,5 mmol/L jämfört med havregrynsgröt?
+tes: Äggfrukosten sänker medelglukos 07–11 med minst 1,5 mmol/L jämfört med gröt.
+motbevis: Hela intervallet visar en sänkning mindre än 1,5 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Frukost kl 07:00 ± 20 min med 2 ägg och 1 knäckebröd med smör (ca 15 g kolhydrater), bolus enligt vanlig kvot
+  B: Frukost kl 07:00 ± 20 min med havregrynsgröt på 60 g gryn och mjölk (ca 50 g kolhydrater), bolus enligt vanlig kvot
+  start: 2025-07-03
+  par: 20
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: manuell          # frukosten loggas med foto och tid
+  verkan:
+    typ: maltid
+    borjar: "07:00"
+
+utfall:
+  matt: medel
+  fonster: ["07:00", "11:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+
+protokoll:
+  periodeffekt: Paren är två intilliggande dagar och ordningen lottas per par. Med det rullande schemat (3 på, 3 av) hamnar ibland en arbetsdag och en ledig dag i samma par. Det ger mer brus men ingen systematisk skillnad, eftersom vilken dag som får A lottas. Frukosten äts kl 07 även lediga dagar.
+  overforing: En frukosts effekt på glukos är över inom 4–5 timmar, och nästa dags fönster börjar 20 timmar senare. Ingen tvättdag behövs.
+  stoppregel: Avbryts vid hypoglykemi nivå 2 under förmiddagen eller vid sjukdom; avbrott redovisas. 20 par planeras för att tåla ca 15 procent dagar utan giltig CGM.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före frukosten kan inte påverkas av dagens frukost; föregående frukost ligger mer än 17 timmar bort och har klingat av.

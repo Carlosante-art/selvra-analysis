@@ -1,0 +1,40 @@
+id: j01-lunchlada-start-fore-idag
+titel: Fullkornsris eller vitt ris i lunchlådan
+fraga: Sänker fullkornsris i stället för vitt ris i samma lunchlåda medelglukos 12–16 med minst 1,0 mmol/L?
+tes: Fullkornsris sänker medelglukos 12–16 med minst 1,0 mmol/L jämfört med vitt ris.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Lunchlåda kl 12:00 ± 15 min, kycklinggryta med 150 g kokt fullkornsris (ca 45 g kolhydrater), bolus enligt vanlig kolhydratkvot
+  B: Samma lunchlåda kl 12:00 ± 15 min med 150 g kokt vitt jasminris (ca 45 g kolhydrater), samma bolusregel
+  start: 2025-06-23
+  par: 12
+  periodlangd_dagar: 2
+  tvatt_dagar: 1
+  foljsamhet:
+    kolumn: manuell          # lådan märks A/B kvällen innan, foto vid lunch
+  verkan:
+    typ: maltid
+    borjar: "12:00"
+
+utfall:
+  matt: medel
+  fonster: ["12:00", "16:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Parade perioder om två dagar intill varandra; långsam drift påverkar båda villkoren i ett par lika.
+  overforing: Första dagen i varje period räknas inte. Lunchens effekt på glukos är över inom 4–5 timmar.
+  stoppregel: Avbryts vid hypoglykemi nivå 2 (under 3,0 mmol/L i minst 15 min) under eftermiddagen eller vid sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "10:00"]
+  motivering: Förmiddagen kommer före lunchen samma dag, och föregående dags lunch ligger mer än 18 timmar bort.

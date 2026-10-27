@@ -1,0 +1,42 @@
+id: j06-gronsaker-forst-helger-apparatbyte
+titel: Grönsaker först till helgmiddagen
+fraga: Sänker det att äta grönsaker och protein före kolhydraterna i samma middag medelglukos 18–22 med minst 1,0 mmol/L?
+tes: Måltidsordningen sänker medelglukos 18–22 med minst 1,0 mmol/L jämfört med samma middag blandad.
+motbevis: Hela intervallet visar en sänkning mindre än 1,0 mmol/L (eller ingen).
+
+design:
+  typ: n1
+  A: Fast helgmiddag kl 18:00 ± 15 min (ca 60 g kolhydrater), bolus enligt vanlig kvot. Grönsaker och protein äts först, kolhydraterna efter 10 minuter
+  B: Samma middag kl 18:00 ± 15 min och samma bolus, allt äts blandat
+  start: 2025-07-05
+  par: 16
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  dagar: {veckodagar: [lordag, sondag]}
+  dagar_motivering: Bara helger, när middagen kan lagas likadant och ätas kl 18. På vardagar äter jag i olika tider och kan inte styra menyn. Båda villkoren går varje helgdag.
+  foljsamhet:
+    kolumn: manuell          # foto av tallriken och ordningen noteras i händelseloggen
+  verkan:
+    typ: maltid
+    borjar: "18:00"
+
+utfall:
+  matt: medel
+  fonster: ["18:00", "22:00"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+
+protokoll:
+  periodeffekt: Paren är lördag och söndag samma helg; säsong och sensorålder påverkar båda villkoren lika. Schemat lottas en gång vid låsning.
+  overforing: Måltidens effekt på glukos är över inom 4–5 timmar; nästa studiedags fönster börjar 24 timmar senare.
+  stoppregel: Avbryts vid hypoglykemi nivå 2 under kvällen eller vid sjukdom; avbrott redovisas.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["07:00", "11:00"]
+  motivering: Förmiddagen kommer före middagen samma dag; föregående kvälls middag ligger mer än 12 timmar bort.

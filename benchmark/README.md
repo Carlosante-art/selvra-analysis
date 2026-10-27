@@ -13,7 +13,8 @@ Varje körning skrivs till `resultat/` med manifestets kontrollsumma, så det g�
 ## Uppsättningar
 
 - `fall/`: utvecklingsfallen, skrivna av den som byggde granskningen. De visar att den gör det den är tänkt att göra, men inte att den generaliserar.
-- `dold2/`: en andra dold uppsättning, skriven på samma sätt efter att granskningen rättats mot den första. Den mäter om rättningarna generaliserar.
+- `dold2/`: skrivna av din lokala Claude med kännedom om analysen av missarna i `RESULTAT.md`: riktade prov på om rättningarna håller i nya konstellationer och om de gått för långt.
+- `dold3/`: skrivna av en agent som varken sett granskningen, rättningarna eller resultaten. Det renaste måttet på generalisering.
 - `dold/`: skrivna av en agent som bara läst forskningsanteckningarna och den här filen, aldrig `granska.py`. Ett fall här som granskningen missar är en verklig svaghet.
 
 **Frysning.** `FRYST.sha256` innehåller kontrollsumman för varje fil. Körningen vägrar om något fall ändrats. Ett fel i ett fall rättas genom att lägga till ett nytt fall, aldrig genom att ändra det gamla efter att resultat setts.

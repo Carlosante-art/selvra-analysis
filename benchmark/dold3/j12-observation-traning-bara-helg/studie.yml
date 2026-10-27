@@ -1,0 +1,32 @@
+id: j12-observation-traning-bara-helg
+titel: Träningsdagar och kvällsglukos (observation)
+fraga: Är medelglukos 19–24 minst 0,8 mmol/L lägre på dagar med loggad träning än på andra dagar?
+tes: På träningsdagar är medelglukos 19–24 minst 0,8 mmol/L lägre än på övriga dagar.
+motbevis: Hela intervallet visar en skillnad mindre än 0,8 mmol/L (eller ingen).
+
+design:
+  typ: observation
+  exponering: {handelse: traning, dagar_efter: 0}
+  period: [2025-04-01, 2025-06-30]
+  retrospektiv: true
+
+utfall:
+  matt: medel
+  fonster: ["19:00", "23:59"]
+  min_tackning_pct: 70
+
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  niva: 0.95
+  minsta_relevanta_effekt: -0.8
+  minsta_underlag: {exponerade: 12, jamforelse: 30}
+
+protokoll:
+  periodeffekt: Blockbootstrap med sjudagarsblock hanterar autokorrelation och veckorytm. Passen ligger på förmiddagen eller tidig eftermiddag, före fönstret. Resultatet redovisas som samband, inte orsak.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten före träningsdagen kommer före passet och kan inte påverkas av det.

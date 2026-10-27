@@ -1,0 +1,21 @@
+start: 2025-04-01
+dagar: 91
+idag: 2025-07-01
+seed: 111
+arbete:
+  monster: inget
+  loggat: false
+steg:
+  arbete: 7000
+  ledig: 7000
+  sd: 2000
+glukos:
+  dag: 7.9
+  natt: 7.1
+  sd: 0.7
+  arbete: 0.0
+tackning: 0.5
+traning:
+  p: 0.25
+  p_arbete: 0.25
+  natt_effekt: 0.2
