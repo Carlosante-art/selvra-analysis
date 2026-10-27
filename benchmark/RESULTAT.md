@@ -80,12 +80,31 @@ Omprövning mot sann styrka:
 - **Falska stopp: 3 av 11** giltiga fall (d05, d12, j08). Alla tre gäller styrka nära 80-procentsgränsen.
 - **Orsaken är densamma i alla tre:** granskningen är för pessimistisk när den skattar styrkan. Väntat antal par avrundas nedåt, och SD skattad på få dagar används som om den vore exakt. Rättningen är att räkna styrkan över fördelningen av kompletta par och att varna i stället för att stoppa när osäkerheten i skattningen omfattar 80 %. Görs den förbrukas dold2 och dold3 som mått för styrkekategorin, och nästa mätning kräver en ny uppsättning.
 
-## Språkmodellen
+## 2026-10-27: språkmodellen, båda armarna
 
-Ännu inte körd. Den kräver `ANTHROPIC_API_KEY` och körs lokalt:
+Körd med `claude-opus-5-5` — frontier-modellen, inte en liten — på samtliga 52 fall
+(utveckling + dold + dold2 + dold3). Modellen har aldrig sett fallen, så alla är dolda för den.
+Körningarna: `resultat/2026-10-27T063542+0000-llm-alla.json` och `…-llm+kunskap-alla.json`.
 
-```bash
-make benchmark-llm      # samma fall, utan och med docs/studiedesign.md
-```
+| | granska | LLM (opus-5-5) | LLM + kunskapsbas |
+|---|---|---|---|
+| stoppade av fall som ska stoppas | 30/30 | 13/30 | 10/30 |
+| **falska godkännanden** | **0** | **17** | **20** |
+| falska stopp (av 22 giltiga) | 3* | 0 | 0 |
+| godkända med rätt flaggor | — | 17/22 | 17/22 |
 
-Jämförelsen gäller samma 28 fall. Språkmodellen har inte sett dem, så för den är även utvecklingsfallen dolda.
+\* granskas tre falska stopp är styrka-gränsfall (se omprövningen ovan), på fall där den
+redovisar sin aritmetik öppet.
+
+**Vad språkmodellen släppte igenom:** dagtypsconfounding (f13, d03, h10), överföring mellan
+intilliggande dagar (f06, d07, j07), saknad negativ kontroll (j03), negativ kontroll efter
+verkans början (j05), för lite underlag (f15, j11, d11) — alltså precis de fel som förstör
+en studies svar. Modellen godkänner i princip allt som ser välskrivet ut: 0 falska stopp
+eftersom den nästan aldrig stoppar.
+
+**Kunskapsbasen gjorde modellen sämre, inte bättre** (17 → 20 falska godkännanden):
+mer text att resonera kring ledde till mer välvilja, inte mer skärpa.
+
+**Slutsatsen, en mening:** på 52 fall missade den deterministiska granskningen inget
+kritiskt fel; frontier-LLM:en släppte igenom 17–20 av 30 — och det är skillnaden mellan
+att beräkna metodfel ur egen data och att bedöma dem på känsla.
