@@ -2,8 +2,8 @@
 
 Kräver OURA_TOKEN i .env (personlig åtkomsttoken från cloud.ouraring.com/personal-access-tokens).
 
-Laddar: sleep_score, total_sleep_seconds, rem_sleep_seconds, deep_sleep_seconds,
-        efficiency, hr_lowest, hrv_avg, readiness_score per dygn.
+Laddar per dygn: sleep_score, readiness_score, sömnlängd och -faser, effektivitet, lägsta puls,
+HRV (från nattens huvudsakliga sömnperiod) och steg (daily_activity).
 
 Usage:
     uv run python -m selvra_analysis.ingest_oura --db data/selvra.duckdb
@@ -51,12 +51,14 @@ def _get(token: str, endpoint: str, start: str, end: str) -> list[dict]:
     return resp.json().get("data", [])
 
 
-def parse(daily_sleep: list[dict], daily_readiness: list[dict], sleep_periods: list[dict]) -> pd.DataFrame:
+def parse(daily_sleep: list[dict], daily_readiness: list[dict], sleep_periods: list[dict],
+          daily_activity: list[dict] | None = None) -> pd.DataFrame:
     """One row per day, with each value from the endpoint that actually holds it.
 
     Oura's daily_sleep and daily_readiness `contributors` are 1-100 sub-scores, not
     durations, milliseconds or beats per minute. Measured values (seconds, ms, bpm, %)
     come from the sleep periods endpoint; the main period of each day is the longest one.
+    Steps are the calendar day's total from daily_activity.
     """
     days: dict[str, dict] = {}
     for item in daily_sleep:
@@ -65,6 +67,9 @@ def parse(daily_sleep: list[dict], daily_readiness: list[dict], sleep_periods: l
     for item in daily_readiness:
         if item.get("day"):
             days.setdefault(item["day"], {})["readiness_score"] = item.get("score")
+    for item in daily_activity or []:
+        if item.get("day"):
+            days.setdefault(item["day"], {})["steps"] = item.get("steps")
     main_periods: dict[str, dict] = {}
     for period in sleep_periods:
         day = period.get("day")
@@ -85,7 +90,7 @@ def parse(daily_sleep: list[dict], daily_readiness: list[dict], sleep_periods: l
 
 def _fetch(token: str, start: str, end: str) -> pd.DataFrame:
     return parse(_get(token, "daily_sleep", start, end), _get(token, "daily_readiness", start, end),
-                 _get(token, "sleep", start, end))
+                 _get(token, "sleep", start, end), _get(token, "daily_activity", start, end))
 
 
 def load(db_path: Path, days_back: int = 90) -> int:

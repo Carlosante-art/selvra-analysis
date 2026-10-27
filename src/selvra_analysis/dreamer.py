@@ -78,6 +78,13 @@ design:
   par: 12                  # heltal ≥ 6
   periodlangd_dagar: 2     # heltal ≥ 1
   tvatt_dagar: 1           # heltal ≥ 0, < periodlangd_dagar
+  foljsamhet:              # endast n1: hur varje dags villkor verifieras ur data
+    kolumn: steps          # kolumn i marts.mart_analysis_days, eller manuell
+    A: {{min: 10000}}
+    B: {{max: 5000}}
+  verkan:                  # endast n1
+    typ: traning           # traning | alkohol | somn | maltid | annat
+    borjar: "HH:MM"        # tidigast A kan verka
 
 utfall:
   # Alternativ A – mäter i ett tidsfönster (kräver matt + fonster):
@@ -116,6 +123,11 @@ REGLER:
 - För TIR/TAR/TBR i procent är ±5 procentenheter rimlig minsta effekt.
 - Den negativa kontrollen måste ligga där exponeringen inte kan verka: före den i tid,
   eller ett utfall utan mekanism. Samma analys körs på den; en effekt där avslöjar snedvridning.
+- n1: negativa kontrollen ska sluta före verkan.borjar och ligga utanför förra A-dagens
+  eftereffekt (träning 24–48 h, alkohol till morgonen efter). Intilliggande dagar duger inte vid träning.
+- n1: går B eller A inte att göra på vissa dagar (arbetsdag/ledig), begränsa med design.dagar.
+- Insulin, kolhydratkvoter, hypobehandling och alkohol som dos är aldrig studievariabler.
+- Filen är ett utkast. Den låses först efter `python -m selvra_analysis.granska` och /ny-studie.
 - Generera INTE studier som redan finns i minnet nedan.
 """
 

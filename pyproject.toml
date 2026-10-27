@@ -84,7 +84,7 @@ ancestors = ["selvra_analysis"]
 name = "Studies and reports sit on top of statistics and provenance, never the reverse"
 type = "layers"
 layers = [
-  "selvra_analysis.reproduce",
+  "selvra_analysis.reproduce | selvra_analysis.granska",
   "selvra_analysis.study | selvra_analysis.report",
   "selvra_analysis.n1 | selvra_analysis.stats | selvra_analysis.provenance",
 ]
@@ -95,7 +95,7 @@ type = "forbidden"
 source_modules = [
   "selvra_analysis.study", "selvra_analysis.report", "selvra_analysis.stats",
   "selvra_analysis.n1", "selvra_analysis.provenance", "selvra_analysis.validate_iglu",
-  "selvra_analysis.reproduce",
+  "selvra_analysis.reproduce", "selvra_analysis.granska",
 ]
 forbidden_modules = [
   "selvra_analysis.ingest_clarity", "selvra_analysis.ingest_events",

@@ -29,8 +29,8 @@ sources:
             tests: [not_null]
       - name: oura_sleep
         description: >
-          Oura Ring, one row per day: daily sleep and readiness scores, and measured values
-          from the main sleep period. Loaded by ingest_oura when OURA_TOKEN is set; an empty
+          Oura Ring, one row per day: daily sleep and readiness scores, measured values
+          from the main sleep period, and the day's step count. Loaded by ingest_oura when OURA_TOKEN is set; an empty
           table otherwise. Optional source: no freshness check.
       - name: personal_events
         description: The personal event log (handelser.csv), validated at ingestion. Self-reported context.

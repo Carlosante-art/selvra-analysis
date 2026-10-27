@@ -1,10 +1,11 @@
-# UTKAST, inte låst. Innan låsning:
-#   1. Bekräfta B (din vanliga stegnivå) och dosen för A.
-#   2. Kör på din data:
-#        uv run python -m selvra_analysis.n1 sd --window 07:00 23:59 --outcome mean_mmol --days 1
-#        uv run python -m selvra_analysis.n1 power --pairs 16 --effect 0.5 --sd <svaret ovan>
-#      och justera design.par tills styrkan är minst 80 %.
-#   3. uv run python -m selvra_analysis.study las studies/002-10000-steg/studie.yml  och committa.
+# UTKAST, inte låst och inte låsbart i den här formen. Designgranskningen stoppar det:
+#   - positivitet: B (≤5 000 steg) går inte att göra på en arbetsdag, och A förekommer inte
+#     naturligt på en ledig; dagstypen styr både steg och glukos
+#   - överföring: intilliggande dagar trots att insulinkänsligheten efter aktivitet håller i sig
+#     24–48 h; den nattliga negativa kontrollen ligger då i föregående A-dags eftereffekt
+#   - följsamhet: steg måste finnas i datan (Oura daily_activity) för att verifiera varje dag
+# Gör om med /ny-studie i Claude Code. Den behöver veta hur dina arbetsdagar läggs (fast
+# veckoschema eller rullande) för att välja tillåtna dagar.
 id: 002-10000-steg
 titel: 10 000 steg om dagen och dagens glukos
 fraga: Sänker en dag med minst 10 000 steg medelglukos under den vakna delen av dygnet jämfört med en dag med få steg?
@@ -19,6 +20,13 @@ design:
   par: 16
   periodlangd_dagar: 1
   tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A: {min: 10000}
+    B: {max: 5000}
+  verkan:
+    typ: traning
+    borjar: "07:00"
 
 utfall:
   matt: medel

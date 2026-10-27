@@ -41,6 +41,10 @@ DAGAR ?= 30
 rapport:
 	uv run python -m selvra_analysis.report --dagar $(DAGAR) --db $(DB)
 
+## Design review of a study draft on your own data: make granska STUDIE=studies/NNN-namn/studie.yml
+granska:
+	uv run python -m selvra_analysis.granska $(STUDIE) --db $(DB)
+
 ## Check daily metrics and glycaemic events against iglu on the demo data (stored reference without R)
 validate:
 	uv run python -m selvra_analysis.validate_iglu --db $(DEMO_DB)

@@ -529,6 +529,17 @@ models:
       iglu_function: null
       does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
       epistemics: derived
+  - name: steps
+    description: Steps during the local calendar day, Oura daily_activity. Null when there is no Oura data for the
+      day.
+    data_type: integer
+    meta:
+      construct: daily step count
+      source_standard: Oura API v2 (daily_activity)
+      valid_range: 0-100000
+      iglu_function: null
+      does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
+      epistemics: derived
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -1021,4 +1032,15 @@ models:
       valid_range: 25-120
       iglu_function: null
       does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
+      epistemics: derived
+  - name: steps
+    description: Steps during the local calendar day, Oura daily_activity. Null when there is no Oura data for the
+      day.
+    data_type: integer
+    meta:
+      construct: daily step count
+      source_standard: Oura API v2 (daily_activity)
+      valid_range: 0-100000
+      iglu_function: null
+      does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
       epistemics: derived

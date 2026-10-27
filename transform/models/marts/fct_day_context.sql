@@ -62,7 +62,8 @@ select
     sl.total_sleep_seconds,
     sl.deep_sleep_seconds,
     sl.rem_sleep_seconds,
-    sl.sleep_efficiency_pct
+    sl.sleep_efficiency_pct,
+    sl.steps
 from days as d
 left join events as e
     on d.reading_date between e.start_date and e.end_date
@@ -72,4 +73,5 @@ left join sleep as sl
     on d.reading_date = sl.reading_date
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
          sl.hrv_avg_ms, sl.hr_lowest_bpm, sl.total_sleep_seconds,
-         sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct
+         sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct,
+         sl.steps

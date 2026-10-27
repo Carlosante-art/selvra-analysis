@@ -6,6 +6,8 @@ Its life has four steps, each a command:
     validera  check the file; nothing is written
     las       lock it: checksum of the file, the git commit of the pipeline, and for an
               experiment the randomised schedule (drawn from the OS's random source).
+              Refused unless `granska` (design review on your own data) has passed for
+              exactly this version of the file.
               Commit the folder afterwards: the commit is the public timestamp.
     status    progress and data quality so far. Never the effect: an experiment is
               analysed once, when it is complete, so no one can stop it when it looks good.
@@ -52,6 +54,10 @@ PROTOCOL_HELP = {
     "overforing": "hur eftereffekter hanteras (CENT 3a, 12c), t.ex. tvättdagar och AB mot BA",
     "stoppregel": "när försöket avbryts i förtid (CENT 7b), t.ex. av säkerhetsskäl",
 }
+# What kind of action the A condition is decides how long its effect can carry over
+# (granska checks the spacing of analysed days against it).
+ACTION_TYPES = ("traning", "alkohol", "somn", "maltid", "annat")
+REVIEW_FILE = "granskning.json"
 # Fewest exposed or comparison days an observational study may be run on. With fewer,
 # a block bootstrap has too few blocks containing exposed days to say anything.
 MIN_DAYS = 10
@@ -138,6 +144,39 @@ def _validate_n1(design: dict, analysis: dict, e: list[str]) -> None:
     _need(analysis.get("metod") == "randomiseringstest", e, "analys.metod: randomiseringstest för n1")
     if "dagar" in design:
         _validate_eligible_days(design, e)
+    if "foljsamhet" in design:
+        _validate_adherence(design["foljsamhet"], e)
+    if "verkan" in design:
+        v = design["verkan"] or {}
+        _need(v.get("typ") in ACTION_TYPES, e, f"design.verkan.typ: en av {list(ACTION_TYPES)}")
+        _need(_is_clock(v.get("borjar")), e, "design.verkan.borjar: klockslag \"HH:MM\" då A tidigast kan verka")
+
+
+def _is_clock(x: object) -> bool:
+    try:
+        datetime.strptime(str(x), "%H:%M")
+    except ValueError:
+        return False
+    return isinstance(x, str)
+
+
+def _validate_adherence(f: dict, e: list[str]) -> None:
+    """How each day's condition is verified from data (SCRIBE 17), or `manuell`."""
+    f = f or {}
+    _need(isinstance(f.get("kolumn"), str), e,
+          "design.foljsamhet.kolumn: en kolumn i marts.mart_analysis_days (t.ex. steps) eller manuell")
+    if f.get("kolumn") == "manuell":
+        return
+    for key in ("A", "B"):
+        rule = f.get(key) or {}
+        _need(isinstance(rule, dict) and rule and set(rule) <= {"min", "max"}
+              and all(isinstance(v, (int, float)) for v in rule.values()), e,
+              f"design.foljsamhet.{key}: {{min: …}} och/eller {{max: …}} i kolumnens enhet")
+
+
+def meets(value: float, rule: dict) -> bool:
+    """Whether a measured value satisfies an adherence rule such as {min: 10000}."""
+    return value >= rule.get("min", -math.inf) and value <= rule.get("max", math.inf)
 
 
 def _validate_eligible_days(design: dict, e: list[str]) -> None:
@@ -214,6 +253,18 @@ def _validate_protocol(spec: dict, kind: str | None, e: list[str]) -> None:
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require_review(study: Study) -> None:
+    """The design review must have passed for exactly this version of the study file."""
+    path = study.folder / REVIEW_FILE
+    if not path.exists():
+        raise StudyError("ingen designgranskning: kör `python -m selvra_analysis.granska` på filen först")
+    review = json.loads(path.read_text())
+    if review.get("spec_sha256") != _sha(study.path):
+        raise StudyError("designgranskningen gäller en annan version av studiefilen; granska igen")
+    if review.get("verdict") == "STOPP":
+        raise StudyError("designgranskningen har stopp kvar; se granskning.md")
 
 
 def lock(study: Study, seed: int | None = None) -> dict:
@@ -371,6 +422,36 @@ def _estimate(study: Study, con, outcome: dict) -> tuple[dict, dict]:
     return est, {}
 
 
+def _adherence(study: Study, con) -> dict | None:
+    """Per condition: scheduled days, days with a measurement, days that met the rule.
+
+    The analysis stays as randomised whatever this shows; adherence is reported beside it.
+    """
+    f = study.design.get("foljsamhet")
+    if not f or f["kolumn"] == "manuell":
+        return None
+    sched = n1.read_schedule(study.schedule_path)
+    sched = sched[~sched["washout"]]
+    try:
+        # The column name was validated as a string and is checked against the table here.
+        cols = {r[0] for r in con.execute("select column_name from information_schema.columns where "
+                                          "table_schema = 'marts' and table_name = 'mart_analysis_days'").fetchall()}
+        if f["kolumn"] not in cols:
+            raise StudyError(f"följsamhetskolumnen {f['kolumn']!r} finns inte i mart_analysis_days")
+        m = con.execute(f'select reading_date, "{f["kolumn"]}" as x from marts.mart_analysis_days').df()  # noqa: S608
+    except duckdb.CatalogException:
+        raise StudyError("marts.mart_analysis_days saknas; följsamheten kan inte mätas") from None
+    m["reading_date"] = pd.to_datetime(m["reading_date"]).dt.date
+    merged = sched.merge(m, left_on="date", right_on="reading_date", how="left")
+    out = {}
+    for cond in ("A", "B"):
+        rows = merged[merged["condition"] == cond]
+        measured = rows["x"].notna()
+        ok = rows.loc[measured, "x"].map(lambda v, c=cond: meets(float(v), f[c]))
+        out[cond] = {"dagar": len(rows), "matta": int(measured.sum()), "uppfyllda": int(ok.sum())}
+    return out
+
+
 def _check_ready(study: Study, con, rec: dict, today: date) -> None:
     """Refuse before anything is written: running, already run, or too little data."""
     if any((study.folder / "korningar").glob("*.json")):
@@ -398,12 +479,15 @@ def run(study: Study, con, today: date | None = None) -> tuple[dict, str]:
         neg, _ = _estimate(study, con, study.spec["negativ_kontroll"])
     except ValueError as err:
         raise StudyError(f"den negativa kontrollen kan inte beräknas ({err}); ingenting har körts") from None
+    adherence = _adherence(study, con) if study.kind == "n1" else None
     record = {
         "study": study.spec["id"], "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "lock": rec, "commit": _git("rev-parse", "HEAD"), "data": data_version(con),
         "result": est, "beslut": decide(est, study.spec["analys"]["minsta_relevanta_effekt"]),
         "negativ_kontroll": neg, **extra,
     }
+    if adherence is not None:
+        record["foljsamhet"] = adherence
     runs = study.folder / "korningar"
     runs.mkdir(exist_ok=True)
     (runs / f"{record['run_at'].replace(':', '')}.json").write_text(
@@ -470,6 +554,7 @@ def _report(study: Study, record: dict) -> str:
         if d.get("retrospektiv"):
             lines.append("Studien är retrospektiv: datan fanns när den skrevs, så förregistreringen skyddar "
                          "inte mot att frågan valdes efter att mönstret setts.")
+    lines += _adherence_lines(d, record.get("foljsamhet"))
     lines += _negative_control_lines(sp, record["negativ_kontroll"])
     lines += _protocol_lines(sp)
     data = record["data"]
@@ -486,6 +571,20 @@ def _outcome_text(o: dict) -> str:
     if "fonster" in o:
         return f"{o['matt']} glukos {o['fonster'][0]}–{o['fonster'][1]} lokal tid"
     return f"`{o['kolumn']}`"
+
+
+def _adherence_lines(d: dict, adh: dict | None) -> list[str]:
+    if adh is None:
+        return []
+    f = d["foljsamhet"]
+    rule = {k: " och ".join(f"{'minst' if op == 'min' else 'högst'} {v:g}" for op, v in f[k].items())
+            for k in ("A", "B")}
+    lines = ["", "## Följsamhet", "", f"Mätt som `{f['kolumn']}` per dag. Analysen ovan följer lottningen oavsett.", "",
+             "| Villkor | Regel | Dagar | Med mätning | Uppfyllda |", "|---|---|---|---|---|"]
+    for k in ("A", "B"):
+        a = adh[k]
+        lines.append(f"| {k} | {rule[k]} | {a['dagar']} | {a['matta']} | {a['uppfyllda']} |")
+    return lines
 
 
 def _negative_control_lines(sp: dict, neg: dict) -> list[str]:
@@ -526,6 +625,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.kommando == "validera":
             print(f"OK: {study.spec['id']} ({study.kind})")
         elif args.kommando == "las":
+            require_review(study)
             rec = lock(study)
             print(f"Låst {rec['study']}. Committa nu {study.folder.relative_to(ROOT)}/ — "
                   "commiten är den offentliga tidsstämpeln.")

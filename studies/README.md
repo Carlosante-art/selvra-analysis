@@ -2,17 +2,21 @@
 
 En studie är en fil. Motorn ([`study.py`](../src/selvra_analysis/study.py)) gör resten.
 
+Börja med `/ny-studie` i Claude Code: den intervjuar, hämtar svaren ur din data och skriver filen enligt [`docs/studiedesign.md`](../docs/studiedesign.md).
+
 ```bash
 uv run python -m selvra_analysis.study validera studies/NNN-namn/studie.yml
+uv run python -m selvra_analysis.granska        studies/NNN-namn/studie.yml   # designgranskning på din data
 uv run python -m selvra_analysis.study las      studies/NNN-namn/studie.yml   # sedan: git commit
 uv run python -m selvra_analysis.study status   studies/NNN-namn/studie.yml   # hur ofta du vill
 uv run python -m selvra_analysis.study kor      studies/NNN-namn/studie.yml   # en gång, när klar
 ```
 
 1. **validera** kontrollerar filen och säger på svenska vad som saknas.
-2. **las** låser: kontrollsumma på filen, pipelinens commit och, för experiment, det lottade schemat. Committa mappen direkt. Commiten är den offentliga tidsstämpeln för att tesen kom före datan.
-3. **status** visar framsteg och datakvalitet: avslutade perioder, kompletta par, perioder utan data, vad schemat säger de närmaste dagarna. **Aldrig effekten.** Ett experiment analyseras en gång, när det är klart, så ingen kan avbryta det när det ser bra ut.
-4. **kor** gör den enda bekräftande analysen. Den vägrar om filen, schemat eller pipelinen ändrats efter låsningen, om mappen inte är committad, om studien pågår, om underlaget är mindre än det låsta minimumet, eller om den redan körts. Resultatet bedöms med den låsta beslutsregeln och skrivs till `slutrapport.md` och `korningar/`.
+2. **granska** kör de kontroller som kräver data: positivitet per dagstyp, överföring mot verkan, tidsordning för den negativa kontrollen, väntat bortfall, minsta möjliga p och styrka från din egen variation. Resultatet skrivs till `granskning.json`. STOPP blockerar låsning.
+3. **las** låser, men bara om granskningen godkänt exakt den versionen av filen: kontrollsumma på filen, pipelinens commit och, för experiment, det lottade schemat. Committa mappen direkt. Commiten är den offentliga tidsstämpeln för att tesen kom före datan.
+4. **status** visar framsteg och datakvalitet: avslutade perioder, kompletta par, perioder utan data, vad schemat säger de närmaste dagarna. **Aldrig effekten.** Ett experiment analyseras en gång, när det är klart, så ingen kan avbryta det när det ser bra ut.
+5. **kor** gör den enda bekräftande analysen. Den vägrar om filen, schemat eller pipelinen ändrats efter låsningen, om mappen inte är committad, om studien pågår, om underlaget är mindre än det låsta minimumet, eller om den redan körts. Resultatet bedöms med den låsta beslutsregeln och skrivs till `slutrapport.md` och `korningar/`.
 
 ## Format
 
@@ -32,6 +36,16 @@ design:
   par: 12                              # minst 6
   periodlangd_dagar: 2
   tvatt_dagar: 1                       # första dag(ar)na i varje period räknas inte
+  # dagar: {veckodagar: [lordag]}      # begränsad lottning: bara dagar där både A och B går
+  # dagar_motivering: …
+  foljsamhet:                          # krävs av granska: hur varje dags villkor verifieras ur data
+    kolumn: steps                      # kolumn i marts.mart_analysis_days, eller manuell
+    A: {min: 10000}
+    B: {max: 5000}
+  verkan:                              # krävs av granska: styr kontrollen av överföring och tidsordning
+    typ: traning                       # traning | alkohol | somn | maltid | annat
+    borjar: "09:00"                    # tidigast A kan verka
+  # genomforbarhet: …                  # om ett villkor aldrig förekommit på de tillåtna dagarna
 
   # observation:
   # exponering: {handelse: alkohol, dagar_efter: 1}

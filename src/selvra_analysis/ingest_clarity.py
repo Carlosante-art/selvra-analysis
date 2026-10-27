@@ -109,7 +109,7 @@ def read_clarity_csv(path: Path) -> pd.DataFrame:
 
 OURA_COLUMNS = ["reading_date", "sleep_score", "readiness_score", "total_sleep_seconds",
                 "deep_sleep_seconds", "rem_sleep_seconds", "sleep_efficiency_pct", "hrv_avg_ms",
-                "hr_lowest_bpm"]
+                "hr_lowest_bpm", "steps"]
 
 
 def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
@@ -124,8 +124,10 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
     con.execute(
         "create table if not exists raw.oura_sleep (reading_date date, sleep_score integer, "
         "readiness_score integer, total_sleep_seconds integer, deep_sleep_seconds integer, "
-        "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double)"
+        "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double, steps integer)"
     )
+    # Databases created before steps were loaded lack the column.
+    con.execute("alter table raw.oura_sleep add column if not exists steps integer")
     con.execute(
         "create table if not exists raw.source_files "
         "(kind varchar, sha256 varchar, bytes bigint, n_rows bigint, loaded_at varchar)"
