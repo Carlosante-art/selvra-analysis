@@ -50,6 +50,33 @@ EVENT_COLUMNS = {
     # Derived from Oura steps, never logged: null days (no ring data) fall out of both groups.
     "hoga_steg": "high_steps",
 }
+# Wearable outcomes are valid when the value exists; CGM-derived outcomes require a valid
+# CGM day. This is what lets a person without a CGM (wearable-only mode) run studies.
+WEARABLE_UTFALL = {"sleep_score", "readiness_score", "hrv_avg_ms", "hr_lowest_bpm",
+                   "total_sleep_seconds", "deep_sleep_seconds", "rem_sleep_seconds",
+                   "sleep_efficiency_pct", "steps"}
+
+
+def utfallsgiltig(df: pd.DataFrame, col: str) -> pd.Series:
+    """Mask: rows where `col` counts as a valid outcome."""
+    if col in WEARABLE_UTFALL:
+        return df[col].notna()
+    return df["is_valid_day"] == True
+
+
+KOLUMN_ENHETER = {"steps": "steg", "hr_lowest_bpm": "slag/min", "hrv_avg_ms": "ms",
+                  "total_sleep_seconds": "s", "deep_sleep_seconds": "s",
+                  "rem_sleep_seconds": "s", "sleep_score": "poäng", "readiness_score": "poäng",
+                  "sleep_efficiency_pct": "pp"}
+
+
+def utfallsenhet(spec: dict) -> str:
+    kol = str(spec.get("utfall", {}).get("kolumn", ""))
+    if kol.endswith("_pct"):
+        return "pp"
+    return KOLUMN_ENHETER.get(kol, "mmol/L")
+
+
 REQUIRED_TEXT = ["id", "titel", "fraga", "tes", "motbevis"]
 PROTOCOL_HELP = {
     "periodeffekt": "hur tidstrender hanteras (CENT 8a), t.ex. att paren balanserar långsam drift",
@@ -227,8 +254,11 @@ def _validate_observation(design: dict, analysis: dict, e: list[str]) -> None:
 
 
 def _validate_outcome(outcome: dict, name: str, kind: str | None, e: list[str]) -> None:
-    """An outcome is a local-time window (matt + fonster), or for observation a day-table column."""
-    if "fonster" in outcome or kind == "n1":
+    """An outcome is a local-time window (matt + fonster) or a day-table column.
+
+    Windows are CGM-specific. A day column works for both designs — it is what lets a
+    person without a CGM (wearable-only mode) run n-of-1 experiments on sleep or pulse."""
+    if "kolumn" not in outcome and ("fonster" in outcome or kind == "n1"):
         _need(outcome.get("matt") in WINDOW_METRICS, e, f"{name}.matt: en av {sorted(WINDOW_METRICS)}")
         w = outcome.get("fonster")
         _need(isinstance(w, list) and len(w) == 2 and all(isinstance(t, str) for t in w) and w[0] < w[1],
@@ -348,7 +378,7 @@ def _observation_series(study: Study, daily: pd.DataFrame, col: str) -> pd.DataF
     lo, hi = (pd.Timestamp(x) for x in d["period"])
     flag = s[EVENT_COLUMNS[exp["handelse"]]].shift(exp.get("dagar_efter", 0))
     s["exposed"] = flag.map({True: True, False: False})
-    s["y"] = s[col].where(s["is_valid_day"] == True)
+    s["y"] = s[col].where(utfallsgiltig(s, col))
     return s[(s.index >= lo) & (s.index <= hi)]
 
 
@@ -421,7 +451,8 @@ def _estimate(study: Study, con, outcome: dict) -> tuple[dict, dict]:
     a = study.spec["analys"]
     daily, col = _daily_outcome(study, con, outcome)
     if study.kind == "n1":
-        periods = n1.period_outcomes(n1.read_schedule(study.schedule_path), daily, col)
+        periods = n1.period_outcomes(n1.read_schedule(study.schedule_path), daily, col,
+                                     valid_column=None if col in WEARABLE_UTFALL else "is_valid_day")
         est = n1.randomisation_test(periods, level=a.get("niva", 0.95)).as_dict()
         return est, {"perioder": periods.to_dict("records")}
     s = _observation_series(study, daily, col)
@@ -531,7 +562,7 @@ def _fmt(x: float) -> str:
 def _report(study: Study, record: dict) -> str:
     sp, r, d = study.spec, record["result"], study.design
     unit = "procentenheter" if sp["utfall"].get("matt") == "tid_over_10" or \
-        str(sp["utfall"].get("kolumn", "")).endswith("_pct") else "mmol/L"
+        str(sp["utfall"].get("kolumn", "")).endswith("_pct") else utfallsenhet(sp)
     kind = ("randomiserat n-of-1-försök med parade perioder" if study.kind == "n1"
             else "observationsstudie" + (", retrospektiv" if d.get("retrospektiv") else ""))
     lines = [

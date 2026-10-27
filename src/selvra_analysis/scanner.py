@@ -41,7 +41,7 @@ def _load(db_path: Path) -> pd.DataFrame:
 
 
 def _baseline_avvikelser(df: pd.DataFrame) -> list[Pattern]:
-    valid = df[df["is_valid_day"]].copy()
+    valid = df[df["is_valid_day"] == True].copy()
     if len(valid) < MIN_DAYS_FOR_BASELINE:
         return []
 
@@ -86,7 +86,7 @@ def _baseline_avvikelser(df: pd.DataFrame) -> list[Pattern]:
 
 
 def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
-    valid = df[df["is_valid_day"]].copy()
+    valid = df[df["is_valid_day"] == True].copy()
     if len(valid) < MIN_DAYS_FOR_BASELINE:
         return []
 
@@ -162,7 +162,7 @@ def _follows_daytype(namn: str, n: int) -> Pattern:
 
 
 def _kluster(df: pd.DataFrame) -> list[Pattern]:
-    valid = df[df["is_valid_day"]].copy()
+    valid = df[df["is_valid_day"] == True].copy()
     patterns = []
 
     valid = valid.sort_values("reading_date").reset_index(drop=True)
@@ -195,7 +195,7 @@ def _kluster(df: pd.DataFrame) -> list[Pattern]:
 
 
 def _trend(df: pd.DataFrame) -> list[Pattern]:
-    valid = df[df["is_valid_day"]].tail(21).copy()
+    valid = df[df["is_valid_day"] == True].tail(21).copy()
     if len(valid) < 14:
         return []
 

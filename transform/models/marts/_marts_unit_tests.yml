@@ -1,0 +1,19 @@
+version: 2
+
+unit_tests:
+  - name: mart_days_exist_without_any_glucose
+    model: mart_analysis_days
+    description: >
+      Wearable-only mode: a person without a CGM still gets mart rows — the day spine
+      comes from the context, and the glucose columns are null.
+    given:
+      - input: ref('fct_glucose_daily')
+        rows: []
+      - input: ref('fct_day_context')
+        rows:
+          - {reading_date: 2026-10-01, steps: 9000, hr_lowest_bpm: 44.0, wearable_source: garmin}
+          - {reading_date: 2026-10-02, steps: 3000, hr_lowest_bpm: 46.0, wearable_source: garmin}
+    expect:
+      rows:
+        - {reading_date: 2026-10-01, steps: 9000, mean_mmol: null, is_valid_day: null}
+        - {reading_date: 2026-10-02, steps: 3000, mean_mmol: null, is_valid_day: null}

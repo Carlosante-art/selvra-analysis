@@ -5,9 +5,14 @@
 -- An evening event (alcohol at 21:00) is attributed to its own date here.
 -- Whether it should count for the next day is an analysis decision, made in the pre-registration.
 
+-- The day spine is every day with any data: CGM or wearable. A person without a
+-- CGM (wearable-only mode) still gets a full context row per day; the glucose
+-- columns in the mart are simply null for days the CGM did not cover.
 with days as (
 
     select reading_date from {{ ref('fct_glucose_daily') }}
+    union
+    select reading_date from {{ ref('int_wearable_daily') }}
 
 ),
 

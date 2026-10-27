@@ -378,11 +378,11 @@ def _check_power(study: st.Study, con) -> list[Check]:
     strata, _ = _strata(d, _workdays(con))
     end = daily["reading_date"].max()
     in_stratum = daily[daily["reading_date"].map(lambda x: _in_any(strata, x))]
-    valid = in_stratum[in_stratum["is_valid_day"] == True][col].dropna()
+    valid = in_stratum[st.utfallsgiltig(in_stratum, col)][col].dropna()
     # Data loss is a property of the sensor and the routine, not of the day type, so it is
     # estimated on every day of the history; one weekday gives too few days to estimate it.
     span = (end - daily["reading_date"].min()).days + 1
-    rate = len(daily[daily["is_valid_day"] == True][col].dropna()) / span
+    rate = len(daily[st.utfallsgiltig(daily, col)][col].dropna()) / span
     k_eff = _expected_valid_pairs(pairs, rate, analysed)
     out.append(Check("underlag", VARNING if rate < 0.8 else OK,
                      f"{rate:.0%} av de tillåtna dagarna de senaste {SD_HISTORY_DAYS} dagarna hade giltigt utfall; "
@@ -396,7 +396,7 @@ def _check_power(study: st.Study, con) -> list[Check]:
         # Too few eligible days of history (one weekday gives 13 in 90 days): pool all days —
         # but within day type. A study comparing Saturdays with Saturdays should not count the
         # workday/day-off level difference as noise (benchmark f18/j08: pooled 1.8 vs true 0.9).
-        alla = daily[daily["is_valid_day"] == True][["reading_date", col]].dropna(subset=[col])
+        alla = daily[st.utfallsgiltig(daily, col)][["reading_date", col]].dropna(subset=[col])
         valid = alla[col]
         basis = "alla dagar, för få tillåtna"
         if len(valid) < MIN_SD_DAYS:

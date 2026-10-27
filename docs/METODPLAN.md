@@ -13,6 +13,16 @@ studier stoppas (benchmark: j08, sann styrka 84 % mot skattade 66 %).
 Rättning: skatta variationen inom dagstyp (residualer efter dagstypens medel ur
 loggade pass), med graciös reträtt till dagens beteende när inga pass finns.
 
+## Klart: wearable-only-läget (2026-10-27)
+
+Dagsryggraden är nu unionen av CGM- och wearable-dagar; glukoskolumnerna är null på
+dagar utan CGM, och utfallsgiltighet bedöms per kolumn (wearable-utfall gäller när
+värdet finns, CGM-utfall kräver giltig CGM-dag). Kolumn-utfall tillåts i n1.
+En person utan CGM får därmed hela kedjan: marts (159/159 tester på pappas databas),
+studievalidering, granskning med power ur egen variation. Första beviset: granskaren
+stoppade p01-promenad-vilopuls korrekt — 35 dagars baslinje ger 1 väntat komplett par
+av 12. `make person-build PERSON=namn` bygger en persons marts.
+
 ## 2. Sekventiella stoppregler — nästa stora
 
 I dag: fast antal par, en analys vid slutet. Modern n-of-1-praxis
