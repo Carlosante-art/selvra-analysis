@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: benchmark benchmark-llm dashboard-data demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: morgon morgon-skicka benchmark benchmark-llm dashboard-data demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -120,6 +120,13 @@ import-kalender:
 ## Autonom loop: hämta data → skanna → tolka → syntetisera
 loop:
 	uv run python -m selvra_analysis.loop
+
+## Morgonmejl till en person: make morgon PERSON=pappa (visar), make morgon-skicka PERSON=pappa
+morgon:
+	uv run python -m selvra_analysis.morgonmejl $(PERSON)
+
+morgon-skicka:
+	uv run python -m selvra_analysis.morgonmejl $(PERSON) --skicka
 
 ## Kör loopen varje morgon via cron: make schemalagg (07:00) eller make schemalagg TID=06:30
 schemalagg:
