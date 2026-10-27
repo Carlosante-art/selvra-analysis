@@ -1,0 +1,23 @@
+version: 2
+
+unit_tests:
+  - name: int_cgm_readings_share_after_clarity
+    model: int_cgm_readings
+    description: >
+      Share readings are used only after the last Clarity reading, so an overlap between the
+      two sources is never counted twice.
+    given:
+      - input: ref('stg_clarity_readings')
+        rows:
+          - {reading_id: c1, reading_at: '2025-10-25 21:55:00+00', glucose_mmol: 6.0, source: clarity}
+          - {reading_id: c2, reading_at: '2025-10-25 22:00:00+00', glucose_mmol: 2.2, source: clarity}
+      - input: ref('stg_share_readings')
+        rows:
+          - {reading_id: s1, reading_at: '2025-10-25 21:55:00+00', glucose_mmol: 6.0, source: dexcom_share}
+          - {reading_id: s2, reading_at: '2025-10-25 22:00:00+00', glucose_mmol: 6.1, source: dexcom_share}
+          - {reading_id: s3, reading_at: '2025-10-25 22:05:00+00', glucose_mmol: 2.2, source: dexcom_share}
+    expect:
+      rows:
+        - {reading_id: c1, source: clarity}
+        - {reading_id: c2, source: clarity}
+        - {reading_id: s3, source: dexcom_share}

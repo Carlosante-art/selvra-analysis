@@ -1,36 +1,18 @@
 version: 2
 
 models:
-  - name: stg_cgm_readings
-    description: One glucose reading per row, mmol/L, deduplicated across overlapping exports.
+  - name: int_cgm_readings
+    description: All readings from both sources. Clarity is used where it exists; Share only after the last Clarity reading, so no reading is counted twice.
     columns:
       - name: reading_id
         tests: [unique, not_null]
       - name: reading_at
-        description: The instant of the reading (timestamptz, UTC). Use for ordering, gaps and durations.
-        tests: [not_null]
-      - name: reading_at_local
-        description: Wall-clock time in var('local_timezone'), as shown on the receiver. Use for time of day.
-        tests: [not_null]
-      - name: reading_date
-        description: Local calendar date.
-        tests: [not_null]
-      - name: local_time_invalid
-        description: The exported wall time does not exist locally (spring-forward hour). Read as summer time.
-        tests: [not_null]
-      - name: glucose_mmol
-        description: Glucose in mmol/L. Censored readings are set to the sensor limit. A null here means an unparseable export value.
-        tests:
-          - not_null
-          - between:
-              arguments:
-                min_value: 2.2
-                max_value: 22.2
-      - name: censored
+        tests: [unique, not_null]
+      - name: source
         tests:
           - accepted_values:
               arguments:
-                values: ['low', 'high']
+                values: ['clarity', 'dexcom_share']
 
   - name: int_cgm_segments
     description: Readings with gaps, contiguous segments and inferred sensor sessions.
@@ -78,10 +60,3 @@ models:
         description: The event includes a reading flagged as compression low or implausible jump.
         tests: [not_null]
 
-
-  - name: stg_personal_events
-    columns:
-      - name: event_id
-        tests: [unique, not_null]
-      - name: start_date
-        tests: [not_null]

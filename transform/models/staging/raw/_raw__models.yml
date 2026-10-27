@@ -1,0 +1,59 @@
+version: 2
+
+# Staging: one model per source, typed and renamed, nothing combined. Combining sources is
+# business logic and lives in intermediate (int_cgm_readings).
+models:
+  - name: stg_clarity_readings
+    description: Clarity export readings (EGV), one per row, mmol/L, deduplicated across overlapping exports, daylight saving time resolved.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+      - name: reading_at
+        description: The instant of the reading (timestamptz, UTC). Use for ordering, gaps and durations.
+        tests: [not_null]
+      - name: reading_at_local
+        description: Wall-clock time in var('local_timezone'), as shown on the receiver. Use for time of day.
+        tests: [not_null]
+      - name: reading_date
+        description: Local calendar date.
+        tests: [not_null]
+      - name: local_time_invalid
+        description: The exported wall time does not exist locally (spring-forward hour). Read as summer time.
+        tests: [not_null]
+      - name: glucose_mmol
+        description: Glucose in mmol/L. Censored readings are set to the sensor limit. A null here means an unparseable export value.
+        tests:
+          - not_null
+          - between:
+              arguments:
+                min_value: 2.2
+                max_value: 22.2
+      - name: censored
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['low', 'high']
+
+
+  - name: stg_share_readings
+    description: Dexcom Share readings collected by Selvra Diabetes, exact UTC instants, converted from mg/dL.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+      - name: reading_at
+        tests: [not_null]
+      - name: glucose_mmol
+        tests:
+          - not_null
+          - between:
+              arguments:
+                min_value: 2.2
+                max_value: 22.2
+
+  - name: stg_personal_events
+    description: The personal event log, one row per logged event, dates parsed. Self-reported.
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: start_date
+        tests: [not_null]

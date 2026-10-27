@@ -9,7 +9,7 @@ with ordered as (
         lag(reading_at)     over (order by reading_at, reading_id) as prev_reading_at,
         lag(glucose_mmol)   over (order by reading_at, reading_id) as prev_glucose_mmol,
         lag(transmitter_id) over (order by reading_at, reading_id) as prev_transmitter_id
-    from {{ ref('stg_cgm_readings') }}
+    from {{ ref('int_cgm_readings') }}
 
 ),
 

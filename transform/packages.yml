@@ -1,0 +1,4 @@
+# dbt-project-evaluator 1.x: 2.x requires dbt 2.0, and dbt-core 1.12 refuses to load it.
+packages:
+  - package: dbt-labs/dbt_project_evaluator
+    version: [">=1.3.0", "<2.0.0"]

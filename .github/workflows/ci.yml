@@ -19,8 +19,10 @@ jobs:
       - name: Architecture (cycles, layers, analysis never reads collection code)
         run: uv run lint-imports
       - name: dbt project parses (cycles, broken refs)
-        run: cd transform && uv run dbt parse --profiles-dir .
-      - name: Pipeline on synthetic data (data tests, unit tests, contracts)
+        run: cd transform && uv run dbt deps --profiles-dir . && uv run dbt parse --profiles-dir .
+      - name: Pipeline on synthetic data (data tests, unit tests, contracts, dbt architecture rules)
+        env:
+          DBT_PROJECT_EVALUATOR_SEVERITY: error
         run: make demo
       - name: Python tests, including ontology and statistical gates
         run: make test

@@ -4,11 +4,19 @@ DB ?= data/selvra.duckdb
 DEMO_DB ?= data/demo.duckdb
 DBT = cd transform && SELVRA_DUCKDB=$(abspath $(DB)) uv run dbt
 DBT_DEMO = cd transform && SELVRA_DUCKDB=$(abspath $(DEMO_DB)) uv run dbt
+DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 
+<<<<<<< HEAD
 .PHONY: demo build build-live live rapport dreamer test lint dashboard validate validate-real example log dagbok reproduce
+=======
+$(DBT_PACKAGES):
+	cd transform && uv run dbt deps --profiles-dir .
+
+.PHONY: verify-real reproduce demo build build-live live rapport test lint dashboard validate validate-real example log dagbok
+>>>>>>> a25fc7f (Quality gate 9: dbt architecture rules (dbt-project-evaluator 1.x))
 
 ## Synthetic data end to end: generate, load, transform, test
-demo:
+demo: $(DBT_PACKAGES)
 	uv run python -m selvra_analysis.synthetic data/sample
 	rm -f $(DEMO_DB)
 	uv run python -m selvra_analysis.ingest_clarity data/sample/clarity_*.csv --db $(DEMO_DB)
@@ -16,14 +24,14 @@ demo:
 	$(DBT_DEMO) build --profiles-dir .
 
 ## Your own data: Clarity exports in data/raw/clarity/, event log in data/raw/handelser.csv
-build:
+build: $(DBT_PACKAGES)
 	uv run python -m selvra_analysis.ingest_clarity data/raw/clarity/*.csv --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 
 ## Readings collected by Selvra Diabetes (Dexcom Share), from Supabase. Needs ANALYSIS_DB_URL and
 ## ANALYSIS_USER_ID in .env. Clarity exports already loaded are kept and take precedence.
-build-live:
+build-live: $(DBT_PACKAGES)
 	uv run python -m selvra_analysis.ingest_supabase --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
@@ -43,6 +51,12 @@ validate:
 ## The same check on your own data (needs R and iglu)
 validate-real:
 	uv run python -m selvra_analysis.validate_iglu --db $(DB)
+
+## Checks that need real data, so they never run in CI: is the live data fresh, do all data
+## tests and architecture rules pass on it
+verify-real: $(DBT_PACKAGES)
+	$(DBT) source freshness --profiles-dir . --select source:raw.share_readings
+	$(DBT) build --profiles-dir .
 
 ## The example study's result, recomputed and compared value by value with the stored one
 reproduce:

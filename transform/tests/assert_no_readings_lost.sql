@@ -19,7 +19,7 @@ share_after_clarity as (
     select count(*) as n
     from {{ source('raw', 'share_readings') }}
     where reading_at > coalesce(
-        (select max(reading_at) from {{ ref('stg_cgm_readings') }} where source = 'clarity'),
+        (select max(reading_at) from {{ ref('stg_clarity_readings') }}),
         '-infinity'::timestamptz)
 ),
 flagged as (

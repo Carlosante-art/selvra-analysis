@@ -12,6 +12,13 @@ sources:
             tests:
               - not_null
       - name: share_readings
+        # Live data from Selvra Diabetes: a new reading every 5 minutes. Checked by
+        # `make verify-real` on real data, never in CI (CI has no real data).
+        config:
+          loaded_at_field: reading_at
+          freshness:
+            warn_after: {count: 30, period: minute}
+            error_after: {count: 24, period: hour}
         description: >
           Readings collected by Selvra Diabetes from Dexcom Share, loaded from Supabase.
           Exact UTC instants, mg/dL as Dexcom measures them. No transmitter ID, no backfill.

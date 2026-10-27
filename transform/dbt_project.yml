@@ -4,6 +4,7 @@ config-version: 2
 profile: selvra
 
 model-paths: ["models"]
+seed-paths: ["seeds"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 
@@ -36,6 +37,8 @@ vars:
   extended_hypo_minutes: 120
   # A day counts as valid for analysis at this share of expected readings
   valid_day_coverage_pct: 70
+  # dbt-project-evaluator: this project's marts are fct_ and mart_ models
+  marts_prefixes: ['fct_', 'mart_']
 
 models:
   selvra_analysis:
@@ -48,6 +51,25 @@ models:
     marts:
       +materialized: table
       +schema: marts
+  # Architecture rules: warn locally, fail in CI (DBT_PROJECT_EVALUATOR_SEVERITY=error).
+  dbt_project_evaluator:
+    +schema: evaluator
+
+seeds:
+  dbt_project_evaluator:
+    dbt_project_evaluator_exceptions:
+      +enabled: false
+  selvra_analysis:
+    +schema: evaluator
+
+data_tests:
+  dbt_project_evaluator:
+    +severity: "{{ env_var('DBT_PROJECT_EVALUATOR_SEVERITY', 'warn') }}"
+
+# dbt-project-evaluator (architecture rules) needs its DuckDB macros first.
+dispatch:
+  - macro_namespace: dbt
+    search_order: ['dbt_project_evaluator', 'dbt']
 
 flags:
   send_anonymous_usage_stats: false
