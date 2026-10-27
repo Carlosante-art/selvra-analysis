@@ -38,6 +38,7 @@ EVENT_TYPES = {
     "stress",
     "menstruation",
     "medicinandring",
+    "arbete",
     "annat",
 }
 REQUIRED = ["start", "slut", "typ", "notering"]

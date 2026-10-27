@@ -108,3 +108,13 @@ def test_eligible_days_restrict_randomisation_to_days_off() -> None:
     assert all(c == ["A", "B"] for c in per_pair)
     with pytest.raises(ValueError, match="one-day periods"):
         make_schedule(date(2026, 11, 2), 4, 2, 1, seed=3, days=days)
+
+
+def test_clustered_days_off_are_spaced_by_min_gap() -> None:
+    """A rotating roster gives days off in clusters; two days off in a row must not both be analysed
+    when the effect lasts into the next day."""
+    off = [date(2026, 11, 2), date(2026, 11, 3), date(2026, 11, 4), date(2026, 11, 9), date(2026, 11, 10), date(2026, 11, 14)]
+    assert eligible_dates(date(2026, 11, 1), 3, dates=off, min_gap=3) == [date(2026, 11, 2), date(2026, 11, 9),
+                                                                          date(2026, 11, 14)]
+    with pytest.raises(ValueError, match="at least 3 days apart"):
+        eligible_dates(date(2026, 11, 1), 4, dates=off, min_gap=3)

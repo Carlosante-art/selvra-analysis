@@ -37,6 +37,8 @@ design:
   periodlangd_dagar: 2
   tvatt_dagar: 1                       # första dag(ar)na i varje period räknas inte
   # dagar: {veckodagar: [lordag]}      # begränsad lottning: bara dagar där både A och B går
+  # dagar: {datum: [2026-11-03, …], minsta_avstand: 3}   # rullande schema: lediga dagar ur
+  #                                    # schemat, minst 3 kalenderdagar isär (eftereffekt)
   # dagar_motivering: …
   foljsamhet:                          # krävs av granska: hur varje dags villkor verifieras ur data
     kolumn: steps                      # kolumn i marts.mart_analysis_days, eller manuell

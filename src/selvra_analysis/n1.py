@@ -43,26 +43,34 @@ WEEKDAYS = {"mandag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "l
 
 
 def eligible_dates(start: date, n_needed: int, weekdays: list[str] | None = None,
-                   dates: list[date] | None = None) -> list[date]:
+                   dates: list[date] | None = None, min_gap: int = 1) -> list[date]:
     """The first n_needed days from start on which both conditions are possible.
 
     Restricted randomisation (Edgington & Onghena): when a condition is impossible or
     confounded on some days (B = few steps on a work day), randomise only among days
     where both are possible. Pairs are formed from consecutive eligible days, so the
     paired randomisation test stays valid; the result applies to those days only.
+
+    min_gap: fewest calendar days between two chosen days. Days off in a rotating schedule
+    come in clusters; a day closer than min_gap to the previous chosen day is skipped, so an
+    effect that lasts (exercise: 24-48 h) does not reach the next analysed day. The choice
+    depends only on the calendar, never on outcomes, and is made before randomisation.
     """
     if dates is not None:
         pool = sorted(d for d in dates if d >= start)
-        if len(pool) < n_needed:
-            raise ValueError(f"need {n_needed} eligible dates from {start}, got {len(pool)}")
-        return pool[:n_needed]
-    wanted = {WEEKDAYS[w] for w in weekdays or []}
-    out, day = [], start
-    while len(out) < n_needed:
-        if day.weekday() in wanted:
-            out.append(day)
-        day += timedelta(days=1)
-    return out
+    else:
+        wanted = {WEEKDAYS[w] for w in weekdays or []}
+        if not wanted:
+            raise ValueError("give weekdays or dates")
+        pool = (start + timedelta(days=i) for i in itertools.count())
+        pool = (d for d in pool if d.weekday() in wanted)
+    out: list[date] = []
+    for d in pool:
+        if not out or (d - out[-1]).days >= min_gap:
+            out.append(d)
+            if len(out) == n_needed:
+                return out
+    raise ValueError(f"need {n_needed} eligible dates from {start} at least {min_gap} days apart, got {len(out)}")
 
 
 def make_schedule(start: date, n_pairs: int, period_days: int, washout_days: int, seed: int,

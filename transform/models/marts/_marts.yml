@@ -356,6 +356,17 @@ models:
       iglu_function: null
       does_not_measure: training that was not logged; false means not logged, not absent
       epistemics: self-reported
+  - name: is_workday
+    description: The event log has a work shift covering this day. With a rotating schedule this, not the
+      weekday, says whether a day was a work day.
+    data_type: boolean
+    meta:
+      construct: logged work shift
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: shifts that were not logged; false means not logged, not a day off
+      epistemics: self-reported
   - name: is_travelling
     description: The event log has travel covering this day.
     data_type: boolean
@@ -882,6 +893,17 @@ models:
       valid_range: true/false
       iglu_function: null
       does_not_measure: training that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: is_workday
+    description: The event log has a work shift covering this day. With a rotating schedule this, not the
+      weekday, says whether a day was a work day.
+    data_type: boolean
+    meta:
+      construct: logged work shift
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: shifts that were not logged; false means not logged, not a day off
       epistemics: self-reported
   - name: is_travelling
     description: The event log has travel covering this day.

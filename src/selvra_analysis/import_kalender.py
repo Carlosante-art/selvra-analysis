@@ -19,6 +19,8 @@ from selvra_analysis.log_event import DEFAULT_LOG, append_event
 
 # Nyckelordsmappning: händelsetyp → sökord (lowercase, delsträng-match)
 NYCKELORD: dict[str, list[str]] = {
+    # Arbetspass först: ett pass ska inte klassas som möte (stress) eller resa.
+    "arbete":         ["jobb", "arbete", "arbetspass", "skift", "shift"],
     "traning":        ["träning", "traning", "gym", "löpning", "lopning", "cykling",
                        "simning", "yoga", "crossfit", "workout", "run", "bike", "swim",
                        "promenad", "walk", "hike", "vandring"],

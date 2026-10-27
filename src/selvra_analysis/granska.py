@@ -31,6 +31,7 @@ import itertools
 import json
 import math
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -95,24 +96,51 @@ def _recent(df: pd.DataFrame, days: int, column: str = "reading_date") -> pd.Dat
     return df[df[column] > end - timedelta(days=days)]
 
 
-def _strata(design: dict) -> tuple[list[tuple[str, set[int]]], str | None]:
-    """Day types to check, as (name, weekdays), and a caveat when the history is a proxy."""
+Stratum = tuple[str, Callable[[date], bool]]
+
+
+def _workdays(con) -> set[date] | None:
+    """Days with a logged work shift in the recent history, or None if no shifts are logged.
+
+    With a rotating schedule the weekday says nothing about whether a day was a work day;
+    the event log (type `arbete`, e.g. imported from the roster calendar) does.
+    """
+    if "is_workday" not in _columns(con):
+        return None
+    df = _recent(con.execute("select reading_date, is_workday from marts.mart_analysis_days").df(), SD_HISTORY_DAYS)
+    days = set(df.loc[df["is_workday"] == True, "reading_date"])
+    return days or None
+
+
+def _strata(design: dict, workdays: set[date] | None) -> tuple[list[Stratum], str | None]:
+    """Day types to check, as (name, predicate on a date), and a caveat when the history is a proxy."""
     days = design.get("dagar") or {}
     if days.get("veckodagar"):
-        return [("de tillåtna veckodagarna", {n1.WEEKDAYS[w] for w in days["veckodagar"]})], None
+        wd = {n1.WEEKDAYS[w] for w in days["veckodagar"]}
+        return [("de tillåtna veckodagarna", lambda x: x.weekday() in wd)], None
     if days.get("datum"):
-        wd = {d.weekday() for d in days["datum"]}
-        return [("samma veckodagar som de valda datumen", wd)], (
-            "dagarna är en datumlista; historiken approximeras med samma veckodagar, som kan blanda "
-            "lediga dagar och arbetsdagar")
-    return [("vardagar", {0, 1, 2, 3, 4}), ("helger", WEEKEND)], None
+        if workdays:
+            return [("lediga dagar enligt händelseloggen", lambda x: x not in workdays)], (
+                "en dag utan loggat arbetspass räknas som ledig; logga alla pass (make import-kalender)")
+        wd = {x.weekday() for x in days["datum"]}
+        return [("samma veckodagar som de valda datumen", lambda x: x.weekday() in wd)], (
+            "dagarna är en datumlista men inga arbetspass är loggade, så historiken approximeras med "
+            "veckodagar; vid rullande schema blandar det lediga dagar och arbetsdagar. Logga passen "
+            "(typ arbete, t.ex. make import-kalender) och granska igen")
+    if workdays:
+        return [("arbetsdagar", lambda x: x in workdays), ("lediga dagar", lambda x: x not in workdays)], None
+    return [("vardagar", lambda x: x.weekday() < 5), ("helger", lambda x: x.weekday() in WEEKEND)], None
+
+
+def _in_any(strata: list[Stratum], x: date) -> bool:
+    return any(pred(x) for _, pred in strata)
 
 
 def _analysed_dates(design: dict) -> list[date]:
     """Every analysed day of the study, in calendar order, before randomisation."""
     if "dagar" in design:
         return n1.eligible_dates(design["start"], 2 * design["par"], design["dagar"].get("veckodagar"),
-                                 design["dagar"].get("datum"))
+                                 design["dagar"].get("datum"), design["dagar"].get("minsta_avstand", 1))
     sched = n1.make_schedule(design["start"], design["par"], design["periodlangd_dagar"],
                              design.get("tvatt_dagar", 0), seed=0)
     return list(sched.loc[~sched["washout"], "date"])
@@ -216,12 +244,11 @@ def _check_positivity(spec: dict, con) -> list[Check]:
                       "följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller "
                       "ange kolumn: manuell och motivera")]
     out_source = _check_one_device(con, hist)
-    strata, caveat = _strata(d)
-    weekday = pd.to_datetime(hist["reading_date"]).dt.day_of_week
+    strata, caveat = _strata(d, _workdays(con))
     rows, out = [], []
     justified = isinstance(d.get("genomforbarhet"), str) and d["genomforbarhet"].strip() != ""
-    for name, wd in strata:
-        x = hist.loc[weekday.isin(wd), "x"]
+    for name, pred in strata:
+        x = hist.loc[hist["reading_date"].map(pred), "x"]
         n = len(x)
         n_a = int(x.map(lambda v: st.meets(float(v), f["A"])).sum())
         n_b = int(x.map(lambda v: st.meets(float(v), f["B"])).sum())
@@ -295,11 +322,10 @@ def _check_power(study: st.Study, con) -> list[Check]:
     daily = _recent(daily, SD_HISTORY_DAYS)
     if daily.empty:
         return [*out, Check("styrka", STOPP, "ingen glukoshistorik att skatta variationen från")]
-    strata, _ = _strata(d)
-    wd = set().union(*(s for _, s in strata))
+    strata, _ = _strata(d, _workdays(con))
     end = daily["reading_date"].max()
-    calendar = [end - timedelta(days=i) for i in range(SD_HISTORY_DAYS) if (end - timedelta(days=i)).weekday() in wd]
-    in_stratum = daily[pd.to_datetime(daily["reading_date"]).dt.day_of_week.isin(wd)]
+    calendar = [end - timedelta(days=i) for i in range(SD_HISTORY_DAYS) if _in_any(strata, end - timedelta(days=i))]
+    in_stratum = daily[daily["reading_date"].map(lambda x: _in_any(strata, x))]
     valid = in_stratum[in_stratum["is_valid_day"] == True][col].dropna()
     rate = len(valid) / len(calendar) if calendar else 0.0
     k_eff = _expected_valid_pairs(pairs, rate, analysed)

@@ -46,7 +46,7 @@ WINDOW_METRICS = {"medel": "mean_mmol", "topp": "peak_mmol", "tid_over_10": "tar
 EVENT_COLUMNS = {
     "alkohol": "had_alcohol", "traning": "had_training", "sjukdom": "is_ill",
     "stress": "had_stress", "resa": "is_travelling", "menstruation": "is_menstruating",
-    "medicinandring": "had_medication_change",
+    "medicinandring": "had_medication_change", "arbete": "is_workday",
     # Derived from Oura steps, never logged: null days (no ring data) fall out of both groups.
     "hoga_steg": "high_steps",
 }
@@ -193,9 +193,14 @@ def _validate_eligible_days(design: dict, e: list[str]) -> None:
     if dates is not None:
         _need(isinstance(dates, list) and all(isinstance(x, date) for x in dates), e,
               "design.dagar.datum: en lista av datum ÅÅÅÅ-MM-DD")
-        if isinstance(dates, list) and isinstance(design.get("par"), int):
-            _need(len(dates) >= 2 * design["par"], e,
-                  f"design.dagar.datum: {len(dates)} datum räcker inte till {design['par']} par")
+        if isinstance(dates, list) and isinstance(design.get("par"), int) and isinstance(design.get("start"), date):
+            try:
+                n1.eligible_dates(design["start"], 2 * design["par"], dates=dates, min_gap=days.get("minsta_avstand", 1))
+            except (ValueError, TypeError):
+                e.append(f"design.dagar.datum: för få datum från start, med minsta_avstand "
+                         f"{days.get('minsta_avstand', 1)}, till {design['par']} par")
+    gap = days.get("minsta_avstand", 1)
+    _need(isinstance(gap, int) and gap >= 1, e, "design.dagar.minsta_avstand: heltal ≥ 1 (kalenderdagar mellan valda dagar)")
     _need(design.get("periodlangd_dagar") == 1 and design.get("tvatt_dagar", 0) == 0, e,
           "design.dagar kräver periodlangd_dagar: 1 och tvatt_dagar: 0 (varje period är en tillåten dag)")
     _need(isinstance(design.get("dagar_motivering"), str) and design["dagar_motivering"].strip() != "", e,
@@ -283,7 +288,8 @@ def lock(study: Study, seed: int | None = None) -> dict:
         seed = seed if seed is not None else secrets.randbits(32)
         days = None
         if "dagar" in d:
-            days = n1.eligible_dates(d["start"], 2 * d["par"], d["dagar"].get("veckodagar"), d["dagar"].get("datum"))
+            days = n1.eligible_dates(d["start"], 2 * d["par"], d["dagar"].get("veckodagar"), d["dagar"].get("datum"),
+                                     d["dagar"].get("minsta_avstand", 1))
         sched = n1.make_schedule(d["start"], d["par"], d["periodlangd_dagar"], d.get("tvatt_dagar", 0), seed,
                                  days=days)
         record["schedule_sha256"] = n1.write_schedule(sched, study.schedule_path, seed)

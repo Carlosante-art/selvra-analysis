@@ -52,6 +52,7 @@ select
     bool_or(e.event_type = 'menstruation')     is true as is_menstruating,
     bool_or(e.event_type = 'medicinandring')   is true as had_medication_change,
     bool_or(e.event_type = 'annat')            is true as had_other_event,
+    bool_or(e.event_type = 'arbete')           is true as is_workday,
     count(e.event_id)                                  as n_events,
     string_agg(e.note, '; ')                           as notes,
     -- Wearable (Oura/Garmin; null om ingen data för dagen)

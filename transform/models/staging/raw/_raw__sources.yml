@@ -44,4 +44,4 @@ sources:
             tests:
               - accepted_values:
                   arguments:
-                    values: ['sjukdom', 'sensorbyte', 'alkohol', 'traning', 'resa', 'stress', 'menstruation', 'medicinandring', 'annat']
+                    values: ['sjukdom', 'sensorbyte', 'alkohol', 'traning', 'resa', 'stress', 'menstruation', 'medicinandring', 'arbete', 'annat']

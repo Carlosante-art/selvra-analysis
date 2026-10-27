@@ -179,3 +179,20 @@ def test_observation_where_exposure_follows_day_type_is_stopped(tmp_path: Path) 
     with duckdb.connect(str(db), read_only=True) as con:
         result = granska.review(st.load(folder / "studie.yml"), con, today=TODAY)
     assert levels(result, "dagtyp") == {granska.STOPP}
+
+
+def test_rotating_schedule_uses_logged_shifts_not_weekdays(tmp_path: Path) -> None:
+    """With shifts logged, day types come from the log: a Tuesday off counts as a day off."""
+    db = make_db(tmp_path / "db.duckdb")
+    with duckdb.connect(str(db)) as con:
+        con.execute("alter table marts.mart_analysis_days add column is_workday boolean")
+        con.execute("update marts.mart_analysis_days set is_workday = steps >= 10000")
+        workdays = granska._workdays(con)
+    off = [date(2025, 7, 7) + timedelta(days=3 * i) for i in range(40)]
+    spec = draft(dagar={"datum": off, "minsta_avstand": 3}, dagar_motivering="lediga dagar ur schemat")
+    strata, caveat = granska._strata(spec["design"], workdays)
+    assert [name for name, _ in strata] == ["lediga dagar enligt händelseloggen"]
+    assert "loggat arbetspass" in caveat
+    assert strata[0][1](date(2025, 6, 28)), "a Saturday without a shift is a day off"
+    assert not strata[0][1](date(2025, 6, 30)), "a Monday with a shift is not"
+    assert granska._min_gap_between_periods(spec["design"]) == 3
