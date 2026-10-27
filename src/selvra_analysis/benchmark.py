@@ -34,6 +34,7 @@ import yaml
 
 from selvra_analysis import granska
 from selvra_analysis import study as st
+from selvra_analysis.dreamer import _load_dotenv
 from selvra_analysis.provenance import ROOT
 
 BENCH = ROOT / "benchmark"
@@ -317,6 +318,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fryst: {write_manifest()} filer i {MANIFEST.relative_to(ROOT)}")
         return 0
     arm = "granska" if args.kommando == "granska" else ("llm+kunskap" if args.kunskap else "llm")
+    if arm != "granska":
+        _load_dotenv()
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise SystemExit("Sätt ANTHROPIC_API_KEY i .env eller miljön.")
     out = run(arm, args.uppsattning, getattr(args, "modell", DEFAULT_MODEL))
     print(render(out))
     return 0

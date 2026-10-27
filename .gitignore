@@ -32,4 +32,6 @@ analyses/*/korningar/*_synthetic.json
 # Daily status reports are working notes
 studies/*/rapporter/
 .env
+.env.*
+*.env.save
 data/

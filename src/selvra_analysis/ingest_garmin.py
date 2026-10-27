@@ -86,16 +86,11 @@ def to_frame(rows: list[dict]) -> pd.DataFrame:
 
 
 def _login(email: str, password: str) -> Garmin:
-    try:
-        garmin = Garmin()
-        garmin.login(str(TOKEN_DIR))
-        return garmin
-    except (FileNotFoundError, GarminConnectAuthenticationError, GarminConnectConnectionError):
-        pass
-    garmin = Garmin(email=email, password=password)
-    garmin.login()
+    """login(tokenstore) sköter hela flödet: provar cachade tokens, faller tillbaka
+    på e-post/lösenord och sparar nya tokens till sökvägen själv."""
     TOKEN_DIR.mkdir(parents=True, exist_ok=True)
-    garmin.garth.dump(str(TOKEN_DIR))
+    garmin = Garmin(email=email, password=password)
+    garmin.login(str(TOKEN_DIR))
     return garmin
 
 
