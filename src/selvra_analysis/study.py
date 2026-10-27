@@ -266,6 +266,10 @@ def _validate_outcome(outcome: dict, name: str, kind: str | None, e: list[str]) 
     else:
         _need(isinstance(outcome.get("kolumn"), str), e,
               f"{name}: antingen kolumn (i marts.mart_analysis_days) eller matt + fonster")
+        skift = outcome.get("dagar_efter", 0)
+        _need(isinstance(skift, int) and skift >= 0, e,
+              f"{name}.dagar_efter: heltal ≥ 0 (utfallet läses så många dagar efter villkorsdagen; "
+              "wearable-kolumner hör till natten som slutar den morgonen)")
 
 
 def _validate_protocol(spec: dict, kind: str | None, e: list[str]) -> None:
@@ -365,9 +369,15 @@ def _daily_outcome(study: Study, con, o: dict | None = None) -> tuple[pd.DataFra
             context["reading_date"] = pd.to_datetime(context["reading_date"])
             daily = daily.merge(context, on="reading_date", how="left")
         return daily, WINDOW_METRICS[o["matt"]]
-    daily = con.execute("select * from marts.mart_analysis_days").df()
+    daily = con.execute("select * from marts.mart_analysis_days order by reading_date").df()
     if o["kolumn"] not in daily.columns:
         raise StudyError(f"kolumnen {o['kolumn']!r} finns inte i mart_analysis_days")
+    skift = o.get("dagar_efter", 0)
+    if skift:
+        # Utfallet för villkorsdag d läses d+skift: Garmins sömn och puls på datum x hör
+        # till natten som slutar morgon x, så "natten efter dagen d" är kolumnvärdet på d+1.
+        daily = daily.copy()
+        daily[o["kolumn"]] = daily[o["kolumn"]].shift(-skift)
     return daily, o["kolumn"]
 
 

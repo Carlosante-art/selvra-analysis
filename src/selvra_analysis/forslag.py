@@ -23,14 +23,14 @@ import yaml
 from selvra_analysis import granska
 from selvra_analysis import study as st
 
-FORSLAG_ID = "p01-promenad-vilopuls"
+FORSLAG_ID = "p02-promenad-somn"
 ANTAL_DAGAR = 24
 AVSTAND_DAGAR = 3
 START_OM_DAGAR = 4
 
 INBJUDAN = ("Selvra ser att underlaget nu räcker för att pröva en fråga på riktigt: "
-            "sänker en promenaddag nattens vilopuls? Upplägget är granskat och klart "
-            "att låsa — säg till Carl om du vill försöka.")
+            "sover du längre natten efter en promenaddag? Upplägget är granskat och "
+            "klart att låsa — säg till Carl om du vill försöka.")
 
 
 def _mall(idag: date) -> dict:
@@ -38,10 +38,10 @@ def _mall(idag: date) -> dict:
     datum = [start + timedelta(days=i * AVSTAND_DAGAR) for i in range(ANTAL_DAGAR)]
     return {
         "id": FORSLAG_ID,
-        "titel": "Promenaddag och nattens vilopuls",
-        "fraga": "Är vilopulsen lägre natten efter en dag med minst 8 000 steg jämfört med en vanlig dag?",
-        "tes": "En dag med minst 8 000 steg ger minst 2 slag lägre vilopuls natten efter.",
-        "motbevis": "Hela intervallet visar en mindre sänkning än 2 slag, eller ingen.",
+        "titel": "Promenaddag och nattens sömn",
+        "fraga": "Är nattsömnen längre efter en dag med minst 8 000 steg jämfört med en vanlig dag?",
+        "tes": "En dag med minst 8 000 steg ger minst 30 minuter längre nattsömn.",
+        "motbevis": "Hela intervallet visar mindre än 30 minuters förlängning, eller kortare sömn.",
         "design": {
             "typ": "n1",
             "A": "Minst 8 000 steg, varav en rask promenad på 45–60 minuter före 17:00",
@@ -54,8 +54,8 @@ def _mall(idag: date) -> dict:
             "genomforbarhet": ("A görs som en planerad promenad; en vanlig dag ligger stegen "
                                "långt under tröskeln, så B är den naturliga dagen."),
         },
-        "utfall": {"kolumn": "hr_lowest_bpm"},
-        "analys": {"metod": "randomiseringstest", "niva": 0.95, "minsta_relevanta_effekt": -2},
+        "utfall": {"kolumn": "total_sleep_seconds", "dagar_efter": 1},
+        "analys": {"metod": "randomiseringstest", "niva": 0.95, "minsta_relevanta_effekt": 1800},
         "protokoll": {
             "periodeffekt": "Ordningen lottas; långsam konditionsförändring drabbar A och B lika.",
             "overforing": "Minst tre kalenderdagar mellan studiedagar, över 24–48 h eftereffekt.",
