@@ -1,0 +1,22 @@
+studier:
+- id: 000-exempel-promenad
+  fraga: Sänker en promenad på 40 minuter efter middagen medelglukos 19–22 jämfört
+    med vila?
+  status: pågår
+  beslut: pågår
+  lardom: ''
+  nasta_steg: ''
+- id: 001-traning-natten-efter
+  fraga: Är medelglukos 00:00–06:00 natten efter träning lägre än nätter utan träning?
+  status: klar
+  beslut: obestämt
+  lardom: ''
+  nasta_steg: ''
+- id: 002-10000-steg
+  fraga: Sänker en dag med minst 10 000 steg medelglukos under den vakna delen av
+    dygnet jämfört med en dag med få steg?
+  status: ej_last
+  beslut: pågår
+  lardom: ''
+  nasta_steg: ''
+oppna_hypoteser: []
