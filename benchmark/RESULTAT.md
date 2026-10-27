@@ -45,17 +45,40 @@ efter) stoppades som dagtyp; d06 (datumlista utan loggade pass) godkändes med v
 kräver; d05:s bortfall skattades på alla dagar. Över-korrigeringssonderna höll: d02 (A aldrig
 historisk men avsiktlig) och d04 (härledd exponering utan dagstypsstruktur) godkändes.
 
-**Avvikelserna är fel i facit, inte i granskningen.** Efterhandsprövning mot motorns redovisade
-aritmetik: d05 ger 9 väntade kompletta par efter sensorbortfall → 71 % styrka; d09 ger 66 % med
-14 par mot SD 1,01; d12 ger 78 % med 10 par — samtliga under det låsta kravet 80 %, med behövt
-antal par utskrivet (15, 18, 11). Fallförfattaren bedömde styrkan på känsla; motorn räknade.
-Facit ändras inte i efterhand (regeln ovan); avvikelserna står kvar i facit och bokförs här
-som facitfel. Eftersom granskningen **inte** rättades efter dold2 är uppsättningen fortfarande
-orörd som mått.
+**Omprövning mot sann styrka.** Den första skrivningen här lät granskningen själv avgöra att facit hade fel. Det är systemet som testas som dömer, och det räknas inte. Scenariot definierar den sanna datan (dag-till-dag-SD och täckning), så den sanna styrkan går att simulera oberoende av både facit och granskningens skattning:
 
-**Resultatet som mening:** på tolv tidigare osedda fall gjorde granskningen noll metodfel,
-släppte inget kritiskt igenom, stoppade inget giltigt — och hade rätt mot människan i alla
-tre fall där de var oense.
+| Fall | Sann styrka | Granskningen | Facit | Rätt |
+|---|---|---|---|---|
+| d05 | 90 % | 71 %, STOPP | godkänn | facit: falskt stopp |
+| d09 | 70 % | 66 %, STOPP | godkänn | granskningen |
+| d12 | 84 % | 78 %, STOPP | godkänn | facit: falskt stopp |
+
+**dold2 efter omprövning: 10/12, inga falska godkännanden, två falska stopp.**
+
+## 2026-10-27: dold3, det renaste måttet
+
+Tolv fall av en agent som varken sett granskningen, rättningarna eller resultaten. Frysta och committade (3d04309) före första körningen, och körda på exakt samma kod som dold2.
+
+| | dold3 (12) |
+|---|---|
+| rätt dom mot facit | 10/12 |
+| falska godkännanden | inga (7/7 stoppade, alla av rätt skäl) |
+| avvikelser | j04 (underlag), j08 (styrka), STOPP mot facit GODKANN |
+
+Omprövning mot sann styrka:
+
+| Fall | Sann styrka | Granskningen | Rätt |
+|---|---|---|---|
+| j04 | 76 % (6 par: ett enda förlorat par gör p < 0,05 omöjligt; 22 % risk) | STOPP underlag | granskningen |
+| j08 | 84 % | 66 %, STOPP | facit: falskt stopp |
+
+**dold3 efter omprövning: 11/12.**
+
+## Sammanfattning efter rättningarna (dold2 + dold3, 24 fall)
+
+- **Falska godkännanden: 0 av 13** fall som skulle stoppas. Inget kritiskt fel släpptes igenom.
+- **Falska stopp: 3 av 11** giltiga fall (d05, d12, j08). Alla tre gäller styrka nära 80-procentsgränsen.
+- **Orsaken är densamma i alla tre:** granskningen är för pessimistisk när den skattar styrkan. Väntat antal par avrundas nedåt, och SD skattad på få dagar används som om den vore exakt. Rättningen är att räkna styrkan över fördelningen av kompletta par och att varna i stället för att stoppa när osäkerheten i skattningen omfattar 80 %. Görs den förbrukas dold2 och dold3 som mått för styrkekategorin, och nästa mätning kräver en ny uppsättning.
 
 ## Språkmodellen
 
