@@ -136,7 +136,7 @@ def load(paths: list[Path], db_path: Path) -> int:
         con.register("events_df", events)
         con.execute("create or replace table raw.clarity_events as select * from events_df")
         n = con.execute("select count(*) from raw.clarity_events").fetchone()[0]
-        manifest.record(con, "clarity", [(p, len(f)) for p, f in zip(paths, frames)])
+        manifest.record(con, "clarity", [(p, len(f)) for p, f in zip(paths, frames, strict=True)])
     return n
 
 

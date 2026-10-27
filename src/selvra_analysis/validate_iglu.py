@@ -126,7 +126,7 @@ def compare_daily(pipeline: pd.DataFrame, iglu: pd.DataFrame) -> list[str]:
         ref = both["iglu_" + icol].astype(float) * factor
         # A value rounded to `precision` is within half a unit of the exact one (plus float noise).
         bad = ((ours - ref).abs() > precision / 2 + 1e-9) | (ours.isna() != ref.isna())
-        for day, o, r in zip(both.loc[bad, "reading_date"], ours[bad], ref[bad]):
+        for day, o, r in zip(both.loc[bad, "reading_date"], ours[bad], ref[bad], strict=True):
             problems.append(f"{day} {col}: pipeline {o}, iglu {r:.4f}")
     return problems
 
@@ -144,7 +144,8 @@ def run_r(script: str, inp: Path, out: Path) -> None:
     rscript = shutil.which("Rscript")
     if rscript is None:
         raise FileNotFoundError("Rscript")
-    subprocess.run([rscript, str(VALIDATION / script), str(inp), str(out)], check=True)
+    # Fixed R scripts from this repo on files this process just wrote; no user input.
+    subprocess.run([rscript, str(VALIDATION / script), str(inp), str(out)], check=True)  # noqa: S603
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -159,7 +160,8 @@ def main(argv: list[str] | None = None) -> int:
     con.execute("set TimeZone = 'UTC'")
     daily = con.execute("select * from marts.fct_glucose_daily").df()
     daily["reading_date"] = daily["reading_date"].astype(str)
-    events = con.execute(f"select {', '.join(EVENT_KEY)} from intermediate.int_glycaemic_events").df()
+    columns = ", ".join(EVENT_KEY)  # a module constant, not input
+    events = con.execute(f"select {columns} from intermediate.int_glycaemic_events").df()  # noqa: S608
 
     checks = {
         "daily": ("iglu_daily.R", export_daily, compare_daily, daily, f"{len(daily) * len(DAILY)} values"),

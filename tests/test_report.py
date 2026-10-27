@@ -27,7 +27,8 @@ def test_metrics_are_pooled_over_readings(tmp_path: Path) -> None:
     values = [3.5] * 72 + [7.0] * 216
     con = db_with(tmp_path, values, date(2026, 1, 1))
     m = period_metrics(con, date(2026, 1, 1), date(2026, 1, 1))
-    assert m["tbr_pct"] == 25.0 and m["tir_pct"] == 75.0
+    assert m["tbr_pct"] == 25.0
+    assert m["tir_pct"] == 75.0
     assert abs(m["tbr_pct_clean"] - 100 * 71 / 287) < 1e-9
     assert m["coverage_pct"] == 100.0
     assert (m["n_hypo_level1"], m["n_hypo_level1_clean"]) == (1, 0)
@@ -39,4 +40,5 @@ def test_report_flags_short_periods_and_marks_targets(tmp_path: Path) -> None:
     m = period_metrics(con, date(2026, 1, 1), date(2026, 1, 1))
     text = render(m, {}, date(2026, 1, 1), date(2026, 1, 1), {"fingerprint": "abc", "synthetic": False})
     assert "Under konsensuskravet" in text
-    assert "| Tid i målområdet 3,9–10,0 | 100,0 % |" in text and "| ja |" in text
+    assert "| Tid i målområdet 3,9–10,0 | 100,0 % |" in text
+    assert "| ja |" in text

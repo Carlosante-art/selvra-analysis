@@ -21,6 +21,7 @@ import hashlib
 import json
 import platform
 import re
+import shutil
 import subprocess
 from datetime import UTC, datetime
 from importlib.metadata import version
@@ -39,8 +40,12 @@ class NotFrozenError(RuntimeError):
     pass
 
 
+GIT = shutil.which("git") or "git"
+
+
 def _git(*args: str) -> str:
-    return subprocess.run(["git", "-C", str(ROOT), *args], check=True,
+    # Arguments are fixed git subcommands and paths inside the repo, never user input.
+    return subprocess.run([GIT, "-C", str(ROOT), *args], check=True,  # noqa: S603
                           capture_output=True, text=True).stdout.strip()
 
 

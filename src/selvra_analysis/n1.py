@@ -1,4 +1,4 @@
-"""N-of-1 experiments: randomised schedule, randomisation test, power.
+r"""N-of-1 experiments: randomised schedule, randomisation test, power.
 
 Design: paired periods. Every pair holds one period of each condition (A = intervention,
 B = comparison) in random order, decided by a coin flip per pair before the experiment
@@ -15,7 +15,7 @@ The confidence interval is every constant effect the test does not reject.
 Carryover: each period can start with washout days that are excluded from the outcome
 (analytic washout). Order effects are reported separately for AB and BA pairs.
 
-    python -m selvra_analysis.n1 schedule --start 2026-11-02 --pairs 8 --period-days 2 \\
+    python -m selvra_analysis.n1 schedule --start 2026-11-02 --pairs 8 --period-days 2 \
         --washout-days 1 --out analyses/NNN-namn/schema.csv
     python -m selvra_analysis.n1 power --pairs 8 --effect 5 --sd 8
 """
@@ -30,6 +30,7 @@ from dataclasses import asdict, dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
+import duckdb
 import numpy as np
 import pandas as pd
 
@@ -79,9 +80,8 @@ def period_outcomes(schedule: pd.DataFrame, daily: pd.DataFrame, outcome: str,
     if valid_column:
         d.loc[d[valid_column] != True, outcome] = np.nan
     m = schedule[~schedule["washout"]].merge(d, left_on="date", right_on=date_column, how="left")
-    out = (m.groupby(["pair", "period", "condition", "order"], as_index=False)
+    return (m.groupby(["pair", "period", "condition", "order"], as_index=False)
              .agg(value=(outcome, "mean"), n_days=(outcome, "count")))
-    return out
 
 
 # --- Randomisation test -----------------------------------------------------------------------
@@ -264,12 +264,17 @@ def main(argv: list[str] | None = None) -> None:
               f"{sched['date'].min()} to {sched['date'].max()}, orders {orders}")
         print(f"Quote in the pre-registration:  **Schema:** `{args.out.name}` sha256 `{digest}`")
     elif args.cmd == "sd":
-        import duckdb
         with duckdb.connect(str(args.db), read_only=True) as con:
             if args.window:
                 daily = window_outcomes(con, *args.window)
             else:
-                daily = con.execute(f'select reading_date, "{args.outcome}", is_valid_day '
+                columns = {r[0] for r in con.execute(
+                    "select column_name from information_schema.columns "
+                    "where table_schema = 'marts' and table_name = 'mart_analysis_days'").fetchall()}
+                if args.outcome not in columns:
+                    raise SystemExit(f"{args.outcome!r} is not a column of marts.mart_analysis_days")
+                # The column name is checked against the table above, so interpolating it is safe.
+                daily = con.execute(f'select reading_date, "{args.outcome}", is_valid_day '  # noqa: S608
                                     'from marts.mart_analysis_days').df()
         sd = period_sd(daily, args.outcome, args.days)
         print(f"SD of {args.outcome} over {args.days}-day blocks: {sd:.2f}")

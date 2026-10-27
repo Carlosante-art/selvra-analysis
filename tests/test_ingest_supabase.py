@@ -1,9 +1,12 @@
+import os
 from pathlib import Path
 
 import duckdb
 import pandas as pd
+import pytest
 
-from selvra_analysis.ingest_supabase import store
+from selvra_analysis.ingest_clarity import ensure_raw_tables
+from selvra_analysis.ingest_supabase import read_env_file, store
 
 
 def rows() -> pd.DataFrame:
@@ -29,21 +32,16 @@ def test_store_snapshots_and_records_version(tmp_path: Path) -> None:
 
 
 def test_env_file_values_are_literal(tmp_path: Path, monkeypatch) -> None:
-    from selvra_analysis.ingest_supabase import read_env_file
     env = tmp_path / ".env"
     env.write_text('# comment\nX_URL="postgresql://u:p$a#ss@h:5432/db"\nexport X_ID=abc\n')
     monkeypatch.delenv("X_URL", raising=False)
     monkeypatch.delenv("X_ID", raising=False)
     read_env_file(env)
-    import os
     assert os.environ["X_URL"] == "postgresql://u:p$a#ss@h:5432/db"
     assert os.environ["X_ID"] == "abc"
 
 
 def test_refuses_database_with_synthetic_demo_data(tmp_path: Path) -> None:
-    import pytest
-
-    from selvra_analysis.ingest_clarity import ensure_raw_tables
     db = tmp_path / "demo.duckdb"
     with duckdb.connect(str(db)) as con:
         ensure_raw_tables(con)

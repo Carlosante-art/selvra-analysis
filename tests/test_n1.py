@@ -43,14 +43,16 @@ def test_exact_p_value_known_case() -> None:
 
 def test_too_few_pairs_gives_no_interval() -> None:
     r = randomisation_test(periods_from([1.0, 2.0, 3.0, 4.0, 5.0]))
-    assert r.ci_low == -np.inf and r.ci_high == np.inf
+    assert r.ci_low == -np.inf
+    assert r.ci_high == np.inf
 
 
 def test_interval_contains_true_effect_and_excludes_zero() -> None:
     rng = np.random.default_rng(1)
     r = randomisation_test(periods_from(5.0 + rng.normal(0, 2, 12)))
     assert r.ci_low < 5.0 < r.ci_high
-    assert r.ci_low > 0 and r.p_value < 0.05
+    assert r.ci_low > 0
+    assert r.p_value < 0.05
 
 
 def test_incomplete_pairs_are_dropped_and_counted() -> None:
@@ -76,8 +78,10 @@ def test_period_outcomes_skip_washout_and_invalid_days() -> None:
         "is_valid_day": [True, True, True, True, True, False],
     })
     out = period_outcomes(s, daily, "tir").set_index("period")
-    assert out.loc[1, "value"] == 70.0 and out.loc[1, "n_days"] == 2
-    assert out.loc[2, "value"] == 40.0 and out.loc[2, "n_days"] == 1
+    assert out.loc[1, "value"] == 70.0
+    assert out.loc[1, "n_days"] == 2
+    assert out.loc[2, "value"] == 40.0
+    assert out.loc[2, "n_days"] == 1
 
 
 def test_power_grows_with_pairs() -> None:

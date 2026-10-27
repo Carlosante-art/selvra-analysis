@@ -61,10 +61,12 @@ def test_validation_names_problems_in_swedish(spec: dict) -> None:
     del spec["motbevis"]
     spec["analys"]["minsta_relevanta_effekt"] = 0
     errors = "\n".join(st.validate(spec))
-    assert "minst 6" in errors and "motbevis" in errors and "minsta_relevanta_effekt" in errors
+    assert "minst 6" in errors
+    assert "motbevis" in errors
+    assert "minsta_relevanta_effekt" in errors
 
 
-@pytest.mark.parametrize("ci,smallest,word", [
+@pytest.mark.parametrize(("ci", "smallest", "word"), [
     ((-3.0, -1.5), -1.0, "håller"),
     ((-0.8, 0.5), -1.0, "motbevisad"),
     ((-2.0, 0.2), -1.0, "obestämt"),
@@ -78,7 +80,8 @@ def test_decision_rule_respects_direction(ci, smallest, word) -> None:
 def test_lock_draws_schedule_once(folder: Path) -> None:
     s = st.load(folder / "studie.yml")
     rec = st.lock(s, seed=1)
-    assert (folder / "schema.csv").exists() and rec["schedule_end"] == "2025-05-24"
+    assert (folder / "schema.csv").exists()
+    assert rec["schedule_end"] == "2025-05-24"
     with pytest.raises(st.StudyError, match="redan låst"):
         st.lock(s)
 
@@ -99,7 +102,8 @@ def test_status_is_blind(folder: Path, tmp_path: Path) -> None:
     with duckdb.connect(str(db), read_only=True) as con:
         text = st.status(s, con, today=date(2025, 5, 1))
     assert "Kompletta par hittills" in text
-    assert "Skattning" not in text and "intervall" not in text.lower().replace("intervallet", "")
+    assert "Skattning" not in text
+    assert "intervall" not in text.lower().replace("intervallet", "")
 
 
 def test_run_refuses_while_running_then_finds_effect_once(folder: Path, tmp_path: Path) -> None:
@@ -113,7 +117,8 @@ def test_run_refuses_while_running_then_finds_effect_once(folder: Path, tmp_path
         record, report = st.run(s, con, today=date(2025, 6, 1))
         assert "håller" in record["beslut"]
         assert record["result"]["ci_high"] < -1.0
-        assert "Tesen håller" in report and "Spårbarhet" in report
+        assert "Tesen håller" in report
+        assert "Spårbarhet" in report
         with pytest.raises(st.StudyError, match="redan körd"):
             st.run(s, con, today=date(2025, 6, 2))
 
@@ -169,7 +174,8 @@ def test_observation_with_night_window_after_training(folder: Path, tmp_path: Pa
         record, report = st.run(s, con, today=date(2026, 1, 15))
     assert "håller" in record["beslut"]
     assert -2.0 < record["result"]["estimate"] < -1.0
-    assert "00:00–06:00" in report and "Observationsdata visar samband" in report
+    assert "00:00–06:00" in report
+    assert "Observationsdata visar samband" in report
 
 
 def test_observation_refuses_below_minimum_without_spending_the_study(folder: Path, tmp_path: Path) -> None:

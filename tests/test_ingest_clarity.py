@@ -83,7 +83,8 @@ def test_swedish_eu_export(tmp_path: Path) -> None:
     path.write_text("\n".join([HEADER_SV, *rows]) + "\n", encoding="utf-8-sig")
     df = read_clarity_csv(path)
     assert list(df.columns) == list(dict.fromkeys(df.columns)), "duplicate column names"
-    assert "Carl" not in df.to_string() and "Exempel" not in df.to_string()
+    assert "Carl" not in df.to_string()
+    assert "Exempel" not in df.to_string()
     egv = df[df["event_type"] == "EGV"]
     assert egv["glucose_raw"].tolist() == ["6,2", "Lågt"]
     assert set(egv["glucose_unit"]) == {"mmol/L"}

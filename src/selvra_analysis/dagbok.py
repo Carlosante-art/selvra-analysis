@@ -8,6 +8,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -107,12 +108,12 @@ def run(target_date: date, db_path: Path, log_path: Path) -> None:
         print(f"\n  Ingen CGM-data för {target_date}.")
         if not _ja("Logga händelse ändå?"):
             return
-        row = {c: None for c in cols}
+        row = dict.fromkeys(cols)
         row["reading_date"] = target_date
         row["is_valid_day"] = False
         already_logged = []
     else:
-        row = dict(zip(cols, rows[0]))
+        row = dict(zip(cols, rows[0], strict=True))
         already_logged = _already_logged(log_path, target_date)
         _visa_dag(row, already_logged)
 
@@ -138,7 +139,6 @@ def run(target_date: date, db_path: Path, log_path: Path) -> None:
 def _already_logged(log_path: Path, target_date: date) -> list[str]:
     if not log_path.exists():
         return []
-    import csv
     found = []
     with log_path.open() as f:
         for row in csv.DictReader(f):
@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         target = date.fromisoformat(args.date)
     except ValueError:
-        raise SystemExit(f"Ogiltigt datum: {args.date!r}")
+        raise SystemExit(f"Ogiltigt datum: {args.date!r}") from None
 
     run(target_date=target, db_path=args.db, log_path=args.log)
 

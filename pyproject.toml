@@ -34,3 +34,35 @@ packages = ["src/selvra_analysis"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# Code limits enforced in CI. Preview is on only for the rules named here (PLR1702).
+preview = true
+explicit-preview-rules = true
+extend-select = [
+  "C90",                                        # cyclomatic complexity
+  "PLR0911", "PLR0912", "PLR0913", "PLR0915",   # returns, branches, arguments, statements
+  "PLR1702",                                    # nested blocks
+  "PLC0415",                                    # imports inside functions hide dependencies
+  "TID",                                        # banned APIs, relative imports
+  "B", "UP", "SIM", "RUF", "PT", "NPY", "C4", "RET", "PTH",
+  "S",                                          # security: SQL strings, subprocess
+]
+ignore = [
+  "PLR2004",                                    # 3.9 and 10.0 mmol/L are domain constants
+  "RUF001", "RUF002", "RUF003",                 # en dashes and × in Swedish text are intended
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-branches = 12
+max-returns = 6
+max-args = 6
+max-statements = 50
+max-nested-blocks = 4
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR0913"]
