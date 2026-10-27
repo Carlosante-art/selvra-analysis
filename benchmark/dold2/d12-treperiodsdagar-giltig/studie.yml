@@ -1,0 +1,44 @@
+id: d12-treperiodsdagar-giltig
+titel: Promenadperioder om tre dagar med tvättdagar
+fraga: Hur mycket lägre är medelglukos 09–24 sista dagen i en promenadperiod jämfört med en viloperiod?
+tes: Tre dagar med minst 10 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24 sista dagen.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 10 000 steg per dag i tre dagar, varav en promenad 60–90 minuter varje förmiddag
+  B: Vanliga dagar, högst 5 000 steg per dag i tre dagar
+  start: 2025-07-07
+  par: 10
+  periodlangd_dagar: 3
+  tvatt_dagar: 2
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 10000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  genomforbarhet: Jag arbetar hemifrån hela hösten; promenad eller vila går alla dagar.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Två tvättdagar mellan perioderna täcker 24–48 h eftereffekt; sista perioddagen analyseras.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före periodens första promenad, efter två tvättdagar.

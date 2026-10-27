@@ -1,0 +1,48 @@
+id: d02-a-skapas-avsiktligt
+titel: Lång söndagspromenad trots stillasittande historik
+fraga: Hur mycket lägre är medelglukos 09–24 en söndag med minst 12 000 steg jämfört med en vanlig söndag?
+tes: En söndag med minst 12 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 12 000 steg, varav en promenad på 90 minuter med start 09:00–10:00
+  B: Vanlig söndag, högst 5 000 steg
+  start: 2025-07-06
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 12000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  dagar:
+    veckodagar:
+    - sondag
+  dagar_motivering: B går inte att göra en arbetsdag; söndagar är alltid lediga.
+  genomforbarhet: Jag går normalt under 4 000 steg en söndag, så A har aldrig inträffat av sig själv — den skapas som en planerad promenad, vilket är hela poängen med interventionen. B är min vanliga söndag.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Söndagar ligger sju dagar isär, långt över 24–48 h eftereffekt.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före promenaden, sju dagar efter förra A-dagen.

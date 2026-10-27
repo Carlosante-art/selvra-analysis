@@ -1,0 +1,36 @@
+id: d04-obs-steg-utan-dagstyp
+titel: Höga steg och kvällen, utan arbetsschema
+fraga: Är medelglukos 18–23 lägre en dag med minst 10 000 steg?
+tes: Minst 0,5 mmol/L lägre medel 18–23 en hoga_steg-dag.
+motbevis: Hela intervallet över −0,5 mmol/L.
+design:
+  typ: observation
+  exponering:
+    handelse: hoga_steg
+    dagar_efter: 0
+  period:
+  - 2025-04-01
+  - 2025-06-30
+  retrospektiv: true
+utfall:
+  matt: medel
+  fonster:
+  - '18:00'
+  - '23:00'
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  niva: 0.95
+  minsta_relevanta_effekt: -0.5
+  minsta_underlag:
+    exponerade: 10
+    jamforelse: 10
+protokoll:
+  periodeffekt: Block om sju dagar bevarar veckorytmen.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten innan dagens steg tagits.

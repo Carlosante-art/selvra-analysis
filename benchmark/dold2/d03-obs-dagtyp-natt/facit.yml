@@ -1,0 +1,8 @@
+forvantat: STOPP
+skal:
+- dagtyp
+kategori: kritiskt
+motivering: 'Höga steg följer arbetspassen (11 200 mot 3 600). Exponerade dagar är arbetsdagar och
+  jämförelsedagar lediga, så kontrasten mäter arbetsdag mot ledig dag, inte stegen. Dagstypen ska
+  bedömas ur loggade pass och på exponeringsdagen — utfallet natten efter ändrar inte det.'
+reparation: Jämför inom dagstyp (arbetsdagar för sig, lediga för sig), eller gör ett n-of-1 med lottade promenader.

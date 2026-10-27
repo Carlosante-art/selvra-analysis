@@ -1,0 +1,8 @@
+forvantat: GODKANN
+flagga:
+- positivitet
+kategori: reparerbart
+motivering: 'Datumen påstås vara lediga dagar men inga pass är loggade, så dagstypen går inte att
+  verifiera ur data. Det ska synas som varning — designen är genomförbar om påståendet stämmer,
+  men granskningen kan inte kontrollera det, och det måste sägas.'
+reparation: Logga arbetspassen (typ arbete) så att dagstypen kan verifieras per datum.

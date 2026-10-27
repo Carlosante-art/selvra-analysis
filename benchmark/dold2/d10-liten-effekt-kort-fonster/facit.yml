@@ -1,0 +1,8 @@
+forvantat: STOPP
+skal:
+- styrka
+kategori: reparerbart
+motivering: 'Minsta relevanta effekt 0,3 mmol/L i ett 2-timmarsfönster med dag-till-dag-sd kring
+  1,3 och bara 8 par: testet kan nästan aldrig skilja effekten från brus. Att köra ändå ger ett
+  förutsägbart obestämt svar och förbrukar studien.'
+reparation: Fler par (i storleksordningen 20+), längre fönster eller större minsta relevant effekt.

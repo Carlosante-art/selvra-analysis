@@ -1,0 +1,45 @@
+id: d10-liten-effekt-kort-fonster
+titel: Kvällspromenad och sen kväll
+fraga: Hur mycket lägre är medelglukos 21–23 en dag med kvällspromenad jämfört med en dag utan?
+tes: En promenad 30 minuter 19:00 ger minst 0,3 mmol/L lägre medelglukos 21–23.
+motbevis: Hela intervallet ligger över −0,3 mmol/L.
+design:
+  typ: n1
+  A: Promenad 30 minuter med start 19:00
+  B: Ingen promenad efter 18:00
+  start: 2025-07-07
+  par: 8
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: manuell
+  verkan:
+    typ: traning
+    borjar: '19:00'
+  dagar:
+    veckodagar:
+    - lordag
+    - onsdag
+  dagar_motivering: Onsdagar och lördagar är jag hemma vid 18.
+  genomforbarhet: A är ett planerat kort pass; B en vanlig kväll.
+utfall:
+  matt: medel
+  fonster:
+  - '21:00'
+  - '23:00'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -0.3
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Minst tre dagar mellan analyserade dagar (ons/lör), över 24–48 h eftereffekt.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före kvällens promenad.

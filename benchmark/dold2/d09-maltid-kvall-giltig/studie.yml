@@ -1,0 +1,40 @@
+id: d09-maltid-kvall-giltig
+titel: Tidig eller sen middag och kvällens glukos
+fraga: Hur mycket lägre är medelglukos 20–24 en kväll efter middag 17:00 jämfört med middag 20:00?
+tes: Middag 17:00 ger minst 1,0 mmol/L lägre medelglukos 20–24 än middag 20:00.
+motbevis: Hela intervallet ligger över −1,0 mmol/L.
+design:
+  typ: n1
+  A: Middag med samma innehåll klockan 17:00
+  B: Samma middag klockan 20:00
+  start: 2025-07-07
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: manuell
+  verkan:
+    typ: maltid
+    borjar: '17:00'
+  genomforbarhet: Båda villkoren är samma måltid vid olika klockslag; båda går att göra alla dagar.
+utfall:
+  matt: medel
+  fonster:
+  - '20:00'
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: En måltids effekt är över till morgonen; en dag mellan analyserade dagar räcker och ordningen lottas.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - '10:00'
+  - '14:00'
+  motivering: Mitt på dagen, innan middagen vid något av klockslagen kan verka.

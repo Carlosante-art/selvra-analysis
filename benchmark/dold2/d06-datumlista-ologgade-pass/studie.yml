@@ -1,0 +1,51 @@
+id: d06-datumlista-ologgade-pass
+titel: Promenad på schemalagt lediga datum utan loggade pass
+fraga: Hur mycket lägre är medelglukos 09–24 en ledig dag med minst 10 000 steg jämfört med en vanlig ledig dag?
+tes: En ledig dag med minst 10 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 10 000 steg, varav en promenad 60–90 minuter med start 09:00–11:00
+  B: Vanlig ledig dag, högst 5 000 steg
+  start: 2025-07-08
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 10000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  dagar:
+    datum: [2025-07-08, 2025-07-12, 2025-07-15, 2025-07-19, 2025-07-22, 2025-07-26, 2025-07-29,
+            2025-08-02, 2025-08-05, 2025-08-09, 2025-08-12, 2025-08-16, 2025-08-19, 2025-08-23,
+            2025-08-26, 2025-08-30, 2025-09-02, 2025-09-06, 2025-09-09, 2025-09-13,
+            2025-09-16, 2025-09-20, 2025-09-23, 2025-09-27, 2025-09-30, 2025-10-04, 2025-10-07, 2025-10-11]
+    minsta_avstand: 3
+  dagar_motivering: Datumen är mina lediga dagar enligt arbetsgivarens rullande schema för hösten.
+  genomforbarhet: A görs som en planerad promenad; B är en vanlig ledig dag med under 5 000 steg.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Minsta avstånd tre dagar mellan studiedagar, över 24–48 h eftereffekt.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före promenaden, minst tre dagar efter förra A-dagen.

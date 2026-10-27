@@ -1,0 +1,48 @@
+id: d05-trasig-sensorvecka
+titel: Lördagspromenad med en stökig sensorperiod
+fraga: Hur mycket lägre är medelglukos 09–24 en lördag med minst 10 000 steg jämfört med en vanlig lördag?
+tes: En lördag med minst 10 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 10 000 steg, varav en promenad 60–90 minuter med start 09:00–11:00
+  B: Vanlig lördag, högst 5 000 steg
+  start: 2025-07-05
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 10000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  dagar:
+    veckodagar:
+    - lordag
+  dagar_motivering: B går inte att göra en arbetsdag; lördagar är lediga.
+  genomforbarhet: A görs som en planerad promenad; den förekommer inte naturligt en lördag.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Lördagar ligger sju dagar isär, långt över 24–48 h eftereffekt.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före promenaden, sju dagar efter förra A-dagen.

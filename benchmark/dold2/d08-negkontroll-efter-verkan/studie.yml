@@ -1,0 +1,44 @@
+id: d08-negkontroll-efter-verkan
+titel: Morgonsimning och dagens glukos
+fraga: Hur mycket lägre är medelglukos 09–16 en dag med morgonsimning jämfört med en dag utan?
+tes: En dag med 30 minuters simning 06:30 ger minst 1,0 mmol/L lägre medelglukos 09–16.
+motbevis: Hela intervallet ligger över −1,0 mmol/L.
+design:
+  typ: n1
+  A: 30 minuters simning med start 06:30
+  B: Ingen simning, i övrigt vanlig morgon
+  start: 2025-07-07
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: manuell
+  verkan:
+    typ: traning
+    borjar: 06:30
+  dagar:
+    veckodagar:
+    - lordag
+  dagar_motivering: Simhallen öppnar 06:00 bara lördagar där jag bor.
+  genomforbarhet: A är ett planerat pass; B är en vanlig lördagsmorgon.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '16:00'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.0
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Lördagar ligger sju dagar isär, långt över 24–48 h eftereffekt.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 07:00
+  - 08:30
+  motivering: Morgonfönstret innan dagens huvudmått börjar 09:00.

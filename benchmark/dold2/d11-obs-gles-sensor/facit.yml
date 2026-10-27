@@ -1,0 +1,8 @@
+forvantat: STOPP
+skal:
+- underlag
+kategori: reparerbart
+motivering: 'Täckningen är 45 %, så under hälften av nätterna i perioden har giltig data. Med kravet
+  15 exponerade och 30 jämförelsenätter kan underlaget inte nås inom perioden — studien skulle
+  låsas mot ett facit den aldrig kan samla in.'
+reparation: Längre period, eller vänta tills sensortäckningen är stabil.

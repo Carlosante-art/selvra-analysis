@@ -1,0 +1,9 @@
+forvantat: STOPP
+skal:
+- positivitet
+kategori: kritiskt
+motivering: 'Cykeln 4 arbete/3 fritt gör att en del onsdagar och söndagar är arbetsdagar med ~11 500 steg:
+  där kan B (≤5 000) aldrig inträffa, och B är den vanliga dagen som inte kan skapas med en avsiktlig
+  handling. Positivitet måste hålla per dagstyp bland de tillåtna dagarna (Daza 2018), bedömd ur loggade
+  pass — inte ur veckodagen, eftersom schemat rullar.'
+reparation: Begränsa till dagar som enligt loggade pass är lediga, oavsett veckodag.

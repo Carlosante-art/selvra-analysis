@@ -1,0 +1,49 @@
+id: d01-rullande-b-omojlig
+titel: Promenad onsdag och söndag med rullande schema
+fraga: Hur mycket lägre är medelglukos 09–24 en dag med minst 10 000 steg jämfört med en vanlig dag, onsdagar och söndagar?
+tes: En dag med minst 10 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 10 000 steg, varav en promenad 60–90 minuter med start 09:00–11:00
+  B: Vanlig dag, högst 5 000 steg, ingen planerad promenad
+  start: 2025-07-09
+  par: 14
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 10000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  dagar:
+    veckodagar:
+    - onsdag
+    - sondag
+  dagar_motivering: Onsdagar och söndagar hinner jag promenera på förmiddagen.
+  genomforbarhet: A görs som en planerad promenad; B är en dag utan extra aktivitet.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära i tid och ordningen lottas; långsam drift drabbar A och B lika.
+  overforing: Studiedagarna ligger minst tre kalenderdagar isär; AB och BA redovisas separat.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före promenaden, minst tre dagar efter förra A-dagen.
