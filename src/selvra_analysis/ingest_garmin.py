@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import getpass
 import hashlib
 import os
 import sys
@@ -85,6 +86,34 @@ def to_frame(rows: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(kept, columns=WEARABLE_COLUMNS)
 
 
+def person_paths(person: str) -> dict[str, Path]:
+    """Each person's data lives apart: data/personer/<namn>/ (gitignored like all of data/)."""
+    base = Path("data/personer") / person
+    return {"token": base / "garmin", "db": base / "selvra.duckdb", "snapshots": base / "snapshots"}
+
+
+def interactive_login(token_dir: Path) -> None:
+    """Log in once with the person present; only Garmin's token is saved, never the password.
+
+    The token lets later runs fetch data without the password (it lasts about a year).
+    """
+    print("Logga in med Garmin Connect-kontot. Lösenordet sparas inte; bara Garmins nyckel.")
+    email = input("E-post: ").strip()
+    password = getpass.getpass("Lösenord: ")
+    garmin = Garmin(email=email, password=password, prompt_mfa=lambda: input("Kod från Garmin (sms/mejl): ").strip())
+    token_dir.mkdir(parents=True, exist_ok=True)
+    garmin.login(str(token_dir))
+    garmin.garth.dump(str(token_dir))
+    name = garmin.get_full_name() if hasattr(garmin, "get_full_name") else ""
+    print(f"Inloggad{f' som {name}' if name else ''}. Nyckeln ligger i {token_dir}.")
+
+
+def _login_with_token(token_dir: Path) -> Garmin:
+    garmin = Garmin()
+    garmin.login(str(token_dir))
+    return garmin
+
+
 def _login(email: str, password: str) -> Garmin:
     """login(tokenstore) sköter hela flödet: provar cachade tokens, faller tillbaka
     på e-post/lösenord och sparar nya tokens till sökvägen själv."""
@@ -111,18 +140,25 @@ def _fetch(garmin: Garmin, start: date, end: date) -> pd.DataFrame:
     return to_frame(rows)
 
 
-def load(db_path: Path, days_back: int = 90) -> int:
-    _load_dotenv()
-    email = os.environ.get("GARMIN_EMAIL")
-    password = os.environ.get("GARMIN_PASSWORD")
-    if not email or not password:
-        print("GARMIN_EMAIL/GARMIN_PASSWORD saknas — hoppar över Garmin-inläsning.", file=sys.stderr)
-        return 0
-
+def _connect(token_dir: Path | None) -> Garmin | None:
+    """A person's saved token if there is one, otherwise GARMIN_EMAIL/GARMIN_PASSWORD from .env."""
     try:
-        garmin = _login(email, password)
+        if token_dir is not None and token_dir.exists():
+            return _login_with_token(token_dir)
+        _load_dotenv()
+        email, password = os.environ.get("GARMIN_EMAIL"), os.environ.get("GARMIN_PASSWORD")
+        if not email or not password:
+            print("Ingen Garmin-nyckel och inget GARMIN_EMAIL/GARMIN_PASSWORD; hoppar över Garmin.", file=sys.stderr)
+            return None
+        return _login(email, password)
     except (GarminConnectAuthenticationError, GarminConnectConnectionError) as err:
         raise SystemExit(f"Garmin-inloggning misslyckades: {err}") from err
+
+
+def load(db_path: Path, days_back: int = 90, token_dir: Path | None = None, snapshots: Path = SNAPSHOTS) -> int:
+    garmin = _connect(token_dir)
+    if garmin is None:
+        return 0
 
     end = date.today()
     start = end - timedelta(days=days_back)
@@ -134,8 +170,8 @@ def load(db_path: Path, days_back: int = 90) -> int:
 
     text = df.to_csv(index=False)
     digest = hashlib.sha256(text.encode()).hexdigest()
-    SNAPSHOTS.mkdir(parents=True, exist_ok=True)
-    (SNAPSHOTS / f"garmin_{digest[:16]}.csv").write_text(text)
+    snapshots.mkdir(parents=True, exist_ok=True)
+    (snapshots / f"garmin_{digest[:16]}.csv").write_text(text)
     with duckdb.connect(str(db_path)) as con:
         ensure_raw_tables(con)
         con.register("garmin_df", df)
@@ -153,10 +189,22 @@ def load(db_path: Path, days_back: int = 90) -> int:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--db", type=Path, default=DB_DEFAULT)
+    parser.add_argument("--db", type=Path, default=None, help="default: data/selvra.duckdb, eller personens")
     parser.add_argument("--dagar", type=int, default=90, help="Antal dagar bakåt (default: 90)")
+    parser.add_argument("--person", help="en annan person än du: data i data/personer/<namn>/")
+    parser.add_argument("--logga-in", action="store_true", help="logga in personen en gång (kräver --person)")
     args = parser.parse_args(argv)
-    load(args.db, args.dagar)
+    if args.person:
+        paths = person_paths(args.person)
+        if args.logga_in:
+            interactive_login(paths["token"])
+            return
+        paths["db"].parent.mkdir(parents=True, exist_ok=True)
+        load(args.db or paths["db"], args.dagar, paths["token"], paths["snapshots"])
+        return
+    if args.logga_in:
+        raise SystemExit("--logga-in kräver --person NAMN")
+    load(args.db or DB_DEFAULT, args.dagar)
 
 
 if __name__ == "__main__":
