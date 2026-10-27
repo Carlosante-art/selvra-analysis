@@ -1,0 +1,42 @@
+# UTKAST, inte låst. Innan låsning:
+#   1. Bekräfta B (din vanliga stegnivå) och dosen för A.
+#   2. Kör på din data:
+#        uv run python -m selvra_analysis.n1 sd --window 07:00 23:59 --outcome mean_mmol --days 1
+#        uv run python -m selvra_analysis.n1 power --pairs 16 --effect 0.5 --sd <svaret ovan>
+#      och justera design.par tills styrkan är minst 80 %.
+#   3. uv run python -m selvra_analysis.study las studies/002-10000-steg/studie.yml  och committa.
+id: 002-10000-steg
+titel: 10 000 steg om dagen och dagens glukos
+fraga: Sänker en dag med minst 10 000 steg medelglukos under den vakna delen av dygnet jämfört med en dag med få steg?
+tes: En dag med minst 10 000 steg ger minst 0,5 mmol/L lägre medelglukos 07–24 än en dag med högst 5 000 steg.
+motbevis: Hela intervallet visar en sänkning mindre än 0,5 mmol/L, eller en höjning.
+
+design:
+  typ: n1
+  A: Minst 10 000 steg under dagen (räknat av klocka eller telefon), utspritt över dagen
+  B: Högst 5 000 steg under dagen, i övrigt vanlig dag
+  start: 2026-11-02
+  par: 16
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+
+utfall:
+  matt: medel
+  fonster: ["07:00", "23:59"]
+  min_tackning_pct: 70
+
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -0.5
+
+protokoll:
+  periodeffekt: Parade dagar intill varandra; långsam drift (säsong, sensorålder, sjukdom) påverkar båda villkoren i ett par lika. Ordningen inom varje par lottas.
+  overforing: Ökad insulinkänslighet kan hålla i sig till nästa dag. Skattningen redovisas separat för AB- och BA-par; skiljer de sig tydligt åt är eftereffekten för stor för endagsperioder.
+  stoppregel: Insulin och måltider ändras inte för studiens skull. Studien avbryts vid upprepad hypoglykemi nivå 2 kopplad till A-dagar, vid sjukdom längre än tre dagar, eller om vården avråder. Avbrott och missade dagar loggas samma dag.
+  andringslogg: []
+
+negativ_kontroll:
+  matt: medel
+  fonster: ["00:00", "06:00"]
+  motivering: Natten kommer före dagens steg och kan inte påverkas av dem. Dagens villkor är lottat oberoende av gårdagens.
