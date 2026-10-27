@@ -78,26 +78,6 @@ models:
         description: The event includes a reading flagged as compression low or implausible jump.
         tests: [not_null]
 
-  - name: fct_glucose_daily
-    description: Daily CGM metrics per international consensus, on all readings and without artefacts.
-    columns:
-      - name: reading_date
-        tests: [unique, not_null]
-      - name: coverage_pct
-        description: Share of expected 5-minute readings for the local day's real length (276 in spring, 288, 300 in autumn). Above 100 means more readings than the clock allows, for example two sensors running in parallel during a G7 grace period.
-        tests:
-          - between:
-              arguments:
-                min_value: 0
-                max_value: 100
-              config:
-                severity: warn
-      - name: tir_pct
-        tests:
-          - between:
-              arguments:
-                min_value: 0
-                max_value: 100
 
   - name: stg_personal_events
     columns:
@@ -105,15 +85,3 @@ models:
         tests: [unique, not_null]
       - name: start_date
         tests: [not_null]
-
-  - name: fct_day_context
-    description: Context per day from the event log, plus inferred sensor changes from the CGM data.
-    columns:
-      - name: reading_date
-        tests: [unique, not_null]
-
-  - name: mart_analysis_days
-    description: The starting table for analyses. One row per day with glucose metrics and context.
-    columns:
-      - name: reading_date
-        tests: [unique, not_null]

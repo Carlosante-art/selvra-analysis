@@ -1,0 +1,858 @@
+# The marts are where claims are made. Every column carries its metric registry entry in
+# `meta` (what it measures, the standard, valid range, reference function in iglu, and
+# what it does NOT measure); tests/test_ontology.py fails if one is missing. Contracts fix
+# the column names and types the study engine relies on.
+version: 2
+models:
+- name: fct_glucose_daily
+  description: Daily CGM metrics per international consensus, on all readings and without artefacts.
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: reading_date
+    description: Local calendar date.
+    data_type: date
+    meta:
+      construct: the day the readings belong to
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: date
+      iglu_function: null
+      does_not_measure: anything about time zones travelled to; days are in var('local_timezone')
+      epistemics: observed
+    constraints:
+    - type: not_null
+    data_tests:
+    - unique
+  - name: n_readings
+    description: Readings that day.
+    data_type: bigint
+    meta:
+      construct: amount of data
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: data quality beyond count
+      epistemics: derived
+  - name: n_expected
+    description: Expected 5-minute readings for the local day's real length (276/288/300).
+    data_type: double
+    meta:
+      construct: the day's length in sensor intervals
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: 276, 288 or 300
+      iglu_function: null
+      does_not_measure: sensor behaviour
+      epistemics: derived
+  - name: coverage_pct
+    description: Readings as a share of expected.
+    data_type: double
+    meta:
+      construct: data completeness
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100 (warn above)
+      iglu_function: null
+      does_not_measure: whether missing readings are random; gaps at night bias night metrics
+      epistemics: derived
+    data_tests:
+    - between:
+        arguments:
+          min_value: 0
+          max_value: 100
+        config:
+          severity: warn
+  - name: is_valid_day
+    description: Coverage at least var('valid_day_coverage_pct').
+    data_type: boolean
+    meta:
+      construct: enough data to describe the day
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: representativeness of the day
+      epistemics: derived
+  - name: n_artefact
+    description: Readings flagged as compression low or implausible jump.
+    data_type: bigint
+    meta:
+      construct: suspected sensor error
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: 'confirmed error: flags are heuristics'
+      epistemics: interpreted
+  - name: n_compression_low
+    description: Readings flagged as suspected compression lows.
+    data_type: bigint
+    meta:
+      construct: suspected pressure on the sensor
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: confirmed compression; no ground truth
+      epistemics: interpreted
+  - name: n_early_sensor
+    description: Readings in the first 24 h of an inferred sensor session.
+    data_type: bigint
+    meta:
+      construct: lower-accuracy period
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: actual accuracy of those readings
+      epistemics: derived
+  - name: n_censored
+    description: Readings exported as Low/High, stored at the sensor limits.
+    data_type: bigint
+    meta:
+      construct: out-of-range readings
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: the true value beyond the limit
+      epistemics: observed
+  - name: mean_mmol
+    description: Mean glucose, mmol/L.
+    data_type: double
+    meta:
+      construct: average glycaemic exposure
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 2.2-22.2
+      iglu_function: mean_glu
+      does_not_measure: variability or time spent at extremes
+      epistemics: derived
+  - name: sd_mmol
+    description: Standard deviation, mmol/L.
+    data_type: double
+    meta:
+      construct: absolute variability
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: '>= 0'
+      iglu_function: sd_glu
+      does_not_measure: variability relative to the mean (see cv_pct)
+      epistemics: derived
+  - name: cv_pct
+    description: Coefficient of variation, %.
+    data_type: double
+    meta:
+      construct: relative glycaemic variability
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: '>= 0; target <= 36'
+      iglu_function: cv_glu
+      does_not_measure: the timing or direction of swings
+      epistemics: derived
+  - name: gmi_pct
+    description: Glucose management indicator, %.
+    data_type: double
+    meta:
+      construct: estimated HbA1c from mean glucose
+      source_standard: Bergenstal et al., Diabetes Care 2018;41:2275
+      valid_range: about 5-12
+      iglu_function: gmi
+      does_not_measure: laboratory HbA1c; the two can differ by more than 1 percentage point
+      epistemics: derived
+  - name: tir_pct
+    description: Time in range 3.9-10.0 mmol/L, % of readings.
+    data_type: double
+    meta:
+      construct: time in target range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target > 70
+      iglu_function: in_range_percent
+      does_not_measure: variability within the range; how far outside it
+      epistemics: derived
+    data_tests:
+    - between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: tar_pct
+    description: Time above 10.0 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time above range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 25
+      iglu_function: above_percent
+      does_not_measure: how high
+      epistemics: derived
+  - name: tar_level2_pct
+    description: Time above 13.9 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time very high
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 5
+      iglu_function: above_percent
+      does_not_measure: duration of single episodes
+      epistemics: derived
+  - name: tbr_pct
+    description: Time below 3.9 mmol/L, %, including suspected artefacts.
+    data_type: double
+    meta:
+      construct: time below range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 4
+      iglu_function: below_percent
+      does_not_measure: whether lows were real (see tbr_pct_clean)
+      epistemics: derived
+  - name: tbr_level2_pct
+    description: Time below 3.0 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time very low
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 1
+      iglu_function: below_percent
+      does_not_measure: symptoms or hypoglycaemia awareness
+      epistemics: derived
+  - name: mean_mmol_clean
+    description: Mean glucose without flagged artefacts.
+    data_type: double
+    meta:
+      construct: average exposure, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 2.2-22.2
+      iglu_function: mean_glu
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: tir_pct_clean
+    description: Time in range without flagged artefacts.
+    data_type: double
+    meta:
+      construct: time in range, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100
+      iglu_function: in_range_percent
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: tbr_pct_clean
+    description: Time below range without flagged artefacts.
+    data_type: double
+    meta:
+      construct: time below range, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100
+      iglu_function: below_percent
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: n_hypo_level1_events
+    description: Number of level 1 hypoglycaemia events (< 3.9 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 1 hypoglycaemia events (< 3.9 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_level2_events
+    description: Number of level 2 hypoglycaemia events (< 3.0 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 2 hypoglycaemia events (< 3.0 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_extended_events
+    description: Number of extended hypoglycaemia events (< 3.9 for > 120 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: extended hypoglycaemia events (< 3.9 for > 120 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hyper_level1_events
+    description: Number of level 1 hyperglycaemia events (> 10.0 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 1 hyperglycaemia events (> 10.0 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hyper_level2_events
+    description: Number of level 2 hyperglycaemia events (> 13.9 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 2 hyperglycaemia events (> 13.9 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_level1_events_clean
+    description: As n_hypo_level1_events, leaving out events with a flagged artefact.
+    data_type: bigint
+    meta:
+      construct: hypo_level1 events, artefacts removed
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events the heuristic flags miss
+      epistemics: interpreted
+  - name: n_hypo_level2_events_clean
+    description: As n_hypo_level2_events, leaving out events with a flagged artefact.
+    data_type: bigint
+    meta:
+      construct: hypo_level2 events, artefacts removed
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events the heuristic flags miss
+      epistemics: interpreted
+- name: fct_day_context
+  description: Context per day from the event log, plus inferred sensor changes from the CGM data.
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: reading_date
+    description: Local calendar date.
+    data_type: date
+    meta:
+      construct: the day the readings belong to
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: date
+      iglu_function: null
+      does_not_measure: anything about time zones travelled to; days are in var('local_timezone')
+      epistemics: observed
+    constraints:
+    - type: not_null
+    data_tests:
+    - unique
+  - name: is_ill
+    description: The event log has illness covering this day.
+    data_type: boolean
+    meta:
+      construct: logged illness
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: illness that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_alcohol
+    description: The event log has alcohol covering this day.
+    data_type: boolean
+    meta:
+      construct: logged alcohol
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: alcohol that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_training
+    description: The event log has training covering this day.
+    data_type: boolean
+    meta:
+      construct: logged training
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: training that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: is_travelling
+    description: The event log has travel covering this day.
+    data_type: boolean
+    meta:
+      construct: logged travel
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: travel that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_stress
+    description: The event log has stress covering this day.
+    data_type: boolean
+    meta:
+      construct: logged stress
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: stress that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: is_menstruating
+    description: The event log has menstruation covering this day.
+    data_type: boolean
+    meta:
+      construct: logged menstruation
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: menstruation that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_medication_change
+    description: The event log has a medication change covering this day.
+    data_type: boolean
+    meta:
+      construct: logged a medication change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: a medication change that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_other_event
+    description: The event log has another event covering this day.
+    data_type: boolean
+    meta:
+      construct: logged another event
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: another event that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: sensor_change_logged
+    description: A sensor change is logged this day.
+    data_type: boolean
+    meta:
+      construct: logged sensor change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: unlogged changes
+      epistemics: self-reported
+  - name: sensor_change_inferred
+    description: The data suggests a sensor change (new transmitter or a gap of 2 h or more).
+    data_type: boolean
+    meta:
+      construct: inferred sensor change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: a confirmed change; long signal gaps look the same
+      epistemics: interpreted
+  - name: n_events
+    description: Logged events covering this day.
+    data_type: bigint
+    meta:
+      construct: amount of logged context
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events not logged
+      epistemics: self-reported
+  - name: notes
+    description: Free-text notes from the log.
+    data_type: varchar
+    meta:
+      construct: free text
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: text
+      iglu_function: null
+      does_not_measure: anything structured
+      epistemics: self-reported
+- name: mart_analysis_days
+  description: The starting table for analyses. One row per day with glucose metrics and context.
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: reading_date
+    description: Local calendar date.
+    data_type: date
+    meta:
+      construct: the day the readings belong to
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: date
+      iglu_function: null
+      does_not_measure: anything about time zones travelled to; days are in var('local_timezone')
+      epistemics: observed
+    constraints:
+    - type: not_null
+    data_tests:
+    - unique
+  - name: n_readings
+    description: Readings that day.
+    data_type: bigint
+    meta:
+      construct: amount of data
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: data quality beyond count
+      epistemics: derived
+  - name: n_expected
+    description: Expected 5-minute readings for the local day's real length (276/288/300).
+    data_type: double
+    meta:
+      construct: the day's length in sensor intervals
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: 276, 288 or 300
+      iglu_function: null
+      does_not_measure: sensor behaviour
+      epistemics: derived
+  - name: coverage_pct
+    description: Readings as a share of expected.
+    data_type: double
+    meta:
+      construct: data completeness
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100 (warn above)
+      iglu_function: null
+      does_not_measure: whether missing readings are random; gaps at night bias night metrics
+      epistemics: derived
+  - name: is_valid_day
+    description: Coverage at least var('valid_day_coverage_pct').
+    data_type: boolean
+    meta:
+      construct: enough data to describe the day
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: representativeness of the day
+      epistemics: derived
+  - name: n_artefact
+    description: Readings flagged as compression low or implausible jump.
+    data_type: bigint
+    meta:
+      construct: suspected sensor error
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: 'confirmed error: flags are heuristics'
+      epistemics: interpreted
+  - name: n_compression_low
+    description: Readings flagged as suspected compression lows.
+    data_type: bigint
+    meta:
+      construct: suspected pressure on the sensor
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: confirmed compression; no ground truth
+      epistemics: interpreted
+  - name: n_early_sensor
+    description: Readings in the first 24 h of an inferred sensor session.
+    data_type: bigint
+    meta:
+      construct: lower-accuracy period
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: actual accuracy of those readings
+      epistemics: derived
+  - name: n_censored
+    description: Readings exported as Low/High, stored at the sensor limits.
+    data_type: bigint
+    meta:
+      construct: out-of-range readings
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: the true value beyond the limit
+      epistemics: observed
+  - name: mean_mmol
+    description: Mean glucose, mmol/L.
+    data_type: double
+    meta:
+      construct: average glycaemic exposure
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 2.2-22.2
+      iglu_function: mean_glu
+      does_not_measure: variability or time spent at extremes
+      epistemics: derived
+  - name: sd_mmol
+    description: Standard deviation, mmol/L.
+    data_type: double
+    meta:
+      construct: absolute variability
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: '>= 0'
+      iglu_function: sd_glu
+      does_not_measure: variability relative to the mean (see cv_pct)
+      epistemics: derived
+  - name: cv_pct
+    description: Coefficient of variation, %.
+    data_type: double
+    meta:
+      construct: relative glycaemic variability
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: '>= 0; target <= 36'
+      iglu_function: cv_glu
+      does_not_measure: the timing or direction of swings
+      epistemics: derived
+  - name: gmi_pct
+    description: Glucose management indicator, %.
+    data_type: double
+    meta:
+      construct: estimated HbA1c from mean glucose
+      source_standard: Bergenstal et al., Diabetes Care 2018;41:2275
+      valid_range: about 5-12
+      iglu_function: gmi
+      does_not_measure: laboratory HbA1c; the two can differ by more than 1 percentage point
+      epistemics: derived
+  - name: tir_pct
+    description: Time in range 3.9-10.0 mmol/L, % of readings.
+    data_type: double
+    meta:
+      construct: time in target range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target > 70
+      iglu_function: in_range_percent
+      does_not_measure: variability within the range; how far outside it
+      epistemics: derived
+  - name: tar_pct
+    description: Time above 10.0 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time above range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 25
+      iglu_function: above_percent
+      does_not_measure: how high
+      epistemics: derived
+  - name: tar_level2_pct
+    description: Time above 13.9 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time very high
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 5
+      iglu_function: above_percent
+      does_not_measure: duration of single episodes
+      epistemics: derived
+  - name: tbr_pct
+    description: Time below 3.9 mmol/L, %, including suspected artefacts.
+    data_type: double
+    meta:
+      construct: time below range
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 4
+      iglu_function: below_percent
+      does_not_measure: whether lows were real (see tbr_pct_clean)
+      epistemics: derived
+  - name: tbr_level2_pct
+    description: Time below 3.0 mmol/L, %.
+    data_type: double
+    meta:
+      construct: time very low
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100; target < 1
+      iglu_function: below_percent
+      does_not_measure: symptoms or hypoglycaemia awareness
+      epistemics: derived
+  - name: mean_mmol_clean
+    description: Mean glucose without flagged artefacts.
+    data_type: double
+    meta:
+      construct: average exposure, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 2.2-22.2
+      iglu_function: mean_glu
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: tir_pct_clean
+    description: Time in range without flagged artefacts.
+    data_type: double
+    meta:
+      construct: time in range, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100
+      iglu_function: in_range_percent
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: tbr_pct_clean
+    description: Time below range without flagged artefacts.
+    data_type: double
+    meta:
+      construct: time below range, artefacts removed
+      source_standard: Battelino et al., Diabetes Care 2019;42:1593
+      valid_range: 0-100
+      iglu_function: below_percent
+      does_not_measure: anything the heuristic flags miss
+      epistemics: interpreted
+  - name: n_hypo_level1_events
+    description: Number of level 1 hypoglycaemia events (< 3.9 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 1 hypoglycaemia events (< 3.9 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_level2_events
+    description: Number of level 2 hypoglycaemia events (< 3.0 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 2 hypoglycaemia events (< 3.0 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_extended_events
+    description: Number of extended hypoglycaemia events (< 3.9 for > 120 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: extended hypoglycaemia events (< 3.9 for > 120 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hyper_level1_events
+    description: Number of level 1 hyperglycaemia events (> 10.0 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 1 hyperglycaemia events (> 10.0 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hyper_level2_events
+    description: Number of level 2 hyperglycaemia events (> 13.9 for >= 15 min) starting that day.
+    data_type: bigint
+    meta:
+      construct: level 2 hyperglycaemia events (> 13.9 for >= 15 min)
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: episode_calculation (event logic)
+      does_not_measure: severity or symptoms of each event
+      epistemics: derived
+  - name: n_hypo_level1_events_clean
+    description: As n_hypo_level1_events, leaving out events with a flagged artefact.
+    data_type: bigint
+    meta:
+      construct: hypo_level1 events, artefacts removed
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events the heuristic flags miss
+      epistemics: interpreted
+  - name: n_hypo_level2_events_clean
+    description: As n_hypo_level2_events, leaving out events with a flagged artefact.
+    data_type: bigint
+    meta:
+      construct: hypo_level2 events, artefacts removed
+      source_standard: Battelino et al., Lancet Diabetes Endocrinol 2023;11:42, Table 4
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events the heuristic flags miss
+      epistemics: interpreted
+  - name: is_ill
+    description: The event log has illness covering this day.
+    data_type: boolean
+    meta:
+      construct: logged illness
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: illness that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_alcohol
+    description: The event log has alcohol covering this day.
+    data_type: boolean
+    meta:
+      construct: logged alcohol
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: alcohol that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_training
+    description: The event log has training covering this day.
+    data_type: boolean
+    meta:
+      construct: logged training
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: training that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: is_travelling
+    description: The event log has travel covering this day.
+    data_type: boolean
+    meta:
+      construct: logged travel
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: travel that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_stress
+    description: The event log has stress covering this day.
+    data_type: boolean
+    meta:
+      construct: logged stress
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: stress that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: is_menstruating
+    description: The event log has menstruation covering this day.
+    data_type: boolean
+    meta:
+      construct: logged menstruation
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: menstruation that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_medication_change
+    description: The event log has a medication change covering this day.
+    data_type: boolean
+    meta:
+      construct: logged a medication change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: a medication change that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: had_other_event
+    description: The event log has another event covering this day.
+    data_type: boolean
+    meta:
+      construct: logged another event
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: another event that was not logged; false means not logged, not absent
+      epistemics: self-reported
+  - name: sensor_change_logged
+    description: A sensor change is logged this day.
+    data_type: boolean
+    meta:
+      construct: logged sensor change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: unlogged changes
+      epistemics: self-reported
+  - name: sensor_change_inferred
+    description: The data suggests a sensor change (new transmitter or a gap of 2 h or more).
+    data_type: boolean
+    meta:
+      construct: inferred sensor change
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: a confirmed change; long signal gaps look the same
+      epistemics: interpreted
+  - name: n_events
+    description: Logged events covering this day.
+    data_type: bigint
+    meta:
+      construct: amount of logged context
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: events not logged
+      epistemics: self-reported
+  - name: notes
+    description: Free-text notes from the log.
+    data_type: varchar
+    meta:
+      construct: free text
+      source_standard: selvra-analysis (own definition, see model SQL)
+      valid_range: text
+      iglu_function: null
+      does_not_measure: anything structured
+      epistemics: self-reported
