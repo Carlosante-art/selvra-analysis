@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: benchmark benchmark-llm demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: benchmark benchmark-llm dashboard-data demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -134,7 +134,12 @@ dagbok:
 log:
 	uv run python -m selvra_analysis.log_event --start "$(start)" --typ "$(typ)" $(if $(slut),--slut "$(slut)",) $(if $(notering),--notering "$(notering)",)
 
-## Private data-health dashboard (rendered file is git-ignored: it contains health data)
+## Morgonvyn: ett mätinstrument, en sida (git-ignorerad: innehåller hälsodata)
 dashboard:
-	cd dashboard && SELVRA_DUCKDB=$(abspath $(DB)) uv run quarto render index.qmd
-	@echo "Open dashboard/index.html"
+	uv run python -m selvra_analysis.morgonvy --db $(DB)
+	@echo "Öppna dashboard/index.html"
+
+## Djup datahälsa-vy (quarto)
+dashboard-data:
+	cd dashboard && SELVRA_DUCKDB=$(abspath $(DB)) uv run quarto render datahalsa.qmd
+	@echo "Öppna dashboard/datahalsa.html"

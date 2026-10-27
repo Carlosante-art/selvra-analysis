@@ -30,6 +30,8 @@ from pathlib import Path
 import duckdb
 
 from selvra_analysis.dreamer import _load_dotenv, sammanfattning, tolka
+from selvra_analysis.morgonvy import UT as MORGONVY_UT
+from selvra_analysis.morgonvy import render as rendera_morgonvy
 from selvra_analysis.prioritera import rapport as prioritering
 from selvra_analysis.scanner import _format, scan, spara_hypoteser
 from selvra_analysis.study import StudyError
@@ -93,6 +95,25 @@ def _portfolio_syntes(db_path: Path) -> str:
     return sammanfattning(STUDIES_DIR, db_path)
 
 
+def _llm_steg(db_path: Path) -> list[str]:
+    _load_dotenv()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return [("## LLM-steg hoppades över\n\n"
+                 "Sätt ANTHROPIC_API_KEY i .env för tolkning och portfoljosyntes.\n")]
+    lines = []
+    tolkade = _tolka_osvarade(db_path)
+    if tolkade:
+        lines.append(f"## Tolkningar genomförda\n\n{', '.join(tolkade)}\n")
+    else:
+        lines.append("## Tolkningar\n\nInga nya slutrapporter att tolka.\n")
+    syntes = _portfolio_syntes(db_path)
+    lines += ["## Portfoljosyntes\n", syntes, ""]
+    out_portfolio = Path("data/rapporter/portfolio.md")
+    out_portfolio.parent.mkdir(exist_ok=True)
+    out_portfolio.write_text(syntes + "\n")
+    return lines
+
+
 def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     today = str(date.today())
     lines = [f"# Loop-rapport {today}", ""]
@@ -127,29 +148,12 @@ def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     out_prio.parent.mkdir(exist_ok=True)
     out_prio.write_text(prio + "\n")
 
-    _load_dotenv()
-    har_api = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    lines.extend(_llm_steg(db_path))
 
-    if har_api:
-        tolkade = _tolka_osvarade(db_path)
-        if tolkade:
-            lines.append(f"## Tolkningar genomförda\n\n{', '.join(tolkade)}\n")
-        else:
-            lines.append("## Tolkningar\n\nInga nya slutrapporter att tolka.\n")
-
-        syntes = _portfolio_syntes(db_path)
-        lines.append("## Portfoljosyntes\n")
-        lines.append(syntes)
-        lines.append("")
-
-        out_portfolio = Path("data/rapporter/portfolio.md")
-        out_portfolio.parent.mkdir(exist_ok=True)
-        out_portfolio.write_text(syntes + "\n")
-    else:
-        lines.append(
-            "## LLM-steg hoppades över\n\n"
-            "Sätt ANTHROPIC_API_KEY i .env för tolkning och portfoljosyntes.\n"
-        )
+    MORGONVY_UT.parent.mkdir(exist_ok=True)
+    MORGONVY_UT.write_text(rendera_morgonvy(db_path))
+    print(f"→ Morgonvyn: {MORGONVY_UT}", file=sys.stderr)
+    lines.append(f"Morgonvyn renderad: {MORGONVY_UT}\n")
 
     rapport = "\n".join(lines)
     out = Path(f"data/rapporter/loop-{today}.md")
