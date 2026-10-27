@@ -218,7 +218,8 @@ def test_study_file_must_name_cent_items_and_a_negative_control(spec: dict) -> N
     spec["protokoll"]["andringslogg"] = None
     errors = "\n".join(st.validate(spec))
     assert "negativ_kontroll" in errors
-    assert "protokoll.overforing" in errors and "CENT" in errors
+    assert "protokoll.overforing" in errors
+    assert "CENT" in errors
     assert "protokoll.andringslogg" in errors
 
 
@@ -231,5 +232,7 @@ def test_report_shows_negative_control_and_protocol(folder: Path, tmp_path: Path
         record, report = st.run(s, con, today=date(2025, 6, 1))
     neg = record["negativ_kontroll"]
     assert neg["ci_low"] <= 0 <= neg["ci_high"], "no effect was put in the morning"
-    assert "## Negativ kontroll" in report and "som förväntat" in report
-    assert "## Protokoll (CENT 2015)" in report and "Ändringar efter låsning:** inga" in report
+    assert "## Negativ kontroll" in report
+    assert "som förväntat" in report
+    assert "## Protokoll (CENT 2015)" in report
+    assert "Ändringar efter låsning:** inga" in report
