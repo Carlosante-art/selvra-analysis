@@ -32,6 +32,11 @@ sources:
           Oura Ring, one row per day: daily sleep and readiness scores, measured values
           from the main sleep period, and the day's step count. Loaded by ingest_oura when OURA_TOKEN is set; an empty
           table otherwise. Optional source: no freshness check.
+      - name: garmin_daily
+        description: >
+          Garmin Connect, one row per day: sleep score, sleep durations, night HRV average,
+          daily resting heart rate and steps. Loaded by ingest_garmin when GARMIN_EMAIL and
+          GARMIN_PASSWORD are set; an empty table otherwise. Optional source: no freshness check.
       - name: personal_events
         description: The personal event log (handelser.csv), validated at ingestion. Self-reported context.
         columns:

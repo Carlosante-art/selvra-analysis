@@ -447,52 +447,52 @@ models:
       does_not_measure: anything structured
       epistemics: self-reported
   - name: sleep_score
-    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no Oura data for the
+    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no wearable data for the
       day.
     data_type: integer
     meta:
       construct: Oura's overall sleep rating
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: sleep as assessed by polysomnography; the algorithm is proprietary and can change with firmware
       epistemics: interpreted
   - name: readiness_score
-    description: Oura readiness score, 0-100. Null when there is no Oura data for the day.
+    description: Oura readiness score, 0-100. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: Oura's recovery rating
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: physiological recovery as clinically defined; proprietary composite
       epistemics: interpreted
   - name: total_sleep_seconds
-    description: Total sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: Total sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: sleep duration estimated by a wearable
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep measured by polysomnography; naps are not included
       epistemics: derived
   - name: deep_sleep_seconds
-    description: Deep sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: Deep sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: wearable estimate of deep (N3) sleep
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
       epistemics: derived
   - name: rem_sleep_seconds
-    description: REM sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: REM sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: wearable estimate of REM sleep
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
@@ -503,46 +503,47 @@ models:
     data_type: double
     meta:
       construct: sleep efficiency
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: sleep quality as experienced
       epistemics: derived
   - name: hrv_avg_ms
-    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no Oura data for the day.
+    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no wearable data for the day.
     data_type: double
     meta:
       construct: night-time heart rate variability
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: '> 0'
       iglu_function: null
       does_not_measure: daytime autonomic state or stress; values are not comparable across devices
       epistemics: derived
   - name: hr_lowest_bpm
-    description: Lowest heart rate during the main sleep period, beats per minute. Null when there is no Oura data
-      for the day.
+    description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute
+      average of the day). Null when there is no wearable data for the day.
     data_type: double
     meta:
       construct: resting heart rate at night
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 25-120
       iglu_function: null
-      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
+      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals; the two
+        sources define the measure slightly differently
       epistemics: derived
   - name: steps
-    description: Steps during the local calendar day, Oura daily_activity. Null when there is no Oura data for the
+    description: Steps during the local calendar day, Oura daily_activity. Null when there is no wearable data for the
       day.
     data_type: integer
     meta:
       construct: daily step count
-      source_standard: Oura API v2 (daily_activity)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100000
       iglu_function: null
       does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
       epistemics: derived
   - name: high_steps
     description: The day reached the step threshold (var high_steps_threshold, default 10 000). Null when there
-      is no Oura data for the day, so such days fall out of both study groups.
+      is no wearable data for the day, so such days fall out of both study groups.
     data_type: boolean
     meta:
       construct: a day with at least the threshold number of steps
@@ -551,6 +552,17 @@ models:
       iglu_function: null
       does_not_measure: training; a gym session with few steps is false, a long stroll is true
       epistemics: derived
+  - name: wearable_source
+    description: Which device produced the day's wearable values ('oura' or 'garmin'). Null when there is no
+      wearable data for the day.
+    data_type: varchar
+    meta:
+      construct: provenance of the wearable row
+      source_standard: selvra-analysis (own definition, see int_wearable_daily)
+      valid_range: oura, garmin or null
+      iglu_function: null
+      does_not_measure: device accuracy; only which device it was
+      epistemics: observed
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -962,52 +974,52 @@ models:
       does_not_measure: anything structured
       epistemics: self-reported
   - name: sleep_score
-    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no Oura data for the
+    description: Oura sleep score, 0-100, for the night ending this day. Null when there is no wearable data for the
       day.
     data_type: integer
     meta:
       construct: Oura's overall sleep rating
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: sleep as assessed by polysomnography; the algorithm is proprietary and can change with firmware
       epistemics: interpreted
   - name: readiness_score
-    description: Oura readiness score, 0-100. Null when there is no Oura data for the day.
+    description: Oura readiness score, 0-100. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: Oura's recovery rating
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: physiological recovery as clinically defined; proprietary composite
       epistemics: interpreted
   - name: total_sleep_seconds
-    description: Total sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: Total sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: sleep duration estimated by a wearable
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep measured by polysomnography; naps are not included
       epistemics: derived
   - name: deep_sleep_seconds
-    description: Deep sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: Deep sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: wearable estimate of deep (N3) sleep
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
       epistemics: derived
   - name: rem_sleep_seconds
-    description: REM sleep in the main sleep period, seconds. Null when there is no Oura data for the day.
+    description: REM sleep in the main sleep period, seconds. Null when there is no wearable data for the day.
     data_type: integer
     meta:
       construct: wearable estimate of REM sleep
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-86400
       iglu_function: null
       does_not_measure: sleep stages from EEG; wearable staging agrees only moderately
@@ -1018,46 +1030,47 @@ models:
     data_type: double
     meta:
       construct: sleep efficiency
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100
       iglu_function: null
       does_not_measure: sleep quality as experienced
       epistemics: derived
   - name: hrv_avg_ms
-    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no Oura data for the day.
+    description: Average HRV (RMSSD) during the main sleep period, ms. Null when there is no wearable data for the day.
     data_type: double
     meta:
       construct: night-time heart rate variability
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: '> 0'
       iglu_function: null
       does_not_measure: daytime autonomic state or stress; values are not comparable across devices
       epistemics: derived
   - name: hr_lowest_bpm
-    description: Lowest heart rate during the main sleep period, beats per minute. Null when there is no Oura data
-      for the day.
+    description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute
+      average of the day). Null when there is no wearable data for the day.
     data_type: double
     meta:
       construct: resting heart rate at night
-      source_standard: Oura API v2 (daily_sleep, daily_readiness, sleep)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 25-120
       iglu_function: null
-      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals
+      does_not_measure: fitness on its own; also moves with illness, alcohol and late meals; the two
+        sources define the measure slightly differently
       epistemics: derived
   - name: steps
-    description: Steps during the local calendar day, Oura daily_activity. Null when there is no Oura data for the
+    description: Steps during the local calendar day, Oura daily_activity. Null when there is no wearable data for the
       day.
     data_type: integer
     meta:
       construct: daily step count
-      source_standard: Oura API v2 (daily_activity)
+      source_standard: Oura API v2 or Garmin Connect; wearable_source states which
       valid_range: 0-100000
       iglu_function: null
       does_not_measure: intensity, timing or type of activity; a ring counts hand movement as well as steps
       epistemics: derived
   - name: high_steps
     description: The day reached the step threshold (var high_steps_threshold, default 10 000). Null when there
-      is no Oura data for the day, so such days fall out of both study groups.
+      is no wearable data for the day, so such days fall out of both study groups.
     data_type: boolean
     meta:
       construct: a day with at least the threshold number of steps
@@ -1066,3 +1079,14 @@ models:
       iglu_function: null
       does_not_measure: training; a gym session with few steps is false, a long stroll is true
       epistemics: derived
+  - name: wearable_source
+    description: Which device produced the day's wearable values ('oura' or 'garmin'). Null when there is no
+      wearable data for the day.
+    data_type: varchar
+    meta:
+      construct: provenance of the wearable row
+      source_standard: selvra-analysis (own definition, see int_wearable_daily)
+      valid_range: oura, garmin or null
+      iglu_function: null
+      does_not_measure: device accuracy; only which device it was
+      epistemics: observed

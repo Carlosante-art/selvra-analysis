@@ -4,3 +4,4 @@ fct_sources_without_freshness,resource_name,raw.personal_events,The event log is
 fct_rejoining_of_upstream_concepts,parent,fct_glucose_daily,mart_analysis_days joins day metrics to day context by date; context keeps its own day spine from the metrics so days without events still appear
 fct_rejoining_of_upstream_concepts,parent,int_cgm_flagged,fct_glucose_daily counts events per day next to per-reading metrics; both come from the same flagged readings by design
 fct_sources_without_freshness,resource_name,raw.oura_sleep,Optional wearable source; empty unless OURA_TOKEN is set
+fct_sources_without_freshness,resource_name,raw.garmin_daily,Optional wearable source; empty unless GARMIN_EMAIL and GARMIN_PASSWORD are set

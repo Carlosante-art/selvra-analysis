@@ -30,6 +30,7 @@ build: $(DBT_PACKAGES)
 build-live: $(DBT_PACKAGES)
 	uv run python -m selvra_analysis.ingest_supabase --db $(DB)
 	uv run python -m selvra_analysis.ingest_oura --db $(DB)
+	uv run python -m selvra_analysis.ingest_garmin --db $(DB)
 	uv run python -m selvra_analysis.ingest_events data/raw/handelser.csv --db $(DB)
 	$(DBT) build --profiles-dir .
 

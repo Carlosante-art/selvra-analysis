@@ -56,6 +56,14 @@ models:
       - name: reading_date
         tests: [unique, not_null]
 
+  - name: stg_garmin_daily
+    description: >
+      Garmin sleep, heart and step data per day. Empty when no Garmin data has been loaded.
+      readiness_score and sleep_efficiency_pct are always null here: Garmin has no equivalent.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]
+
   - name: stg_personal_events
     description: The personal event log, one row per logged event, dates parsed. Self-reported.
     columns:

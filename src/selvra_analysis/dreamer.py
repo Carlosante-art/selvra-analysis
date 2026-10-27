@@ -45,9 +45,9 @@ Tillgängliga kolumner i marts.mart_analysis_days (för utfall.kolumn):
   Rensad (utan artefakter): mean_mmol_clean, tir_pct_clean, tbr_pct_clean
   Episoder: n_hypo_level1_events, n_hypo_level2_events, n_hypo_extended_events
             n_hyper_level1_events, n_hyper_level2_events
-  Sömn och aktivitet (Oura, null om OURA_TOKEN saknas): sleep_score, readiness_score,
-            hrv_avg_ms, hr_lowest_bpm, total_sleep_seconds, deep_sleep_seconds,
-            rem_sleep_seconds, sleep_efficiency_pct, steps
+  Sömn och aktivitet (Oura/Garmin, null om wearable-data saknas): sleep_score,
+            readiness_score, hrv_avg_ms, hr_lowest_bpm, total_sleep_seconds,
+            deep_sleep_seconds, rem_sleep_seconds, sleep_efficiency_pct, steps
   Tidsfönster (utfall.matt + utfall.fonster): medel, topp, tid_over_10"""
 
 SYSTEM_PROMPT_TEMPLATE = """\

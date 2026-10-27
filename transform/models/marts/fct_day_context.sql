@@ -36,7 +36,7 @@ inferred_sensor_starts as (
 
 sleep as (
 
-    select * from {{ ref('stg_oura_sleep') }}
+    select * from {{ ref('int_wearable_daily') }}
 
 )
 
@@ -54,7 +54,7 @@ select
     bool_or(e.event_type = 'annat')            is true as had_other_event,
     count(e.event_id)                                  as n_events,
     string_agg(e.note, '; ')                           as notes,
-    -- Oura sleep (null om OURA_TOKEN saknas eller saknad dag)
+    -- Wearable (Oura/Garmin; null om ingen data för dagen)
     sl.sleep_score,
     sl.readiness_score,
     sl.hrv_avg_ms,
@@ -64,7 +64,8 @@ select
     sl.rem_sleep_seconds,
     sl.sleep_efficiency_pct,
     sl.steps,
-    -- Exposure derived from steps: true/false only when Oura data exists for the day,
+    sl.wearable_source,
+    -- Exposure derived from steps: true/false only when wearable data exists for the day,
     -- null otherwise, so days without data fall out of both study groups.
     case
         when sl.steps is not null
@@ -80,4 +81,4 @@ left join sleep as sl
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
          sl.hrv_avg_ms, sl.hr_lowest_bpm, sl.total_sleep_seconds,
          sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct,
-         sl.steps
+         sl.steps, sl.wearable_source

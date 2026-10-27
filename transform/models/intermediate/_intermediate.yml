@@ -60,3 +60,16 @@ models:
         description: The event includes a reading flagged as compression low or implausible jump.
         tests: [not_null]
 
+
+  - name: int_wearable_daily
+    description: >
+      One wearable row per day from whichever source has data (Oura or Garmin; Garmin wins
+      a tie). wearable_source states which device produced each row.
+    columns:
+      - name: reading_date
+        tests: [unique, not_null]
+      - name: wearable_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['oura', 'garmin']
