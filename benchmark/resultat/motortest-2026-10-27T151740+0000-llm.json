@@ -1,0 +1,14 @@
+{
+  "arm": "llm",
+  "reps": 20,
+  "seed": 1,
+  "giltiga_natter": 80,
+  "utfall": "natt 00-06",
+  "minsta_effekt": -0.5,
+  "resultat": {
+    "modell": "claude-opus-5-5",
+    "placebo": 1,
+    "planterat": 2,
+    "reps": 20
+  }
+}

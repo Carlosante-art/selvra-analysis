@@ -156,6 +156,14 @@ par-krav är uppmätt rättfärdigade; (2) kortare utfallsfönster närmare meka
 sekventiella designer (METODPLAN §2) är vägen till svar, inte fler nätter av samma sort;
 (3) varje framtida ändring i statistik- eller beslutslagret körs om genom motortestet.
 
+**Motortestets LLM-arm** (`motortest-…-llm.json`, opus-5-5, 20 seedade repetitioner,
+samma datasetgenerator): 1/20 fynd i ren slumpdata, 2/20 av planterade −1,0 mmol/L vid
+10 nätter — i nivå med motorns 3 % respektive 9 %. På sifferbedömning av en dagstabell
+var frontier-modellen alltså hederlig på den här bruströga datan; rubriken "AI hittar
+mönster i slumpdata" höll inte här, och det bokförs som det är. Skillnaden Selvra säljer
+ligger uppmätt i metodgranskningen (0 mot 17–20 falska godkännanden) och i den låsta,
+spårbara ordningen — inte i att en LLM inte kan läsa ett medelvärde.
+
 ## 2026-10-27: språkmodellen, båda armarna
 
 Körd med `claude-opus-5-5` — frontier-modellen, inte en liten — på samtliga 52 fall

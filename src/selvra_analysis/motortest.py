@@ -132,9 +132,9 @@ def kor_llm(serie: pd.Series, reps: int, seed: int) -> dict:
               '{"effekt_funnen": true/false, "skattning_mmol": tal}')
 
     def fraga(s: pd.Series, datum: list[pd.Timestamp]) -> bool:
-        msg = client.messages.create(model=LLM_MODELL, max_tokens=120, system=system,
+        msg = client.messages.create(model=LLM_MODELL, max_tokens=2000, system=system,
                                      messages=[{"role": "user", "content": _tabell(s, datum)}])
-        text = msg.content[0].text
+        text = " ".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
         try:
             return bool(json.loads(text[text.index("{"):text.rindex("}") + 1])["effekt_funnen"])
         except (ValueError, KeyError):
