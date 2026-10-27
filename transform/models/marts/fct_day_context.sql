@@ -38,6 +38,20 @@ sleep as (
 
     select * from {{ ref('int_wearable_daily') }}
 
+),
+
+-- Insulin and carbs per day from Nightscout treatments (empty without a
+-- configured instance). Bolus units only: temp basals carry rates, not doses.
+dosing as (
+
+    select
+        treatment_date as reading_date,
+        sum(insulin_units)  as insulin_bolus_units,
+        sum(carbs_g)        as carbs_logged_g,
+        count(*) filter (where insulin_units is not null) as n_boluses
+    from {{ ref('stg_nightscout_treatments') }}
+    group by treatment_date
+
 )
 
 select
@@ -66,6 +80,10 @@ select
     sl.sleep_efficiency_pct,
     sl.steps,
     sl.wearable_source,
+    -- Dosering (null utan Nightscout)
+    dsg.insulin_bolus_units,
+    dsg.carbs_logged_g,
+    dsg.n_boluses,
     -- Exposure derived from steps: true/false only when wearable data exists for the day,
     -- null otherwise, so days without data fall out of both study groups.
     case
@@ -79,7 +97,10 @@ left join inferred_sensor_starts as s
     on d.reading_date = s.reading_date
 left join sleep as sl
     on d.reading_date = sl.reading_date
+left join dosing as dsg
+    on d.reading_date = dsg.reading_date
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
          sl.hrv_avg_ms, sl.hr_lowest_bpm, sl.total_sleep_seconds,
          sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct,
-         sl.steps, sl.wearable_source
+         sl.steps, sl.wearable_source, dsg.insulin_bolus_units, dsg.carbs_logged_g,
+         dsg.n_boluses

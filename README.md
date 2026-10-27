@@ -19,6 +19,7 @@ Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his
 ```
 Clarity CSV ──▶ raw.clarity_events ──▶ stg_clarity_readings  parse, dedupe overlapping exports, DST, Low/High as censored
 Supabase ────▶ raw.share_readings ──▶ stg_share_readings    Dexcom Share via Selvra Diabetes: exact instants, mg/dL
+Nightscout ──▶ raw.nightscout_*    ──▶ stg_nightscout_*      the DIY community's own server: glucose, bolus insulin, carbs
                                         int_cgm_readings      both sources; Share only after the last Clarity reading
                                         int_cgm_segments      gaps, contiguous runs, inferred sensor sessions
                                         int_cgm_flagged       early sensor period, suspected compression lows, implausible jumps

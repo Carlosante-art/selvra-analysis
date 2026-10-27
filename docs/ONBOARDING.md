@@ -43,6 +43,10 @@ GARMIN_PASSWORD=...
 # eller Oura
 OURA_TOKEN=...
 
+# Nightscout (din egen instans: glukos + insulin + kolhydrater)
+NIGHTSCOUT_URL=https://din-instans.example.com
+NIGHTSCOUT_TOKEN=...   # bara om instansen är skyddad
+
 # Dreamer (studiedesign + tolkning via LLM)
 ANTHROPIC_API_KEY=...
 ```

@@ -16,8 +16,31 @@ unit_tests:
           - {reading_id: s1, reading_at: '2025-10-25 21:55:00+00', glucose_mmol: 6.0, data_source: dexcom_share}
           - {reading_id: s2, reading_at: '2025-10-25 22:00:00+00', glucose_mmol: 6.1, data_source: dexcom_share}
           - {reading_id: s3, reading_at: '2025-10-25 22:05:00+00', glucose_mmol: 2.2, data_source: dexcom_share}
+      - input: ref('stg_nightscout_readings')
+        rows:
+          - {reading_id: n1, reading_at: '2025-10-25 22:10:00+00', glucose_mmol: 6.3, data_source: nightscout}
     expect:
       rows:
         - {reading_id: c1, data_source: clarity}
         - {reading_id: c2, data_source: clarity}
         - {reading_id: s3, data_source: dexcom_share}
+
+  - name: int_cgm_readings_nightscout_only_without_share
+    model: int_cgm_readings
+    description: >
+      Nightscout is the live source only when Share has no readings at all; with Share present
+      (above) it is ignored, so an instant can never be counted twice.
+    given:
+      - input: ref('stg_clarity_readings')
+        rows:
+          - {reading_id: c1, reading_at: '2025-10-25 21:55:00+00', glucose_mmol: 6.0, data_source: clarity}
+      - input: ref('stg_share_readings')
+        rows: []
+      - input: ref('stg_nightscout_readings')
+        rows:
+          - {reading_id: n1, reading_at: '2025-10-25 21:50:00+00', glucose_mmol: 5.9, data_source: nightscout}
+          - {reading_id: n2, reading_at: '2025-10-25 22:00:00+00', glucose_mmol: 6.2, data_source: nightscout}
+    expect:
+      rows:
+        - {reading_id: c1, data_source: clarity}
+        - {reading_id: n2, data_source: nightscout}

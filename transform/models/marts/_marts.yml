@@ -574,6 +574,39 @@ models:
       iglu_function: null
       does_not_measure: device accuracy; only which device it was
       epistemics: observed
+  - name: insulin_bolus_units
+    description: Sum of bolus insulin for the day from Nightscout treatments. Null without a configured
+      Nightscout instance or on days without boluses recorded.
+    data_type: double
+    meta:
+      construct: total bolus insulin delivered or logged during the local day
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '> 0 units'
+      iglu_function: null
+      does_not_measure: basal insulin, insulin absorbed, or whether the record came from a pump or a manual
+        entry — Nightscout stores both identically
+      epistemics: observed
+  - name: carbs_logged_g
+    description: Sum of carbohydrates logged for the day in Nightscout treatments. Null without a configured
+      instance or on days without carb entries.
+    data_type: double
+    meta:
+      construct: carbohydrates as entered by the user or the bolus calculator
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '> 0 g'
+      iglu_function: null
+      does_not_measure: carbohydrates actually eaten; entries are estimates and meals can go unlogged
+      epistemics: self-reported
+  - name: n_boluses
+    description: Number of bolus events recorded for the day. Null without a configured Nightscout instance.
+    data_type: bigint
+    meta:
+      construct: count of bolus records
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: doses merged by the pump into one record, or boluses never recorded
+      epistemics: observed
 - name: mart_analysis_days
   description: The starting table for analyses. One row per day with glucose metrics and context.
   config:
@@ -1111,4 +1144,37 @@ models:
       valid_range: oura, garmin or null
       iglu_function: null
       does_not_measure: device accuracy; only which device it was
+      epistemics: observed
+  - name: insulin_bolus_units
+    description: Sum of bolus insulin for the day from Nightscout treatments. Null without a configured
+      Nightscout instance or on days without boluses recorded.
+    data_type: double
+    meta:
+      construct: total bolus insulin delivered or logged during the local day
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '> 0 units'
+      iglu_function: null
+      does_not_measure: basal insulin, insulin absorbed, or whether the record came from a pump or a manual
+        entry — Nightscout stores both identically
+      epistemics: observed
+  - name: carbs_logged_g
+    description: Sum of carbohydrates logged for the day in Nightscout treatments. Null without a configured
+      instance or on days without carb entries.
+    data_type: double
+    meta:
+      construct: carbohydrates as entered by the user or the bolus calculator
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '> 0 g'
+      iglu_function: null
+      does_not_measure: carbohydrates actually eaten; entries are estimates and meals can go unlogged
+      epistemics: self-reported
+  - name: n_boluses
+    description: Number of bolus events recorded for the day. Null without a configured Nightscout instance.
+    data_type: bigint
+    meta:
+      construct: count of bolus records
+      source_standard: Nightscout treatments API (user's own instance)
+      valid_range: '>= 0'
+      iglu_function: null
+      does_not_measure: doses merged by the pump into one record, or boluses never recorded
       epistemics: observed

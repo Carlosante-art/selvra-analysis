@@ -64,6 +64,20 @@ models:
       - name: reading_date
         tests: [unique, not_null]
 
+  - name: stg_nightscout_readings
+    description: Nightscout glucose readings, typed and converted to mmol/L. Empty without a configured instance.
+    columns:
+      - name: reading_id
+        tests: [unique, not_null]
+
+  - name: stg_nightscout_treatments
+    description: >
+      Nightscout treatments with substance (insulin, carbs or a temp basal), typed, local dates.
+      Manual entries and pump records are indistinguishable here.
+    columns:
+      - name: treatment_at
+        tests: [not_null]
+
   - name: stg_personal_events
     description: The personal event log, one row per logged event, dates parsed. Self-reported.
     columns:

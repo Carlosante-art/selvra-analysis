@@ -136,6 +136,15 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
         "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double, steps integer)"
     )
     con.execute(
+        "create table if not exists raw.nightscout_entries "
+        "(reading_at timestamptz, value_mgdl integer, trend varchar, device varchar)"
+    )
+    con.execute(
+        "create table if not exists raw.nightscout_treatments "
+        "(treatment_at timestamptz, event_type varchar, insulin_units double, "
+        "carbs_g double, duration_min double, basal_rate double)"
+    )
+    con.execute(
         "create table if not exists raw.source_files "
         "(kind varchar, sha256 varchar, bytes bigint, n_rows bigint, loaded_at varchar)"
     )
