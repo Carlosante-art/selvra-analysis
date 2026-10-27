@@ -1,0 +1,7 @@
+forvantat: STOPP
+skal:
+- dagtyp
+kategori: kritiskt
+motivering: Höga steg följer arbetsdagen helt; observationsdata kan inte skilja steg från arbetsdag (strukturellt
+  positivitetsbrott).
+reparation: Lottat n1-försök på lediga dagar.

@@ -17,6 +17,7 @@ n1 checks
     positivitet    both conditions occurred, per day type, in your last 8 weeks (Daza 2018)
     underlag       expected valid pairs after data loss; smallest attainable p below alpha
     styrka         power from your own day-to-day variability on the eligible days
+    apparat        the adherence measure comes from one device in the history
     data           the review ran on real data, not the synthetic demo
 
 observation checks
@@ -285,7 +286,7 @@ def _check_one_device(con, hist: pd.DataFrame) -> list[Check]:
     src = src[src["reading_date"].isin(set(hist["reading_date"]))]
     counts = src["wearable_source"].value_counts().to_dict()
     if len(counts) > 1:
-        return [Check("positivitet", VARNING,
+        return [Check("apparat", VARNING,
                       f"mätningen kommer från flera apparater de senaste {HISTORY_DAYS} dagarna {counts}; "
                       "använd en apparat under hela studien och skriv vilken i design.foljsamhet")]
     return []

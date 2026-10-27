@@ -1,0 +1,6 @@
+forvantat: STOPP
+skal:
+- positivitet
+kategori: kritiskt
+motivering: 'Följsamheten ska mätas med steg men ingen stegdata finns: varken positivitet eller följsamhet kan verifieras.'
+reparation: Koppla en wearable eller ange manuell följsamhet och motivera.

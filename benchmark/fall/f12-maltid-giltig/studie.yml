@@ -1,0 +1,41 @@
+id: f12-maltid-giltig
+titel: Promenad efter middag
+fraga: Hur mycket lägre är medelglukos 19–23 efter en 20 minuters promenad direkt efter middagen?
+tes: Promenaden ger minst 1,5 mmol/L lägre medel 19–23.
+motbevis: Hela intervallet över −1,5.
+design:
+  typ: n1
+  A: 20 minuters promenad direkt efter middagen (start 19:00)
+  B: Sitter kvar efter middagen
+  start: 2025-07-07
+  par: 16
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: manuell
+  verkan:
+    typ: maltid
+    borjar: '19:00'
+utfall:
+  matt: medel
+  fonster:
+  - '19:00'
+  - '23:00'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära varandra i tid och ordningen lottas, så långsam drift påverkar båda villkoren
+    lika.
+  overforing: Dagarna ligger minst tre kalenderdagar isär; AB- och BA-par redovisas separat.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till
+    A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 07:00
+  - '10:00'
+  motivering: Morgonen före promenaden.

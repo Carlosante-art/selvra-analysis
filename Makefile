@@ -9,7 +9,7 @@ DBT_PACKAGES = transform/dbt_packages/dbt_project_evaluator
 $(DBT_PACKAGES):
 	cd transform && uv run dbt deps --profiles-dir .
 
-.PHONY: demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
+.PHONY: benchmark benchmark-llm demo build build-live live rapport dreamer tolka sammanfattning minne skanna prioritera import-kalender loop schemalagg test lint dashboard validate validate-real example log dagbok reproduce verify-real
 
 ## Synthetic data end to end: generate, load, transform, test
 demo: $(DBT_PACKAGES)
@@ -41,6 +41,14 @@ live: build-live dashboard
 DAGAR ?= 30
 rapport:
 	uv run python -m selvra_analysis.report --dagar $(DAGAR) --db $(DB)
+
+## Benchmark for the design review: make benchmark (granska), make benchmark-llm (needs ANTHROPIC_API_KEY)
+benchmark:
+	uv run python -m selvra_analysis.benchmark granska
+
+benchmark-llm:
+	uv run python -m selvra_analysis.benchmark llm
+	uv run python -m selvra_analysis.benchmark llm --kunskap
 
 ## Design review of a study draft on your own data: make granska STUDIE=studies/NNN-namn/studie.yml
 granska:

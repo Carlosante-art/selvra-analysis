@@ -1,0 +1,50 @@
+id: f10-start-passerad
+titel: Långpromenad en ledig dag och dagens glukos
+fraga: Hur mycket lägre är medelglukos 09–24 en ledig dag med minst 10 000 steg jämfört med en vanlig ledig dag?
+tes: En ledig dag med minst 10 000 steg ger minst 1,5 mmol/L lägre medelglukos 09–24.
+motbevis: Hela intervallet ligger över −1,5 mmol/L.
+design:
+  typ: n1
+  A: Minst 10 000 steg, varav en promenad på 60–90 minuter med start 09:00–11:00
+  B: Vanlig ledig dag, högst 5 000 steg, ingen planerad promenad
+  start: 2025-06-14
+  par: 16
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: steps
+    A:
+      min: 10000
+    B:
+      max: 5000
+  verkan:
+    typ: traning
+    borjar: 09:00
+  dagar:
+    veckodagar:
+    - lordag
+  dagar_motivering: B går inte att göra en arbetsdag; bara lediga dagar jämförs.
+  genomforbarhet: A görs som en planerad promenad på förmiddagen; den förekommer inte naturligt en ledig dag.
+utfall:
+  matt: medel
+  fonster:
+  - 09:00
+  - '23:59'
+  min_tackning_pct: 70
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: -1.5
+protokoll:
+  periodeffekt: Paren ligger nära varandra i tid och ordningen lottas, så långsam drift påverkar båda villkoren
+    lika.
+  overforing: Dagarna ligger minst tre kalenderdagar isär; AB- och BA-par redovisas separat.
+  stoppregel: Insulin ändras aldrig för studien. Paus vid hypoglykemi nivå 2 (<3,0 mmol/L ≥15 min) kopplad till
+    A, ketoner ≥1,5 eller sjukdom.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+  motivering: Natten före dagens promenad, och minst tre dagar efter förra A-dagen.

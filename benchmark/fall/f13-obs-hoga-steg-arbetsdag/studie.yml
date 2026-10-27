@@ -1,0 +1,36 @@
+id: f13-obs-hoga-steg-arbetsdag
+titel: Höga steg och natten efter
+fraga: Är natten lägre efter hoga_steg?
+tes: Minst 0,5 mmol/L lägre medel 00–06 natten efter.
+motbevis: Hela intervallet över −0,5.
+design:
+  typ: observation
+  exponering:
+    handelse: hoga_steg
+    dagar_efter: 1
+  period:
+  - 2025-04-01
+  - 2025-06-30
+  retrospektiv: true
+utfall:
+  matt: medel
+  fonster:
+  - 00:00
+  - 06:00
+analys:
+  metod: blockbootstrap
+  blocklangd: 7
+  niva: 0.95
+  minsta_relevanta_effekt: -0.5
+  minsta_underlag:
+    exponerade: 10
+    jamforelse: 10
+protokoll:
+  periodeffekt: Block om sju dagar bevarar veckorytmen.
+  andringslogg: []
+negativ_kontroll:
+  matt: medel
+  fonster:
+  - '18:00'
+  - '23:00'
+  motivering: Kvällen före natten; exponeringen loggas dagen före och kvällen kan inte påverkas av natten efter.
