@@ -2,12 +2,15 @@
 
 En körning gör:
   1. Hämtar senaste data (make live)
-  2. Skannar efter mönster
-  3. Tolkar slutförda studier som saknar tolkning
-  4. Syntetiserar hela portfoljen
-  5. Skriver en loop-rapport till data/rapporter/loop-DATUM.md
+  2. Skannar efter mönster, sparar nya hypoteser i Dreamer-minnet
+  3. Kör slutanalysen på låsta studier som nått sitt underlag
+  4. Prioriterar: vad är närmast ett svar, vad är värt att logga
+  5. Tolkar slutförda studier som saknar tolkning
+  6. Syntetiserar hela portfoljen
+  7. Skriver en loop-rapport till data/rapporter/loop-DATUM.md
 
-Motorn driver sig själv — du behöver bara köra `make loop` regelbundet.
+Motorn driver sig själv — du behöver bara köra `make loop` regelbundet
+(eller `make schemalagg` en gång, så kör den varje morgon).
 
 Usage:
     make loop
@@ -24,8 +27,14 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import duckdb
+
 from selvra_analysis.dreamer import _load_dotenv, sammanfattning, tolka
+from selvra_analysis.prioritera import rapport as prioritering
 from selvra_analysis.scanner import _format, scan, spara_hypoteser
+from selvra_analysis.study import StudyError
+from selvra_analysis.study import load as las_studie
+from selvra_analysis.study import run as kor_studie
 
 DB_DEFAULT = Path("data/selvra.duckdb")
 STUDIES_DIR = Path("studies")
@@ -37,6 +46,27 @@ def _kör_live() -> bool:
     # A fixed make target from this repo; no user input.
     result = subprocess.run([make, "live"], check=False, capture_output=False)  # noqa: S603
     return result.returncode == 0
+
+
+def _kor_fardiga(db_path: Path) -> list[str]:
+    """Kör slutanalysen på låsta studier som nått sitt underlag. Beslutet togs vid
+    låsningen; körningen är mekanik. Motorn vägrar själv om något inte stämmer
+    (pågår, för lite data, okommittad, redan körd) och förbrukar inget vid nej."""
+    korda = []
+    for folder in sorted(STUDIES_DIR.glob("[0-9][0-9][0-9]-*")):
+        if not (folder / "las.json").exists() or (folder / "slutrapport.md").exists():
+            continue
+        if "exempel" in folder.name:
+            continue  # exempelstudier hör till demo-databasen, aldrig din data
+        try:
+            study = las_studie((folder / "studie.yml").resolve())
+            with duckdb.connect(str(db_path), read_only=True) as con:
+                record, _ = kor_studie(study, con)
+            korda.append(f"{folder.name}: {record['beslut']}")
+            print(f"→ Körde {folder.name}: {record['beslut']}", file=sys.stderr)
+        except (StudyError, ValueError) as err:
+            print(f"  {folder.name}: inte redo ({err})", file=sys.stderr)
+    return korda
 
 
 def _tolka_osvarade(db_path: Path) -> list[str]:
@@ -82,6 +112,20 @@ def run(db_path: Path, hoppa_over_live: bool = False) -> str:
     nya = spara_hypoteser(patterns)
     if nya:
         lines.append(f"{nya} nya hypoteser sparade i Dreamer-minnet.\n")
+
+    korda = _kor_fardiga(db_path)
+    if korda:
+        lines.append("## Slutanalyser körda\n")
+        lines.extend(f"- {k}" for k in korda)
+        lines.append("")
+
+    print("→ Prioriterar...", file=sys.stderr)
+    prio = prioritering(db_path)
+    lines.append(prio)
+    lines.append("")
+    out_prio = Path("data/rapporter/prioritering.md")
+    out_prio.parent.mkdir(exist_ok=True)
+    out_prio.write_text(prio + "\n")
 
     _load_dotenv()
     har_api = bool(os.environ.get("ANTHROPIC_API_KEY"))

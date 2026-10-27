@@ -103,6 +103,8 @@ def _event_korrelationer(df: pd.DataFrame) -> list[Pattern]:
     baseline_tir = valid["tir_pct"].mean()
 
     for col, namn in event_cols.items():
+        if col not in valid.columns:
+            continue  # databas byggd före kolumnen; nästa make build lägger till den
         exposed = valid[valid[col] == True]["tir_pct"]
         if len(exposed) < MIN_EVENTS_FOR_CORRELATION:
             continue
