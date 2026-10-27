@@ -17,8 +17,9 @@ Built by Carl Karjalainen Joels, who lives with type 1 diabetes and analyses his
 ## Pipeline
 
 ```
-Clarity CSV ──▶ raw.clarity_events ──▶ stg_cgm_readings      parse, dedupe overlapping exports, Low/High as censored values
-Supabase ────▶ raw.share_readings ──┘                         Dexcom Share via Selvra Diabetes, after the last Clarity reading
+Clarity CSV ──▶ raw.clarity_events ──▶ stg_clarity_readings  parse, dedupe overlapping exports, DST, Low/High as censored
+Supabase ────▶ raw.share_readings ──▶ stg_share_readings    Dexcom Share via Selvra Diabetes: exact instants, mg/dL
+                                        int_cgm_readings      both sources; Share only after the last Clarity reading
                                         int_cgm_segments      gaps, contiguous runs, inferred sensor sessions
                                         int_cgm_flagged       early sensor period, suspected compression lows, implausible jumps
                                         int_glycaemic_events  consensus 2023 hypo/hyper events (level 1, level 2, extended)
@@ -81,6 +82,23 @@ Observational analyses show what follows what. To show what *causes* what for on
 - **Schedule** drawn from the operating system's random source, committed with its checksum before day one.
 - **Outcome** in a fixed local-time window where the mechanism acts, because whole-day metrics are usually too noisy for an experiment of realistic length. `n1 sd` measures that noise on existing data, and `n1 power` turns it into the number of pairs needed.
 - **Analysis** by the paired randomisation test: its null distribution is the 2^n ways the coin flips could have fallen, so it needs neither normality nor independent days. The interval is every effect the test does not reject. Washout days are excluded, and AB and BA pairs are reported separately to expose carryover.
+
+## Quality gates
+
+Every push runs the same gates, in order; any red one stops the result from leaving the lab.
+
+| Question | Gate | Where |
+|---|---|---|
+| Is the code reviewable? | Complexity ≤ 10, branches ≤ 12, statements ≤ 50, nesting ≤ 4, no imports inside functions, security rules | ruff, `pyproject.toml` |
+| Does the architecture hold? | No cycles; studies and reports above statistics; analysis never imports collection code | import-linter, `pyproject.toml` |
+| Does the dbt project hold? | Staging one model per source; marts never read sources; tests and docs per model; exceptions documented with reasons | dbt-project-evaluator 1.x, `transform/seeds/` |
+| Is the SQL unambiguous? | CTEs instead of subqueries, qualified references, explicit joins | SQLFluff, `transform/.sqlfluff` |
+| What do we measure? | Every mart column states its construct, standard, valid range, iglu function, epistemic label and **what it does not measure**; contracts fix names and types | `transform/models/marts/_marts.yml`, `tests/test_ontology.py`, `DATASHEET.md` |
+| How do we know a claim holds? | Study files must name CENT items and a negative control; the example study reproduces value for value; every number in a report is traceable to its run record | `study.py`, `make reproduce`, `tests/test_study.py` |
+| Is the data right? | Readings never lost, ranges, uniqueness, synthetic and real never mixed; freshness of live data on real data | dbt tests, `make verify-real` |
+| Do the statistics do what we say? | Type I error, coverage of an injected effect, power, and the block bootstrap's real coverage (87 %, printed in reports) | `tests/test_calibration.py`, weekly at 2000 simulations |
+
+`make verify-real` runs the checks that need real data (freshness, all dbt tests on your data); real data never reaches CI.
 
 ## Validated against an independent implementation
 
