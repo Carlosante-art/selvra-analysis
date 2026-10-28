@@ -167,6 +167,10 @@ dashboard:
 	uv run python -m selvra_analysis.morgonvy --db $(DB)
 	@echo "Öppna dashboard/index.html"
 
+## Visuell regression: rendera morgonvyn + selvra.ai i mobil/desktop till data/syn/
+syn:
+	./scripts/syn.sh
+
 ## Djup datahälsa-vy (quarto)
 dashboard-data:
 	cd dashboard && SELVRA_DUCKDB=$(abspath $(DB)) uv run quarto render datahalsa.qmd

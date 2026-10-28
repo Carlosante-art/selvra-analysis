@@ -31,6 +31,7 @@ import anthropic
 import duckdb
 import yaml
 
+from selvra_analysis import sprakgrind
 from selvra_analysis.study import MIN_DAYS, StudyError, load, status, validate
 
 DB_DEFAULT = Path("data/selvra.duckdb")
@@ -523,6 +524,13 @@ def _study_status_text(folder: Path, db_path: Path) -> str:
         return f"Status kunde inte tas fram: {err}"
 
 
+def _svar_ur_rapport(slutrapport: str) -> str:
+    """Motorskriven reserv när språkgrinden stoppar AI-texten: rapportens Svar-sektion."""
+    m = re.search(r"## Svar\n+(.*?)(?=\n## |\Z)", slutrapport, re.DOTALL)
+    svar = m.group(1).strip() if m else slutrapport.strip().split("\n")[0]
+    return svar + "\n\n(AI-tolkningen stoppades av språkgrinden; detta är rapportens eget svar.)"
+
+
 def tolka(folder: Path, db_path: Path, studies_dir: Path = STUDIES_DIR) -> str:
     slutrapport_path = folder / "slutrapport.md"
     studie_path = folder / "studie.yml"
@@ -541,6 +549,14 @@ def tolka(folder: Path, db_path: Path, studies_dir: Path = STUDIES_DIR) -> str:
     minne_text = _load_minne(studies_dir)
 
     text, minne_data = _call_tolka(studie_yml, slutrapport, status_text, minne_text)
+
+    ok, skal = sprakgrind.granska_text(text, studie_yml + slutrapport + status_text,
+                                       max_tecken=1500)
+    if not ok:
+        print(f"språkgrinden stoppade tolkningen ({skal}); mallat svar istället",
+              file=sys.stderr)
+        text = _svar_ur_rapport(slutrapport)
+        minne_data = {}
 
     _update_minne(
         studies_dir,
@@ -616,7 +632,24 @@ def sammanfattning(studies_dir: Path, db_path: Path) -> str:
         else:
             texter.append(f"STUDIE: {folder.name} (ej låst)\n\nFIL:\n{studie}")
 
-    return _call_sammanfattning(texter, minne_text)
+    text = _call_sammanfattning(texter, minne_text)
+    ok, skal = sprakgrind.granska_text(text, "\n".join(texter) + minne_text,
+                                       max_tecken=2500)
+    if not ok:
+        print(f"språkgrinden stoppade syntesen ({skal}); mallad lista istället",
+              file=sys.stderr)
+        rader = []
+        for folder in folders:
+            if (folder / "slutrapport.md").exists():
+                svar = _svar_ur_rapport((folder / "slutrapport.md").read_text())
+                rader.append(f"- {folder.name}: {svar.splitlines()[0]}")
+            elif (folder / "las.json").exists():
+                rader.append(f"- {folder.name}: låst, pågår")
+            else:
+                rader.append(f"- {folder.name}: utkast, ej låst")
+        text = ("AI-syntesen stoppades av språkgrinden. Studiernas egna svar:\n"
+                + "\n".join(rader))
+    return text
 
 
 def write_study(study_id: str, spec: dict) -> Path:
