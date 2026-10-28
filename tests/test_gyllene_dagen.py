@@ -79,13 +79,18 @@ def test_morgonen_fran_db_till_payload(db):
     ok, skal = sprakgrind.granska_text(body, body)
     assert ok, skal
 
-    p = mp.payload(subject, body, IDAG)
+    p = mp.payload(subject, body, IDAG, timme=7)
     assert p["titel"] == subject
     assert p["text"] == body
     assert p["datum"] == f"{IDAG.day}/{IDAG.month}"
     assert p["kort"]
     assert not p["kort"].startswith("Garmin")
     assert len(p["kort"]) <= mp.SHORT_MAX
+
+    # Rubriken följer klockslaget: en kvällsdom får inte stå under "Morgonen".
+    assert p["rubrik"] == "Morgonen"
+    assert mp.payload(subject, body, IDAG, timme=12)["rubrik"] == "Dagen"
+    assert mp.payload(subject, body, IDAG, timme=20)["rubrik"] == "Kvällen"
 
 
 def test_tyst_klocka_varnar_forst():

@@ -20,7 +20,7 @@ import argparse
 import base64
 import json
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -73,12 +73,17 @@ def connect(person: str, code: str) -> Path:
     return out
 
 
-def payload(subject: str, body: str, today: date) -> dict:
+def payload(subject: str, body: str, today: date, timme: int | None = None) -> dict:
     """Title, the short lock-screen text, and the full report for the page."""
     facts = [line[2:] for line in body.splitlines() if line.startswith("- ")]
     warning = next((line for line in body.splitlines()[1:4] if "synkat" in line), None)
     short = warning or " · ".join(f.split(", ")[0].replace("Garmin ", "") for f in facts) or "Ingen ny data i natt."
-    return {"titel": subject, "kort": short[:SHORT_MAX], "text": body, "datum": f"{today.day}/{today.month}"}
+    # Sidan rubricerar rapporten efter när den skickades — en dom som går ut på
+    # kvällen ska inte stå under "Morgonen" (pappas vidarebefordran 27/10).
+    timme = datetime.now().hour if timme is None else timme
+    rubrik = "Morgonen" if timme < 11 else "Dagen" if timme < 18 else "Kvällen"
+    return {"titel": subject, "kort": short[:SHORT_MAX], "text": body,
+            "rubrik": rubrik, "datum": f"{today.day}/{today.month}"}
 
 
 def send(person: str, data: dict) -> None:
