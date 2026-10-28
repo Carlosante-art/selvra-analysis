@@ -169,6 +169,10 @@ dashboard:
 	uv run python -m selvra_analysis.morgonvy --db $(DB)
 	@echo "Öppna dashboard/index.html"
 
+## API-jämförelse: klockans FIT-filer (data/fit/) som facit mot garminconnect/Terra
+api-jamforelse:
+	uv run python -m selvra_analysis.api_jamforelse
+
 ## Visuell regression: rendera morgonvyn + selvra.ai i mobil/desktop till data/syn/
 syn:
 	./scripts/syn.sh
