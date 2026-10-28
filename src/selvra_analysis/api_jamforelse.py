@@ -1,17 +1,17 @@
-"""API-jämförelsen: klockans FIT-filer är facit, API:erna är de åtalade.
+"""Källjämförelsen: klockans egna filer är facit, hämtvägarna jämförs mot det.
 
-Frågan validitetslagret vilar på: vad tappas eller förvanskas mellan klockan
-och ett API-svar? Facit är FIT-filerna från egen klocka (egen data, läst via
-USB → data/fit/, gitignorerad). Jämförelsen diffar dagliga aggregat fält för
-fält mot garminconnect (och Terra när konto finns): steg, sömn per stadium,
-vilopuls, HRV — plus det lömska: tidszoner och dagsgränser (en natt som slutar
-07:10 — vilken dag tillhör den, enligt vem?).
+Mätlagret (METODPLAN §6): vad tappas eller förvanskas mellan klockan och ett
+API-svar? Facit är FIT-filerna från egen klocka (egen data, läst via USB →
+data/fit/, gitignorerad). Jämförelsen diffar dagliga aggregat fält för fält
+mot de hämtvägar Selvra använder: steg, sömn per stadium, vilopuls, HRV —
+plus det lömska: tidszoner och dagsgränser (en natt som slutar 07:10 — vilken
+dag tillhör den, enligt vem?).
 
 Bara aggregat lämnar skriptet; inga rådata i repot. Utdata:
 data/rapporter/api-jamforelse.md (gitignorerat som allt under data/).
 
     make api-jamforelse                 # FIT mot garminconnect (person: carl)
-    ... --terra-json data/terra.json    # + Terra, ur en exporterad dump
+    ... --kalla-json data/kalla.json    # + ytterligare källa, ur exporterad dump
 
 Ärlighetsnoter, tills riktiga filer setts (klockan kommer 2026-10-30):
 - Stegen i monitoring-FIT är kumulativa per aktivitetstyp; dagssumman är
@@ -190,9 +190,9 @@ def las_garminconnect(person: str, dagar: list[date]) -> pd.DataFrame:
     return pd.DataFrame([parse_day(g, str(d)) | {"reading_date": d} for d in dagar])
 
 
-def las_terra_json(fil: Path) -> pd.DataFrame:
-    """Terra-dump (exporterad för hand) → samma kolumnnamn. Mappningen fylls på
-    när ett konto finns; tills dess accepteras redan-harmoniserad JSON."""
+def las_kalla_json(fil: Path) -> pd.DataFrame:
+    """Extern källdump (exporterad för hand) → samma kolumnnamn; redan-
+    harmoniserad JSON accepteras tills en riktig mappning behövs."""
     rader = json.loads(fil.read_text())
     df = pd.DataFrame(rader)
     df["reading_date"] = pd.to_datetime(df["reading_date"]).dt.date
@@ -248,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--person", default="carl")
     p.add_argument("--fit", type=Path, default=FIT_DIR)
-    p.add_argument("--terra-json", type=Path, default=None)
+    p.add_argument("--kalla-json", type=Path, default=None)
     p.add_argument("--dagar", type=int, default=14)
     p.add_argument("--inventera", action="store_true",
                    help="per fält: kommer facit från klockan eller servern?")
@@ -266,8 +266,8 @@ def main(argv: list[str] | None = None) -> int:
     facit = facit[facit["reading_date"].isin(dagar)]
 
     kallor = {"garminconnect": las_garminconnect(args.person, dagar)}
-    if args.terra_json:
-        kallor["terra"] = las_terra_json(args.terra_json)
+    if args.kalla_json:
+        kallor["extern"] = las_kalla_json(args.kalla_json)
 
     diff = diffa(facit, kallor)
     UT.parent.mkdir(parents=True, exist_ok=True)

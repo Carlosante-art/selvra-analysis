@@ -162,8 +162,8 @@ oavsett om det någonsin blir en tjänst av det:
 
 **Gränsen, så att mätlagret inte blir ett eget projekt:** det gäller de
 personers apparater som redan är i drift och de rör Selvra faktiskt använder —
-ingenting mer. Jämförelsebänkar och aggregatorer Selvra inte använder hör till
-ett eventuellt affärsspår, som väntar på sina egna grindar.
+ingenting mer. Jämförelsebänkar och källor Selvra inte använder ligger
+utanför detta och prövas i så fall separat, mot egna grindar.
 
 ## Byggs inte, med skäl
 
