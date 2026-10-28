@@ -32,8 +32,10 @@ och förbättras lagren i den ordningen när de konkurrerar om tid.
 
 ## Bevisat hittills (därför är modellen trovärdig)
 
-- Motorn fäller hellre än friar: pappas p00 **motbevisad** (±0,00 slag/min),
-  negativ kontroll godkänd — och domen skickades som den var.
+- Motorn fäller hellre än friar: första förslagsstudien på en wearable-person
+  (p00) slutade **motbevisad** med negativ kontroll godkänd — och domen
+  skickades till personen som den var. (Mätvärdena är personens egna och bor i
+  den gitignorerade personmappen, inte här — se docs/INTEGRITET.md.)
 - Granskaren stoppar på riktigt: p01 stoppad (1 väntat komplett par av 12),
   rate-fix skrotad när datan inte bar.
 - Benchmarken biter sin författare: f17/f18-cykeln, styrka-rättningen,
