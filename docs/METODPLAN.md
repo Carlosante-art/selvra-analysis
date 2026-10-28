@@ -49,6 +49,22 @@ vilket nuddar konstitutionens push-förbud. Möjlig linje: opt-in-prompts enbart
 inom en låst studie är inte engagemangspush. **Beslutet är Carls**, inte
 teknikens. Byggs inte före det beslutet.
 
+## 5. Prior-bibliotek för design — vilande tills ett förslag behöver det
+
+Publicerad statistik (metaanalyser, MCID-värden) som litet bibliotek
+(YAML per påstående: källa, population, effektstorlek, KI) — läst av
+**förslagsgrinden, aldrig av domen**. Tre legitima användningar: rangordna
+vilka frågor som är värda att ställa, förankra `minsta_relevanta_effekt`
+när personens baslinje är tunn, och sätta realistiska styrkeförväntningar
+(litteraturen förutsade p00: dagseffekt av promenad på vilopuls är liten).
+Gräns satt av uppmätt resultat: kunskapsbas i *bedömningen* gjorde LLM-
+granskaren sämre (RESULTAT.md, 20 falska godkännanden) — litteratur får
+forma frågan, aldrig fria svaret. Mot ditt eget normala, aldrig en norm.
+Grind: byggs först den dag ett konkret förslag behöver en litteratur-
+förankrad effektstorlek. Relaterat: T1DEXI/OhioT1DM/DiaTrend (Carls
+Vivli-ansökan) laddas när de beviljas — men in i **benchmarken** som
+planterade effekter på riktiga serier, inte som priors.
+
 ## Byggs inte, med skäl
 
 - **Bandit-allokering för behandlingsval** (adaptiv randomisering mot "bästa
