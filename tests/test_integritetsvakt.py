@@ -19,7 +19,7 @@ ROT = Path(__file__).resolve().parent.parent
 # Sökvägar som aldrig får spåras: persondata, databaser, nycklar, miljöfiler.
 FORBJUDNA_SOKVAGAR = re.compile(
     r"^data/|\.duckdb$|push\.json$|person\.yml$|\.pem$|^\.env|/\.env|\.env\.save$"
-    r"|/snapshots/|/garmin/|^dashboard/index\.html$")
+    r"|/snapshots/|/garmin/|^dashboard/index\.html$|^docs/privat/")
 TILLATNA_UNDANTAG = {
     "data/handelser.mall.csv",      # tom mall, inga händelser
     "data/raw/.gitkeep",

@@ -35,3 +35,6 @@ studies/*/rapporter/
 .env.*
 *.env.save
 data/
+
+# Privata arbetsdokument (läroplaner, utkast) — aldrig publika
+docs/privat/
