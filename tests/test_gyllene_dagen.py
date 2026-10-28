@@ -154,3 +154,23 @@ def test_reserven_ar_rapportens_eget_svar():
     assert svar.startswith("**Tesen motbevisad.**")
     assert "språkgrinden" in svar
     assert "Blockbootstrap" not in svar
+
+
+def test_cgm_rader_forst_med_egna_band():
+    """En CGM-person ser glukossnitt + målområde först, mot sina egna percentiler,
+    och möts inte av klockvarning innan klockan ens finns."""
+    glukos = pd.DataFrame({
+        "reading_date": [IDAG - timedelta(days=i) for i in range(29, 0, -1)],
+        "mean_mmol": [9.0 + (i % 5) * 0.5 for i in range(29)],
+        "tir_pct": [60.0 + (i % 4) * 5 for i in range(29)],
+    })
+    subject, body = mm.compose("Carl", pd.DataFrame(), IDAG, glukos=glukos)
+    assert "glukossnittet" in body
+    assert "målområdet" in body
+    assert "ditt vanliga" in body
+    assert "mmol/L" in body.split("\n")[2]  # CGM-raden är första faktaraden
+    assert "synkat" not in subject
+    assert "Garmin har ingen data" not in body
+
+    p = mp.payload(subject, body, IDAG, timme=7)
+    assert "glukossnittet" in p["kort"]

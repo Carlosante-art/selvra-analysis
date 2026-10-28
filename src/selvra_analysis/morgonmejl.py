@@ -61,6 +61,12 @@ MEASURES = [
     Measure("hrv_avg_ms", "Garmin mätte HRV {} ms i natt", " ms"),
 ]
 
+# CGM-rader för personer med glukosdata; bara giltiga dagar räknas (is_valid_day).
+GLUKOS_MEASURES = [
+    Measure("mean_mmol", "CGM:n mätte glukossnittet till {} mmol/L i går", " mmol/L"),
+    Measure("tir_pct", "Du var i målområdet {} % av gårdagen", " %"),
+]
+
 
 def _short(m: Measure, v: float) -> str:
     if m.column == "total_sleep_seconds":
@@ -68,12 +74,26 @@ def _short(m: Measure, v: float) -> str:
         return f"{h} h {mins:02d} min"
     if m.column == "steps":
         return f"{round(v / 100) * 100:,.0f}".replace(",", " ")
+    if m.column == "mean_mmol":
+        return f"{v:.1f}".replace(".", ",")
     return f"{v:.0f}"
 
 
 def read_days(db: Path) -> pd.DataFrame:
     with duckdb.connect(str(db), read_only=True) as con:
         df = con.execute("select * from raw.garmin_daily order by reading_date").df()
+    df["reading_date"] = pd.to_datetime(df["reading_date"]).dt.date
+    return df
+
+
+def read_glucose(db: Path) -> pd.DataFrame:
+    """Giltiga CGM-dagar ur personens marts; tom för personer utan glukosdata."""
+    try:
+        with duckdb.connect(str(db), read_only=True) as con:
+            df = con.execute("select reading_date, mean_mmol, tir_pct from marts.fct_glucose_daily "
+                             "where is_valid_day order by reading_date").df()
+    except duckdb.Error:
+        return pd.DataFrame(columns=["reading_date", "mean_mmol", "tir_pct"])
     df["reading_date"] = pd.to_datetime(df["reading_date"]).dt.date
     return df
 
@@ -101,29 +121,37 @@ def _measure_line(m: Measure, value: float, history: pd.Series, stage2: bool) ->
     return text + f". Hittills brukar det vara {_short(m, history.median())}{m.unit} ({len(history)} dagar)."
 
 
-def compose(name: str, df: pd.DataFrame, today: date) -> tuple[str, str]:
-    """Subject and body of one morning's mail."""
+def compose(name: str, df: pd.DataFrame, today: date,
+            glukos: pd.DataFrame | None = None) -> tuple[str, str]:
+    """Subject and body of one morning's mail. CGM-raderna först — de är
+    primärsignalen för den som har dem; klockraderna därefter."""
     yesterday = today - timedelta(days=1)
+    har_glukos = glukos is not None and not glukos.empty
     n_days = int(df["steps"].notna().sum()) if not df.empty else 0
     lines = [f"God morgon {name},", ""]
     warn = _sync_line(df, today)
-    if warn:
+    if warn and not (df.empty and har_glukos):
+        # En CGM-person utan klocka ännu ska inte mötas av en klockvarning varje morgon.
         lines += [warn, ""]
     shown = 0
-    for m in MEASURES:
+    kallor = ([(m, glukos) for m in GLUKOS_MEASURES] if har_glukos else []) \
+        + [(m, df) for m in MEASURES]
+    for m, frame in kallor:
         # Sleep and HRV belong to the night that ended this morning; steps and pulse to yesterday.
         day = today if m.column in ("total_sleep_seconds", "hrv_avg_ms") else yesterday
-        row = df[df["reading_date"] == day]
+        row = frame[frame["reading_date"] == day] if not frame.empty else frame
         if row.empty or pd.isna(row[m.column].iloc[0]):
             continue
         # The person's last BASELINE_DAYS days *with data*: a sync gap must not empty the baseline.
-        hist = df.loc[df["reading_date"] < day, m.column].dropna().tail(BASELINE_DAYS)
+        hist = frame.loc[frame["reading_date"] < day, m.column].dropna().tail(BASELINE_DAYS)
         lines.append("- " + _measure_line(m, float(row[m.column].iloc[0]), hist, len(hist) >= STAGE2_DAYS))
         shown += 1
     if not shown:
-        lines.append("Inga nya värden från klockan för i går och i natt ännu.")
-    lines += ["", _stage_footer(n_days), "", "Selvra"]
-    subject = f"Selvra {WEEKDAYS[today.weekday()]} {today.day}/{today.month}" + (" – klockan har inte synkat" if warn else "")
+        lines.append("Inga nya värden för i går och i natt ännu.")
+    lines += ["", _stage_footer(n_days if not har_glukos else max(n_days, int(glukos["mean_mmol"].notna().sum()))),
+              "", "Selvra"]
+    subject = f"Selvra {WEEKDAYS[today.weekday()]} {today.day}/{today.month}" \
+        + (" – klockan har inte synkat" if warn and not (df.empty and har_glukos) else "")
     return subject, "\n".join(lines) + "\n"
 
 
@@ -169,9 +197,10 @@ def main(argv: list[str] | None = None) -> int:
     if not conf_path.exists():
         raise SystemExit(f"{conf_path} saknas (namn, epost, kallor)")
     conf = yaml.safe_load(conf_path.read_text())
-    if args.skicka:
+    if args.skicka and paths["token"].exists():
         load_garmin(paths["db"], FETCH_DAYS, paths["token"], paths["snapshots"])
-    subject, body = compose(conf["namn"], read_days(paths["db"]), date.today())
+    subject, body = compose(conf["namn"], read_days(paths["db"]), date.today(),
+                            glukos=read_glucose(paths["db"]))
     if args.skicka:
         _load_dotenv()
         send(conf["epost"], subject, body)

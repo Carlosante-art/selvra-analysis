@@ -31,7 +31,7 @@ from pywebpush import WebPushException, webpush
 from selvra_analysis.forslag import forslagsrad
 from selvra_analysis.ingest_garmin import load as load_garmin
 from selvra_analysis.ingest_garmin import person_paths
-from selvra_analysis.morgonmejl import FETCH_DAYS, compose, read_days
+from selvra_analysis.morgonmejl import FETCH_DAYS, compose, read_days, read_glucose
 
 KEY_DIR = Path("data/push")
 PRIVATE_KEY = KEY_DIR / "vapid_private.pem"
@@ -106,10 +106,11 @@ def send(person: str, data: dict) -> None:
 def _report(person: str, fetch: bool) -> dict:
     paths = person_paths(person)
     conf = yaml.safe_load((paths["dir"] / "person.yml").read_text())
-    if fetch:
+    if fetch and paths["token"].exists():  # CGM-person utan klocka ännu: inget att hämta
         load_garmin(paths["db"], FETCH_DAYS, paths["token"], paths["snapshots"])
     today = date.today()
-    subject, body = compose(conf["namn"], read_days(paths["db"]), today)
+    subject, body = compose(conf["namn"], read_days(paths["db"]), today,
+                            glukos=read_glucose(paths["db"]))
     rad = forslagsrad(person, paths["db"], today, bygg=fetch)
     if rad:
         body = body.rstrip() + "\n\n" + rad + "\n"
