@@ -6,8 +6,8 @@ göra är att upptäcka tystnaden via molnets senaste uppladdningstid och be per
 generös (12 h) och det kommer högst en per dygn.
 
 Usage:
-    uv run python -m selvra_analysis.synkvakt pappa            # kolla, skicka vid behov
-    uv run python -m selvra_analysis.synkvakt pappa --visa     # bara status
+    uv run python -m selvra_analysis.synkvakt testare-1            # kolla, skicka vid behov
+    uv run python -m selvra_analysis.synkvakt testare-1 --visa     # bara status
 """
 
 from __future__ import annotations

@@ -5,7 +5,7 @@ personliga. Saknas filen eller nyckeln skrivs ett tomt objekt — dbt:s
 standardvärden gäller då.
 
 Usage:
-    uv run python -m selvra_analysis.personvars pappa   # -> {"high_steps_threshold": 8000}
+    uv run python -m selvra_analysis.personvars testare-1   # -> {"high_steps_threshold": 8000}
 """
 
 from __future__ import annotations

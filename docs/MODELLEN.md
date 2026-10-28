@@ -20,7 +20,7 @@ första klient. Selvra Diabetes är dess första vertikal.*
 
 | # | Lager | Vad det är | Läge 2026-10-28 |
 |---|-------|-----------|------------------|
-| L0 | **Data** | Källor → raw → marts per person (Dexcom Share, Nightscout, Garmin; dbt-kontrakt, 159 tester) | Live, n=2 (Carl CGM+klocka, pappa klocka) |
+| L0 | **Data** | Källor → raw → marts per person (Dexcom Share, Nightscout, Garmin; dbt-kontrakt, 159 tester) | Live, n=2 (Carl CGM+klocka, testare-1 klocka) |
 | L1 | **Motor** | fråga → granska → lås → kör en gång → dom (block bootstrap, randomiseringstest, negativ kontroll, styrka ur egen variation) | Live, benchmarkad (motortest, chaos monkey, LLM-arm) |
 | L2 | **Upplevelse** | brev, push, morgonvy, förslagsgrind, språkgrind | Live; grindad (gyllene dagen, make syn) |
 | L3 | **Distribution** | selvra.ai, studiesidan (ScholarlyArticle, engelska), Substack | Sajt live; Substack vilande (Carls beslut) |
@@ -49,8 +49,8 @@ Varje steg har en grind som öppnar nästa. Datum är prognoser; grindarna är
 beslut.
 
 **Nu (oktober–november 2026)**
-1. **Pappas p02 (promenad → sömn)** genom hela cykeln: inbjudan → lås → 24
-   studiedagar → dom. Grind: pappa tackar ja. Detta är modellens första
+1. **Testare-1:s p02 (promenad → sömn)** genom hela cykeln: inbjudan → lås → 24
+   studiedagar → dom. Grind: testare-1 tackar ja. Detta är modellens första
    *prospektiva* n=1 på en wearable-person — hela kedjan på riktigt.
 2. **Carls klocka (torsdag)** → hans steg/sömn/puls-baslinje börjar växa →
    studie 003 (träning, prospektiv) designas när granskaren släpper igenom.

@@ -63,7 +63,7 @@ def test_person_paths_kan_peka_pa_huvuddatabasen(tmp_path, monkeypatch) -> None:
     assert p["handelser"] == (tmp_path / "data" / "raw" / "handelser.csv").resolve()
     assert p["dir"] == Path("data/personer/carl")
 
-    # Utan override: allt i personmappen, som för pappa.
-    u = person_paths("pappa")
-    assert u["db"] == Path("data/personer/pappa/selvra.duckdb")
-    assert u["handelser"] == Path("data/personer/pappa/handelser.csv")
+    # Utan override: allt i personmappen, som för testare-1.
+    u = person_paths("testare-1")
+    assert u["db"] == Path("data/personer/testare-1/selvra.duckdb")
+    assert u["handelser"] == Path("data/personer/testare-1/handelser.csv")

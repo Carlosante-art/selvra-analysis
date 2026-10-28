@@ -62,7 +62,7 @@ inte bett om att vara testare.
 
 ## 8. En yta per person, och friktion med avsikt
 
-Pappa har notisen och morgonsidan — inte terminalen, inte dashboarden, inte
+Testare-1 har notisen och morgonsidan — inte terminalen, inte dashboarden, inte
 repo:t. Nya ytor läggs bara till när en fråga inte ryms i de som finns.
 Flödet är friktionsfritt; konsekvens har avsiktlig friktion (att låsa en
 studie kräver ett aktivt ja till Carl, aldrig ett tryck i en notis).

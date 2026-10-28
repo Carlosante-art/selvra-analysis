@@ -3,7 +3,7 @@
 # Användning: scripts/schemalagg_morgonpush.sh PERSON [HH:MM]   (default 07:00)
 set -euo pipefail
 
-PERSON="${1:?ange person, t.ex. pappa}"
+PERSON="${1:?ange person, t.ex. testare-1}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 TID="${2:-07:00}"
 HH="${TID%%:*}"

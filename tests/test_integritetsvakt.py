@@ -36,6 +36,7 @@ HEMLIGT = [re.compile(p, re.IGNORECASE) for p in (
     "BEGIN " + r"(EC |RSA )?PRIVATE KEY",
     "DEXCOM_" + r"PASSWORD\s*=\s*[^.\s]",   # värde, inte platshållare
     "NIGHTSCOUT_" + r"TOKEN\s*=\s*[^.\s]",
+    r"\bpa" + r"ppas?\b",   # person-id:n är neutrala (testare-N); relationer röjs inte
 )]
 
 TEXTFILER = (".py", ".md", ".yml", ".yaml", ".sql", ".sh", ".toml", ".cfg",

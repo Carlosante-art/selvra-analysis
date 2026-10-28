@@ -2,7 +2,7 @@
 # Synkvakten för en person, tre gånger om dagen (12, 17, 21).
 # Användning: scripts/schemalagg_synkvakt.sh PERSON
 set -euo pipefail
-PERSON="${1:?ange person, t.ex. pappa}"
+PERSON="${1:?ange person, t.ex. testare-1}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 LOGG="$REPO/data/personer/$PERSON/synkvakt.log"
 RAD="0 12,17,21 * * * cd $REPO && uv run python -m selvra_analysis.synkvakt $PERSON >> $LOGG 2>&1"

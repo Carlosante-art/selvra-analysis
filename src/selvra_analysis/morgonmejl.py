@@ -16,8 +16,8 @@ Personen beskrivs i data/personer/<namn>/person.yml (gitignored; e-postadressen 
 Utskick via SMTP, inställt i .env: SELVRA_SMTP_USER, SELVRA_SMTP_PASSWORD (för Gmail ett
 applösenord), valfritt SELVRA_SMTP_HOST (smtp.gmail.com) och SELVRA_SMTP_PORT (587).
 
-    uv run python -m selvra_analysis.morgonmejl pappa            # visa mejlet, skicka inget
-    uv run python -m selvra_analysis.morgonmejl pappa --skicka   # hämta ny data och skicka
+    uv run python -m selvra_analysis.morgonmejl testare-1            # visa mejlet, skicka inget
+    uv run python -m selvra_analysis.morgonmejl testare-1 --skicka   # hämta ny data och skicka
 
 Genväg i MVP:n: mejlet läser personens Garmin-dagar direkt (raw.garmin_daily), eftersom
 datalagret ännu utgår från CGM-dagar och saknar rader för den som inte har CGM.

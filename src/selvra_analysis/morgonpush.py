@@ -6,10 +6,10 @@ till telefonen (Web Push); webbsidan sparar den bara i telefonen. Ingen server l
 En gång, på datorn som skickar:
     uv run python -m selvra_analysis.morgonpush nycklar          # nyckelpar; committa web/morgon/config.js
 En gång per telefon (koden kommer från sidan när notiserna slagits på):
-    uv run python -m selvra_analysis.morgonpush koppla pappa KOD
+    uv run python -m selvra_analysis.morgonpush koppla testare-1 KOD
 Varje morgon:
-    uv run python -m selvra_analysis.morgonpush skicka pappa      # hämta ny data och skicka
-    uv run python -m selvra_analysis.morgonpush visa pappa        # visa vad som skulle skickas
+    uv run python -m selvra_analysis.morgonpush skicka testare-1      # hämta ny data och skicka
+    uv run python -m selvra_analysis.morgonpush visa testare-1        # visa vad som skulle skickas
 
 Den privata nyckeln ligger i data/push/ (gitignored) och lämnar aldrig datorn.
 """
@@ -79,7 +79,7 @@ def payload(subject: str, body: str, today: date, timme: int | None = None) -> d
     warning = next((line for line in body.splitlines()[1:4] if "synkat" in line), None)
     short = warning or " · ".join(f.split(", ")[0].replace("Garmin ", "") for f in facts) or "Ingen ny data i natt."
     # Sidan rubricerar rapporten efter när den skickades — en dom som går ut på
-    # kvällen ska inte stå under "Morgonen" (pappas vidarebefordran 27/10).
+    # kvällen ska inte stå under "Morgonen" (testare-1:s vidarebefordran 27/10).
     timme = datetime.now().hour if timme is None else timme
     rubrik = "Morgonen" if timme < 11 else "Dagen" if timme < 18 else "Kvällen"
     return {"titel": subject, "kort": short[:SHORT_MAX], "text": body,

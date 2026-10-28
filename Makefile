@@ -128,7 +128,7 @@ import-kalender:
 loop:
 	uv run python -m selvra_analysis.loop
 
-## Bygg en persons marts (wearable-only fungerar): make person-build PERSON=pappa
+## Bygg en persons marts (wearable-only fungerar): make person-build PERSON=testare-1
 person-build:
 	@test -n "$(PERSON)" || (echo "ange PERSON=namn" && exit 1)
 	$(eval PDB := $(shell uv run python -c "from selvra_analysis.ingest_garmin import person_paths as p; print(p('$(PERSON)')['db'])"))
@@ -137,14 +137,14 @@ person-build:
 	uv run python -m selvra_analysis.ingest_events $(PHND) --db $(PDB)
 	cd transform && SELVRA_DUCKDB=$(abspath $(PDB)) uv run dbt build --profiles-dir . --vars '$(shell uv run python -m selvra_analysis.personvars $(PERSON))'
 
-## Morgonmejl till en person: make morgon PERSON=pappa (visar), make morgon-skicka PERSON=pappa
+## Morgonmejl till en person: make morgon PERSON=testare-1 (visar), make morgon-skicka PERSON=testare-1
 morgon:
 	uv run python -m selvra_analysis.morgonmejl $(PERSON)
 
 morgon-skicka:
 	uv run python -m selvra_analysis.morgonmejl $(PERSON) --skicka
 
-## Morgonnotis till telefonen: make push PERSON=pappa (visar), make push-skicka PERSON=pappa
+## Morgonnotis till telefonen: make push PERSON=testare-1 (visar), make push-skicka PERSON=testare-1
 push:
 	uv run python -m selvra_analysis.morgonpush visa $(PERSON)
 

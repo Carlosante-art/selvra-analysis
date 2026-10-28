@@ -33,10 +33,12 @@ integritetsvakten är beviset.
    endast som processfakta utan mätvärden ("studien slutade motbevisad")
    och helst inte alls. Vill personen själv publicera är det personens
    beslut, dokumenterat, aldrig underförstått.
-3. **Person-id:n i publik kod** (Makefile-exempel, cron-skript, tester) ska
-   vara neutrala på sikt. Att ett id röjer en relation ("pappa") är inte ett
-   mätvärde, men det är en personuppgift — nya personer får neutrala id:n
-   från början; befintliga byts när personen tillfrågats.
+3. **Person-id:n i publik kod** (Makefile-exempel, cron-skript, tester) är
+   neutrala: `testare-1`, `testare-2` osv (infört 2026-10-28; ett id som
+   röjde en relation byttes ut i alla publika filer samma dag). Ett id som
+   avslöjar vem en testare är — namn, relation, roll — är en personuppgift
+   och fastnar i vakten. Människonamnet bor i personens gitignorerade
+   `person.yml`, aldrig i repot.
 4. **Syntetiskt är fritt** — allt som föds ur en seed får committas.
 
 ## Vakten

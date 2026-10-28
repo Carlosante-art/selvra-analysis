@@ -32,9 +32,9 @@ def test_keys_write_only_the_public_key_to_the_page(tmp_path: Path, monkeypatch)
 def test_the_code_from_the_page_connects_the_phone(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     sub = _subscription()
-    out = mp.connect("pappa", base64.b64encode(json.dumps(sub).encode()).decode())
+    out = mp.connect("testare-1", base64.b64encode(json.dumps(sub).encode()).decode())
     assert json.loads(out.read_text()) == sub
-    assert out.is_relative_to(Path("data/personer/pappa"))
+    assert out.is_relative_to(Path("data/personer/testare-1"))
 
 
 def test_the_lock_screen_text_is_short_and_the_warning_comes_first() -> None:

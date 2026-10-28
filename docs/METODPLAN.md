@@ -18,7 +18,7 @@ loggade pass), med graciös reträtt till dagens beteende när inga pass finns.
 Dagsryggraden är nu unionen av CGM- och wearable-dagar; glukoskolumnerna är null på
 dagar utan CGM, och utfallsgiltighet bedöms per kolumn (wearable-utfall gäller när
 värdet finns, CGM-utfall kräver giltig CGM-dag). Kolumn-utfall tillåts i n1.
-En person utan CGM får därmed hela kedjan: marts (159/159 tester på pappas databas),
+En person utan CGM får därmed hela kedjan: marts (159/159 tester på testare-1:s databas),
 studievalidering, granskning med power ur egen variation. Första beviset: granskaren
 stoppade p01-promenad-vilopuls korrekt — 35 dagars baslinje ger 1 väntat komplett par
 av 12. `make person-build PERSON=namn` bygger en persons marts.
