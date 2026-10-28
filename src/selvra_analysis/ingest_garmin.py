@@ -210,7 +210,8 @@ def load(db_path: Path, days_back: int = 90, token_dir: Path | None = None, snap
         ensure_raw_tables(con)
         con.register("garmin_df", df)
         cols = ", ".join(WEARABLE_COLUMNS)
-        con.execute("delete from raw.garmin_daily")
+        # Merge, inte ersätt: en 10-dagars morgonhämtning får aldrig radera historiken.
+        con.execute("delete from raw.garmin_daily where reading_date >= ?", [str(start)])
         con.execute(f"insert into raw.garmin_daily ({cols}) select {cols} from garmin_df")  # noqa: S608
         n = con.execute("select count(*) from raw.garmin_daily").fetchone()[0]
         con.execute("delete from raw.source_files where kind = 'garmin'")
