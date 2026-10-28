@@ -142,6 +142,29 @@ Hernán m.fl., "Target Trial Emulation" (JAMA 2022); Kravitz & Duan (red.),
 *Design and Implementation of N-of-1 Trials: A User's Guide* (AHRQ 2014);
 CENT 2015 (redan motorns rapportstandard).
 
+## 6. Mätlagret — rörets fel är en del av variansen (vilande tills 14-dagarstabellen finns)
+
+Selvra lovar källattribuering: "Garmin mätte X". Om röret mellan källan och
+Selvra förvränger X är attribueringen falsk precision. Mätlagret jämför de rör
+Selvra faktiskt använder mot källans egna filer (FIT-facit) och ger tre saker,
+oavsett om det någonsin blir en tjänst av det:
+
+1. **Spegeln blir ärlig**: morgonrapporten slutar säga "över ditt vanliga" när
+   avvikelsen är mindre än rörets kända mätfel (UPPLEVELSEN §5).
+2. **Studierna blir bättre**: rörets spridning per dag är en del av variansen i
+   varje n-of-1-test. Känd spridning → vet vilka effekter som alls går att
+   upptäcka; den hör hemma i styrkeberäkningen. Ändringen i granska görs
+   fall-först enligt PROTOKOLL när tabellen finns.
+3. **Oberoende av mellanled**: Selvra blir ett system som vet hur bra dess
+   egna källor är, i stället för ett som litar på dem. Om värdet ligger i
+   modellen av användaren måste modellen veta hur mycket den kan lita på
+   sina egna data.
+
+**Gränsen, så att mätlagret inte blir ett eget projekt:** det gäller de
+personers apparater som redan är i drift och de rör Selvra faktiskt använder —
+ingenting mer. Jämförelsebänkar och aggregatorer Selvra inte använder hör till
+ett eventuellt affärsspår, som väntar på sina egna grindar.
+
 ## Byggs inte, med skäl
 
 - **Bandit-allokering för behandlingsval** (adaptiv randomisering mot "bästa

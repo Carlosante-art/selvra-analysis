@@ -85,6 +85,10 @@ beslut.
 
 "Hela tiden förbättra" är inte ambition utan mekanik; varje lager har sin loop:
 
+- **L0:** rörens fel mäts mot källans egna filer (FIT-facit, METODPLAN §6):
+  spegeln får inte kalla något "avvikelse" som ryms i rörets mätfel, och rörets
+  per-dag-spridning hör hemma i styrkeberäkningen. Gräns: bara apparater och
+  rör som redan är i drift.
 - **L1:** produktionsmissar blir benchmarkfall (PROTOKOLL §6); varje
   motorändring möter fall-först + motortest + chaos monkey; dolda uppsättningar
   förbrukas och ersätts blint.
@@ -119,3 +123,4 @@ Inte MAU. I ordning:
 ## Ändringslogg
 
 - 2026-10-28: Första versionen.
+- 2026-10-29: Mätlagret in i L0:s förbättringsloop (METODPLAN §6).

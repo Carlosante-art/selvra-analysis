@@ -40,7 +40,10 @@ formuleras som frågor personen kan tacka nej till.
 ## 5. Mot ditt eget normala, aldrig en norm
 
 Band och jämförelser byggs av personens egen historik (P10–P90, rullande
-fönster, median under uppbyggnad) — aldrig befolkningsreferenser. Innan
+fönster, median under uppbyggnad) — aldrig befolkningsreferenser. Och när
+rörets mätfel är känt (METODPLAN §6) gäller: en avvikelse som ryms i mätfelet
+redovisas inte som avvikelse — "över ditt vanliga" måste betyda över bruset,
+inte inom det. Innan
 baslinjen bär (STAGE2_DAYS) sägs det ärligt: "hittills brukar det vara …
 (N dagar)". Relevans är arkitektur, inte kuratering: en rad visas bara när
 dess data finns (`utfallsgiltig`), och saknad data sägs som saknad.
@@ -75,3 +78,4 @@ studie kräver ett aktivt ja till Carl, aldrig ett tryck i en notis).
 ## Ändringslogg
 
 - 2026-10-28: Första versionen, åtta regler.
+- 2026-10-29: §5 utökad — avvikelser som ryms i rörets kända mätfel redovisas inte som avvikelser.
