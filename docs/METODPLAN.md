@@ -118,8 +118,9 @@ därför är den en dörr, inte ett lås.
 
 1. **Varje slutrapport och tolkning anger båda axlarna**: design i rubriken
    (görs redan: "retrospektiv observation") och tillförlitlighet i
-   Svar-avsnittet. Tillförlitlighetsraden läggs till nästa gång rapportmallen
-   ändå rörs — inte som egen utryckning.
+   Svar-avsnittet (infört 2026-10-28: `_tillforlitlighet` i study.py —
+   n1 startar hög, observation låg, obestämt beslut sänker en nivå för
+   imprecision).
 2. **En observationsdom (låg tillförlitlighet) stänger aldrig frågan** — den
    kvalificerar eller diskvalificerar den för en nivå 1-prövning. p00:s nej
    betyder: inte värt 24 lottade dagar på vilopuls, pröva sömnen. Det är dess

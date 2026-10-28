@@ -239,6 +239,21 @@ def test_report_shows_negative_control_and_protocol(folder: Path, tmp_path: Path
     assert "Ändringar efter låsning:** inga" in report
 
 
+def test_report_grades_certainty_on_both_axes(folder: Path, tmp_path: Path) -> None:
+    """GRADE-raden: design sätter startbetyget, ett obestämt beslut sänker en nivå."""
+    s = st.load(folder / "studie.yml")
+    st.lock(s, seed=1)
+    sched = st.n1.read_schedule(folder / "schema.csv")
+    db = make_db(tmp_path / "t.duckdb", sched, effect=-3.0)
+    with duckdb.connect(str(db), read_only=True) as con:
+        _, report = st.run(s, con, today=date(2025, 6, 1))
+    assert "Tillförlitlighet (GRADE): hög" in report
+
+    assert st._tillforlitlighet("n1", "obestämt: ...").startswith("måttlig")
+    assert st._tillforlitlighet("observation", "tesen motbevisad: ...").startswith("låg")
+    assert st._tillforlitlighet("observation", "obestämt: ...").startswith("mycket låg")
+
+
 def test_every_computed_number_in_the_report_comes_from_the_run_record(folder: Path, tmp_path: Path) -> None:
     """Text-to-number traceability (Sandve et al. 2013, rule 9): signed numbers in the report are
     computed results; each must be the formatting of a value stored in the run record."""

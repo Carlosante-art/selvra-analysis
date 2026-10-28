@@ -571,6 +571,19 @@ def _fmt(x: float) -> str:
     return "obegränsat" if not math.isfinite(x) else f"{x:+.2f}".replace(".", ",")
 
 
+def _tillforlitlighet(kind: str, beslut: str) -> str:
+    """GRADE-betyget på domen: randomiserat startar hög, observation låg;
+    ett obestämt beslut är allvarlig imprecision och sänker en nivå."""
+    obestamt = beslut.startswith("obestämt")
+    if kind == "n1":
+        return ("måttlig — randomiserad och förregistrerad, men nedgraderad för imprecision"
+                if obestamt else
+                "hög — randomiserad och förregistrerad; nivå 1-bevis för personen (OCEBM 2011)")
+    return ("mycket låg — icke-randomiserad observation, därtill imprecision"
+            if obestamt else
+            "låg — icke-randomiserad observation: en dörr till en lottad studie, aldrig ett lås")
+
+
 def _report(study: Study, record: dict) -> str:
     sp, r, d = study.spec, record["result"], study.design
     unit = "procentenheter" if sp["utfall"].get("matt") == "tid_over_10" or \
@@ -583,6 +596,7 @@ def _report(study: Study, record: dict) -> str:
         "## Svar", "",
         (f"**{record['beslut'][0].upper() + record['beslut'][1:]}.** Skattning {_fmt(r['estimate'])} {unit} "
          f"({int(r['level'] * 100)} % intervall {_fmt(r['ci_low'])} till {_fmt(r['ci_high'])})."), "",
+        f"*Tillförlitlighet (GRADE): {_tillforlitlighet(study.kind, record['beslut'])}.*", "",
         "## Fråga och tes (låsta i förväg)", "",
         f"- **Fråga:** {sp['fraga']}", f"- **Tes:** {sp['tes']}", f"- **Motbevis:** {sp['motbevis']}",
         f"- **Minsta relevanta effekt:** {_fmt(sp['analys']['minsta_relevanta_effekt'])} {unit}", "",
