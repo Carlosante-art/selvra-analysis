@@ -12,5 +12,6 @@ MARKOR=data/rapporter/morgon.datum
   /usr/bin/make loop || echo "loop misslyckades ($?)"
   uv run python -m selvra_analysis.morgonpush skicka carl || echo "push carl misslyckades ($?)"
   uv run python -m selvra_analysis.morgonpush skicka testare-1 || echo "push testare-1 misslyckades ($?)"
+  bash scripts/backup.sh || echo "backup misslyckades ($?)"
   date +%F > "$MARKOR"
 } >> data/rapporter/morgon.log 2>&1
