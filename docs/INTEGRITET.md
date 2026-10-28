@@ -41,6 +41,23 @@ integritetsvakten är beviset.
    `person.yml`, aldrig i repot.
 4. **Syntetiskt är fritt** — allt som föds ur en seed får committas.
 
+## Kanon är publik, verktyg är publika, spår är privata
+
+Läxan från källjämförelsen (2026-10-29): principer och metoder hör hemma i det
+öppna — men *spåren* (vilka tjänster som jämförs, varför, vad som kan bli en
+affär) läcker i docstrings, flaggnamn och commit-meddelanden om orden inte
+väljs före push. En namngiven motpart i en publik docstring är en länk den
+motparten kan läsa. Regeln:
+
+- **Publik kod beskriver vad den gör, aldrig vem den siktar på eller varför
+  strategiskt.** Namngivna tredjepartstjänster i kod/flaggor/commit-meddelanden
+  bara när integrationen är beslutad och publik i sig.
+- **Strategi, motparter och affärsresonemang bor i docs/privat/** —
+  gitignorerat och vaktat.
+- Vakten fångar filer och hemligheter; **ordvalen är handarbete** — läs
+  docstring och commit-meddelande en extra gång före push, med frågan:
+  "vad avslöjar det här för den som nämns?"
+
 ## Vakten
 
 `tests/test_integritetsvakt.py` kör i varje CI-varv:
