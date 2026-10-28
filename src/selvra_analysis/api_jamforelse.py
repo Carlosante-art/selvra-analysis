@@ -103,12 +103,14 @@ def _ta_frame(a: _Ack, frame) -> None:
             a.hrv[dag] = float(v)
 
 
-def _las_fil(a: _Ack, fil: Path) -> None:
+def _las_fil(a: _Ack, fil: Path, sedda: dict[str, int] | None = None) -> None:
     try:
         with fitdecode.FitReader(fil) as fr:
-            for frame in fr:
-                if isinstance(frame, fitdecode.FitDataMessage):
-                    _ta_frame(a, frame)
+            datameddelanden = (f for f in fr if isinstance(f, fitdecode.FitDataMessage))
+            for frame in datameddelanden:
+                if sedda is not None:
+                    sedda[frame.name] += 1
+                _ta_frame(a, frame)
     except Exception as err:  # noqa: BLE001 — en trasig fil fäller inte jämförelsen
         a.noter.append(f"{fil.name}: kunde inte läsas ({err})")
 
@@ -141,6 +143,46 @@ def las_fit_mapp(mapp: Path) -> tuple[pd.DataFrame, list[str]]:
         a.noter.append("FIT lokal UTC-offset: "
                        + ", ".join(f"{s / 3600:+.0f} h" for s in sorted(a.offset_sek)))
     return pd.DataFrame(rader), a.noter
+
+
+FALT_KALLKRAV = {
+    # Vilket FIT-meddelande som måste finnas i klockans filer för att fältet
+    # ska ha ett klock-facit. Saknas det räknas värdet ut på Garmins servrar,
+    # och jämförelsen för det fältet blir Connect mot aggregator — svagare,
+    # och ska redovisas så.
+    "steps": "monitoring",
+    "hr_lowest_bpm": "monitoring_info (resting_heart_rate), annars min(samples)",
+    "total_sleep_seconds": "sleep_level",
+    "deep_sleep_seconds": "sleep_level",
+    "rem_sleep_seconds": "sleep_level",
+    "hrv_avg_ms": "hrv_status_summary/hrv_summary",
+}
+
+
+def inventera(mapp: Path) -> str:
+    """Första dagen klockan är kopplad: finns facit i klockans filer, per fält?
+
+    Tabellen avgör vad jämförelsen får påstå: klock-facit = riktig jämförelse;
+    server-beräknat = Connect mot aggregator, vilket bara mäter transport."""
+    a = _Ack()
+    sedda: dict[str, int] = defaultdict(int)
+    for fil in sorted(mapp.glob("**/*.[fF][iI][tT]")):
+        _las_fil(a, fil, sedda)
+    har = {
+        "steps": bool(a.steg_max), "hr_lowest_bpm": bool(a.rhr or a.puls_min),
+        "total_sleep_seconds": bool(a.somn), "deep_sleep_seconds": bool(a.somn),
+        "rem_sleep_seconds": bool(a.somn), "hrv_avg_ms": bool(a.hrv),
+    }
+    rader = ["| fält | facit i klockan? | källa | kräver |", "|---|---|---|---|"]
+    for falt in FALT:
+        kalla = ("KLOCKAN" if har[falt] else "SERVERN (Connect — svagare jämförelse)")
+        if falt == "hr_lowest_bpm" and a.puls_min and not a.rhr:
+            kalla = "KLOCKAN, men som min(samples) — inte Garmins RHR-definition"
+        rader.append(f"| {falt} | {'ja' if har[falt] else 'NEJ'} | {kalla} | {FALT_KALLKRAV[falt]} |")
+    rader += ["", "Meddelandetyper i filerna: "
+              + (", ".join(f"{k}×{v}" for k, v in sorted(sedda.items())) or "(inga)")]
+    rader += [f"- {n}" for n in a.noter]
+    return "\n".join(rader)
 
 
 def las_garminconnect(person: str, dagar: list[date]) -> pd.DataFrame:
@@ -208,7 +250,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--fit", type=Path, default=FIT_DIR)
     p.add_argument("--terra-json", type=Path, default=None)
     p.add_argument("--dagar", type=int, default=14)
+    p.add_argument("--inventera", action="store_true",
+                   help="per fält: kommer facit från klockan eller servern?")
     args = p.parse_args(argv)
+
+    if args.inventera:
+        print(inventera(args.fit))
+        return 0
 
     facit, noter = las_fit_mapp(args.fit)
     if facit.empty:

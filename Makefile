@@ -173,6 +173,10 @@ dashboard:
 api-jamforelse:
 	uv run python -m selvra_analysis.api_jamforelse
 
+## Första dagen klockan är kopplad: finns facit i klockans FIT-filer, per fält?
+api-inventering:
+	uv run python -m selvra_analysis.api_jamforelse --inventera
+
 ## Visuell regression: rendera morgonvyn + selvra.ai i mobil/desktop till data/syn/
 syn:
 	./scripts/syn.sh
