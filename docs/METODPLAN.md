@@ -65,6 +65,82 @@ förankrad effektstorlek. Relaterat: T1DEXI/OhioT1DM/DiaTrend (Carls
 Vivli-ansökan) laddas när de beviljas — men in i **benchmarken** som
 planterade effekter på riktiga serier, inte som priors.
 
+## Bevisaxlarna — vad som är en slutsats på riktigt (källgranskat 2026-10-28)
+
+Carls krav: "vi måste kunna reglera vad som är en slutsats på riktigt — inte
+bara: efter 1 timme, nej, det finns ingen korrelation, sen var studien över."
+Djupsökningen visar att fältet inte använder en trappa utan **två axlar**, och
+att måttet aldrig är kalendertid utan design + täckta lottade dagar.
+
+### Axel 1 — design (OCEBM 2011, frågan "hjälper insatsen?")
+
+Oxford-nivåerna, ordagrant ur tabellen (CEBM Levels of Evidence 2.1):
+nivå 1 = *"systematic review of randomized trials or n-of-1 trials"*,
+nivå 2 = randomiserad studie (eller observation med dramatisk effekt),
+nivå 3 = icke-randomiserad kohort, nivå 4 = fallserier/case-control,
+nivå 5 = mekanismresonemang. För biverkningsfrågan är nivå 1 uttryckligen
+*"n-of-1 trial with the patient you are raising the question about"*.
+
+Det avgörande: **en randomiserad n-of-1 på personen själv är nivå 1-bevis för
+den personen** — inte en svagare kusin till "riktiga" studier. Selvras
+kärndesign sitter alltså högst på axeln, för exakt den fråga Selvra ställer.
+
+Mappning: skanner-mönster = nivå 5 (mekanism/hypotes — aldrig en slutsats);
+retrospektiv självkontrollerad körning (p00) = observationsstudie;
+prospektiv lottad förregistrerad n-of-1 (001, p02) = nivå 1 för personen.
+
+### Axel 2 — tillförlitlighet (GRADE)
+
+Fyra betyg: hög, måttlig, låg, mycket låg. Randomiserat startar **hög**;
+observation startar **låg**. Nedgradering (fem domäner): risk för bias,
+inkonsistens, indirekthet, imprecision, publikationsbias. Uppgradering
+(endast observation): stor effekt, dos–respons, motriktad confounding.
+
+Selvras maskineri är redan GRADE-format utan att ha hetat så:
+"**obestämt**" = imprecision (intervallet rymmer både relevant och irrelevant
+effekt); dagstyp-VARNING = risk för bias; negativ kontroll = bias-detektion;
+periodeffekt-avsnittet = indirekthet. Konsekvensen för p00: en retrospektiv
+dom startar **låg** och kan aldrig bli hög hur snäv skattningen än är —
+därför är den en dörr, inte ett lås.
+
+### Replikationens två platser (här satt utkastet fel)
+
+- **Inom personen:** replikationen är paren/cyklerna i n-of-1-designen själv —
+  fler lottade par = starkare dom. Det är *tidens* legitima roll: tid köper
+  par, inte mognad. 24 lottade dagar över tio veckor slår 32 historiska nätter
+  beräknade på en timme — av designskäl, inte av kalenderskäl.
+- **Mellan personer:** aggregering (hierarkisk modell, §3) svarar på en
+  *annan* fråga — populationseffekt och heterogenitet — och är ingen "högre
+  nivå" för individen. Generaliserbarhet och individuell bevisstyrka är
+  olika axlar och ska aldrig blandas i språket.
+
+### Regler i drift
+
+1. **Varje slutrapport och tolkning anger båda axlarna**: design i rubriken
+   (görs redan: "retrospektiv observation") och tillförlitlighet i
+   Svar-avsnittet. Tillförlitlighetsraden läggs till nästa gång rapportmallen
+   ändå rörs — inte som egen utryckning.
+2. **En observationsdom (låg tillförlitlighet) stänger aldrig frågan** — den
+   kvalificerar eller diskvalificerar den för en nivå 1-prövning. p00:s nej
+   betyder: inte värt 24 lottade dagar på vilopuls, pröva sömnen. Det är dess
+   hela auktoritet.
+3. **Retrospektiva körningar följer target trial-emulering** (Hernán m.fl.):
+   protokollet — tidsnoll, regel, utfall, analys — låses före beräkning, som
+   p00 gjorde. Ramverket botar tidsnoll-fel men aldrig confounding; därav
+   startbetyget låg.
+4. **Snabbhet får bara komma från förregistrering, aldrig från iver.**
+   Sekventiella gränser (§2) kortar kalendertid via i förväg låsta
+   avläsningspunkter; de sänker aldrig paren under golvet och flyttar inget
+   på axlarna.
+5. **Grinden får vägra av underlagsskäl** — p02-stoppet är axel 2 i förväg:
+   hellre en senare nivå 1-dom än en som föds obestämd.
+
+Källor: OCEBM Levels of Evidence Working Group, "The Oxford 2011 Levels of
+Evidence" (CEBM 2.1-tabellen); GRADE handbook-domänerna (BMJ-serien);
+Hernán m.fl., "Target Trial Emulation" (JAMA 2022); Kravitz & Duan (red.),
+*Design and Implementation of N-of-1 Trials: A User's Guide* (AHRQ 2014);
+CENT 2015 (redan motorns rapportstandard).
+
 ## Byggs inte, med skäl
 
 - **Bandit-allokering för behandlingsval** (adaptiv randomisering mot "bästa
