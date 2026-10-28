@@ -32,6 +32,7 @@ from selvra_analysis.forslag import forslagsrad
 from selvra_analysis.ingest_garmin import load as load_garmin
 from selvra_analysis.ingest_garmin import person_paths
 from selvra_analysis.morgonmejl import FETCH_DAYS, compose, read_days, read_glucose
+from selvra_analysis.trendvakt import trendrad
 
 KEY_DIR = Path("data/push")
 PRIVATE_KEY = KEY_DIR / "vapid_private.pem"
@@ -111,6 +112,9 @@ def _report(person: str, fetch: bool) -> dict:
     today = date.today()
     subject, body = compose(conf["namn"], read_days(paths["db"]), today,
                             glukos=read_glucose(paths["db"]))
+    trad = trendrad(person, paths["db"], today, skriv=fetch)
+    if trad:
+        body = body.rstrip() + "\n\n" + trad + "\n"
     rad = forslagsrad(person, paths["db"], today, bygg=fetch)
     if rad:
         body = body.rstrip() + "\n\n" + rad + "\n"
