@@ -27,6 +27,7 @@ from pathlib import Path
 
 import duckdb
 import pandas as pd
+import yaml
 from garminconnect import (
     Garmin,
     GarminConnectAuthenticationError,
@@ -87,9 +88,23 @@ def to_frame(rows: list[dict]) -> pd.DataFrame:
 
 
 def person_paths(person: str) -> dict[str, Path]:
-    """Each person's data lives apart: data/personer/<namn>/ (gitignored like all of data/)."""
+    """Each person's data lives apart: data/personer/<namn>/ (gitignored like all of data/).
+
+    person.yml kan peka ut en annan databas och händelselogg (relativt personmappen):
+    Carl är huvuddatabasens person, så hans `db: ../../selvra.duckdb` låter honom vara
+    en person i infran utan att CGM-historiken splittras. Personliga filer (push.json,
+    förslag, token) bor alltid i personmappen (`dir`), aldrig hos databasen.
+    """
     base = Path("data/personer") / person
-    return {"token": base / "garmin", "db": base / "selvra.duckdb", "snapshots": base / "snapshots"}
+    paths = {"dir": base, "token": base / "garmin", "db": base / "selvra.duckdb",
+             "snapshots": base / "snapshots", "handelser": base / "handelser.csv"}
+    conf = base / "person.yml"
+    if conf.exists():
+        spec = yaml.safe_load(conf.read_text()) or {}
+        for nyckel in ("db", "handelser"):
+            if spec.get(nyckel):
+                paths[nyckel] = (base / str(spec[nyckel])).resolve()
+    return paths
 
 
 def interactive_login(token_dir: Path) -> None:

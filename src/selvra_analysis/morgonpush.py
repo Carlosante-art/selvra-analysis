@@ -67,7 +67,7 @@ def connect(person: str, code: str) -> Path:
         sub = json.loads(base64.b64decode(text + "=" * (-len(text) % 4)).decode())
     if not sub.get("endpoint") or not (sub.get("keys") or {}).get("p256dh"):
         raise SystemExit("koden är inte en giltig push-prenumeration")
-    out = person_paths(person)["db"].parent / "push.json"
+    out = person_paths(person)["dir"] / "push.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(sub))
     return out
@@ -87,7 +87,7 @@ def payload(subject: str, body: str, today: date, timme: int | None = None) -> d
 
 
 def send(person: str, data: dict) -> None:
-    sub_path = person_paths(person)["db"].parent / "push.json"
+    sub_path = person_paths(person)["dir"] / "push.json"
     if not sub_path.exists():
         raise SystemExit(f"{person} har ingen kopplad telefon: kör `morgonpush koppla {person} KOD`")
     if not PRIVATE_KEY.exists():
@@ -105,7 +105,7 @@ def send(person: str, data: dict) -> None:
 
 def _report(person: str, fetch: bool) -> dict:
     paths = person_paths(person)
-    conf = yaml.safe_load((paths["db"].parent / "person.yml").read_text())
+    conf = yaml.safe_load((paths["dir"] / "person.yml").read_text())
     if fetch:
         load_garmin(paths["db"], FETCH_DAYS, paths["token"], paths["snapshots"])
     today = date.today()

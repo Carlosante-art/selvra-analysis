@@ -1,4 +1,6 @@
-from selvra_analysis.ingest_garmin import parse_day, to_frame
+from pathlib import Path
+
+from selvra_analysis.ingest_garmin import parse_day, person_paths, to_frame
 
 
 def test_each_value_comes_from_the_endpoint_that_holds_it() -> None:
@@ -45,3 +47,23 @@ def test_empty_input_keeps_the_columns() -> None:
     df = to_frame([])
     assert df.empty
     assert "steps" in df.columns
+
+
+def test_person_paths_kan_peka_pa_huvuddatabasen(tmp_path, monkeypatch) -> None:
+    """Carl är huvuddatabasens person: person.yml får peka ut db och händelselogg
+    utanför personmappen, men personliga filer (dir) bor alltid i mappen."""
+    monkeypatch.chdir(tmp_path)
+    carl = tmp_path / "data" / "personer" / "carl"
+    carl.mkdir(parents=True)
+    carl.joinpath("person.yml").write_text(
+        "namn: Carl\ndb: ../../selvra.duckdb\nhandelser: ../../raw/handelser.csv\n")
+
+    p = person_paths("carl")
+    assert p["db"] == (tmp_path / "data" / "selvra.duckdb").resolve()
+    assert p["handelser"] == (tmp_path / "data" / "raw" / "handelser.csv").resolve()
+    assert p["dir"] == Path("data/personer/carl")
+
+    # Utan override: allt i personmappen, som för pappa.
+    u = person_paths("pappa")
+    assert u["db"] == Path("data/personer/pappa/selvra.duckdb")
+    assert u["handelser"] == Path("data/personer/pappa/handelser.csv")

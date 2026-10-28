@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skicka", action="store_true", help="hämta ny data och skicka mejlet")
     args = parser.parse_args(argv)
     paths = person_paths(args.person)
-    conf_path = paths["db"].parent / "person.yml"
+    conf_path = paths["dir"] / "person.yml"
     if not conf_path.exists():
         raise SystemExit(f"{conf_path} saknas (namn, epost, kallor)")
     conf = yaml.safe_load(conf_path.read_text())

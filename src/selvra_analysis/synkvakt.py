@@ -44,7 +44,7 @@ def kolla(person: str, skicka: bool = True) -> int:
     if alder < timedelta(hours=TROSKEL_TIMMAR):
         return 0
 
-    markor = person_paths(person)["db"].parent / "synkvakt.datum"
+    markor = person_paths(person)["dir"] / "synkvakt.datum"
     if _redan_pamind_idag(markor):
         print("redan påmind i dag; tyst", file=sys.stderr)
         return 0

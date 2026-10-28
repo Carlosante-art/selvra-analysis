@@ -22,6 +22,7 @@ import yaml
 
 from selvra_analysis import granska
 from selvra_analysis import study as st
+from selvra_analysis.ingest_garmin import person_paths
 
 FORSLAG_ID = "p02-promenad-somn"
 ANTAL_DAGAR = 24
@@ -85,7 +86,7 @@ def forslagsrad(person: str, db_path: Path, idag: date | None = None,
                 bygg: bool = True) -> str | None:
     """Inbjudan när granskaren godkänner mallstudien mot personens data, annars None."""
     idag = idag or date.today()
-    mapp = db_path.parent / "forslag" / FORSLAG_ID
+    mapp = person_paths(person)["dir"] / "forslag" / FORSLAG_ID
     if (mapp / "las.json").exists():
         return None  # försöket pågår; motorn tjatar inte
     if bygg and not _bygg_marts(person):

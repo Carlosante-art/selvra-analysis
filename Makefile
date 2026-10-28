@@ -131,9 +131,11 @@ loop:
 ## Bygg en persons marts (wearable-only fungerar): make person-build PERSON=pappa
 person-build:
 	@test -n "$(PERSON)" || (echo "ange PERSON=namn" && exit 1)
-	@test -f data/personer/$(PERSON)/handelser.csv || printf 'start,slut,typ,notering\n' > data/personer/$(PERSON)/handelser.csv
-	uv run python -m selvra_analysis.ingest_events data/personer/$(PERSON)/handelser.csv --db data/personer/$(PERSON)/selvra.duckdb
-	cd transform && SELVRA_DUCKDB=$(abspath data/personer/$(PERSON)/selvra.duckdb) uv run dbt build --profiles-dir . --vars '$(shell uv run python -m selvra_analysis.personvars $(PERSON))'
+	$(eval PDB := $(shell uv run python -c "from selvra_analysis.ingest_garmin import person_paths as p; print(p('$(PERSON)')['db'])"))
+	$(eval PHND := $(shell uv run python -c "from selvra_analysis.ingest_garmin import person_paths as p; print(p('$(PERSON)')['handelser'])"))
+	@test -f $(PHND) || printf 'start,slut,typ,notering\n' > $(PHND)
+	uv run python -m selvra_analysis.ingest_events $(PHND) --db $(PDB)
+	cd transform && SELVRA_DUCKDB=$(abspath $(PDB)) uv run dbt build --profiles-dir . --vars '$(shell uv run python -m selvra_analysis.personvars $(PERSON))'
 
 ## Morgonmejl till en person: make morgon PERSON=pappa (visar), make morgon-skicka PERSON=pappa
 morgon:
