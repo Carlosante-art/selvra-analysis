@@ -176,17 +176,6 @@ personers apparater som redan är i drift och de rör Selvra faktiskt använder 
 ingenting mer. Jämförelsebänkar och källor Selvra inte använder ligger
 utanför detta och prövas i så fall separat, mot egna grindar.
 
-## 8. Käll-reliability ur egna prediktionsfel — vilande tills tabellen motiverar den
-
-Metakognitions-mekanik (HOT-2-mönstret ur selvra-brain): en prediktor som
-förutsäger sitt eget fel ger, inverterat, en löpande pålitlighetsskattning per
-källa — "den här källan är ostabil just nu". Studie-nivå-versionen finns redan
-(granskarens SD-osäkerhetsband); detta vore dagliga per-rör-versionen, som
-kunde mata trendvakten ("trenden vilar på en ostabil källa — säg det") och
-mätfelsregeln (UPPLEVELSEN §5). Grind: byggs först om 14-dagarstabellen visar
-att källors pålitlighet varierar nog att behöva skattas löpande. Fall-först
-enligt PROTOKOLL när den byggs.
-
 ## 7. Självstudien — systemet som forskningsobjekt åt sig själv (i drift)
 
 Domstolsprincipens meta-varv: journalerna om systemets eget arbete får samma
@@ -199,6 +188,17 @@ persisteras i grindloggen), domregistret och datadagarna räknade ur journaler
 i stället för prosa. Beskrivande rapport, aldrig push — tystnad före brus
 gäller även metalagret. Fynd härifrån blir hypoteser och frusna fall enligt
 PROTOKOLL, aldrig automatiska ändringar.
+
+## 8. Käll-reliability ur egna prediktionsfel — vilande tills tabellen motiverar den
+
+Metakognitions-mekanik (HOT-2-mönstret ur selvra-brain): en prediktor som
+förutsäger sitt eget fel ger, inverterat, en löpande pålitlighetsskattning per
+källa — "den här källan är ostabil just nu". Studie-nivå-versionen finns redan
+(granskarens SD-osäkerhetsband); detta vore dagliga per-rör-versionen, som
+kunde mata trendvakten ("trenden vilar på en ostabil källa — säg det") och
+mätfelsregeln (UPPLEVELSEN §5). Grind: byggs först om 14-dagarstabellen visar
+att källors pålitlighet varierar nog att behöva skattas löpande. Fall-först
+enligt PROTOKOLL när den byggs.
 
 ## ML-reglerna — föreslå och attackera, aldrig döma
 
