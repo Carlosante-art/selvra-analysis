@@ -38,6 +38,44 @@ def _matvarden(s: str) -> set[float]:
     return {float(m.replace(",", ".")) for m in _MATVARDE.findall(s)}
 
 
+# Reflektionsutdata (dialoglagret) har hårdare regler än breven: inga coach-
+# mönster, inga poäng eller betyg, inga värdeord, inga normer användaren inte
+# satt, inget intag-mot-förbrukning, ingen medicinsk tolkning. Hypo får aldrig
+# bli en reflektionsfråga, och glukos beskrivs som mönster i tid — aldrig som
+# andel utanför mål. (FAS 0, 2026-10-29.)
+REFLEKTIONSFORBUD = (
+    "borde", "försök att", "försök ", "kanske kan du", "har du funderat",
+    "tips:", "mitt råd", "rekommenderar",
+    "poäng", "betyg", "score", "/10", "av 10",
+    "normalt för", "rekommenderad nivå", "du ska", "man bör",
+    "kaloriunderskott", "förbränt mot intag", "kalorier in", "intag mot",
+    "öka dosen", "minska dosen", "justera insulin",
+)
+_VARDEORD = re.compile(r"\b(bra|dålig|dåligt|dåliga|duktig|duktigt)\b", re.IGNORECASE)
+_HYPO = re.compile(r"hypo|lågt blodsocker|känning", re.IGNORECASE)
+_ANDEL_UTANFOR_MAL = re.compile(r"(%|procent)[^.]{0,40}(utanför|över|under)\s*mål"
+                                r"|((utanför|över|under)\s*mål[^.]{0,40}(%|procent))",
+                                re.IGNORECASE)
+
+
+def granska_reflektion(text: str, kallor: str, max_tecken: int = 1200) -> tuple[bool, str]:
+    """Dialoglagrets utdata-grind: baskontrollerna plus reflektionsförbuden."""
+    ok, skal = granska_text(text, kallor, max_tecken)
+    if not ok:
+        return ok, skal
+    lag = text.lower()
+    for monster in REFLEKTIONSFORBUD:
+        if monster in lag:
+            return False, f"reflektionsförbud: {monster!r}"
+    if traff := _VARDEORD.search(text):
+        return False, f"värdeord: {traff.group(0)!r} — beskrivning, aldrig betyg"
+    if _HYPO.search(text) and "?" in text:
+        return False, "hypo får aldrig bli en reflektionsfråga"
+    if _ANDEL_UTANFOR_MAL.search(text):
+        return False, "glukos beskrivs som mönster i tid, aldrig som andel utanför mål"
+    return True, "ok"
+
+
 def granska_text(text: str, kallor: str, max_tecken: int = 2000) -> tuple[bool, str]:
     """(godkänd, skäl). Källorna är dokumenten texten får hämta sina siffror ur."""
     lag = text.lower()
