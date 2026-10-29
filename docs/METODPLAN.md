@@ -176,6 +176,19 @@ personers apparater som redan är i drift och de rör Selvra faktiskt använder 
 ingenting mer. Jämförelsebänkar och källor Selvra inte använder ligger
 utanför detta och prövas i så fall separat, mot egna grindar.
 
+## 7. Självstudien — systemet som forskningsobjekt åt sig själv (i drift)
+
+Domstolsprincipens meta-varv: journalerna om systemets eget arbete får samma
+mönsterletning som människornas data. Varje morgon (`sjalvstudie.py`):
+rörloggen mot sig själv (formändringar = seriebrotts-kandidater — driftlarm
+utan facit), förslagsgrindens dombeteende över tid (ett stoppskäl som
+dominerar länge är en hypotes om granskaren, inte bara om datan —
+styrka-rättningen hittades manuellt ur exakt det mönstret; grindbesluten
+persisteras i grindloggen), domregistret och datadagarna räknade ur journaler
+i stället för prosa. Beskrivande rapport, aldrig push — tystnad före brus
+gäller även metalagret. Fynd härifrån blir hypoteser och frusna fall enligt
+PROTOKOLL, aldrig automatiska ändringar.
+
 ## ML-reglerna — föreslå och attackera, aldrig döma
 
 Grundregeln är uppmätt, inte tyckt: som domare släppte frontier-LLM:en igenom

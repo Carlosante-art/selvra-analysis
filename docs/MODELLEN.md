@@ -98,6 +98,9 @@ beslut.
   bättre fråga. Registret av domar *är* produkten som växer.
 - **Metod:** METODPLAN:s prioritering styrs av verkliga studiers behov, aldrig
   av vad som är intressant.
+- **Meta:** självstudien (METODPLAN §7) forskar dagligen på systemets egna
+  journaler — rör-drift, grindbeteende, domregister. Fynd blir hypoteser och
+  frusna fall, aldrig automatiska ändringar.
 
 ## Domstolsprincipen — varför förbättringsloopen fungerar
 

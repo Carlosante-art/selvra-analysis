@@ -1,0 +1,39 @@
+{
+  "study": "000-exempel-promenad",
+  "reviewed_at": "2026-10-28T23:21:38+00:00",
+  "spec_sha256": "ea1c4f96a7c02a316d4f3820a4b0b327c0579fa43b03b0a4a21940af7ce8bca0",
+  "data_fingerprint": "5977c5055b6cd3aa157da2460d280c924b65dda015f3adc8ebdf0ec2a77c63c4",
+  "verdict": "STOPP",
+  "checks": [
+    {
+      "id": "data",
+      "level": "STOPP",
+      "text": "granskningen kördes på syntetisk demodata; siffrorna säger inget om dig. Kör mot data/selvra.duckdb"
+    },
+    {
+      "id": "struktur",
+      "level": "STOPP",
+      "text": "design.foljsamhet saknas: hur verifieras varje dags villkor ur data? (t.ex. {kolumn: steps, A: {min: 10000}, B: {max: 5000}}, eller {kolumn: manuell})"
+    },
+    {
+      "id": "struktur",
+      "level": "STOPP",
+      "text": "design.verkan saknas: {typ: traning|alkohol|somn|maltid|annat, borjar: \"HH:MM\"} styr kontrollen av överföring och tidsordning"
+    },
+    {
+      "id": "tid",
+      "level": "OK",
+      "text": "24 analyserade dagar från 2025-04-07 till 2025-05-24 (48 kalenderdagar)"
+    },
+    {
+      "id": "underlag",
+      "level": "OK",
+      "text": "100% av de tillåtna dagarna de senaste 90 dagarna hade giltigt utfall; väntat antal kompletta par 12 av 12"
+    },
+    {
+      "id": "styrka",
+      "level": "STOPP",
+      "text": "periodens SD 1.91 (egen data, tillåtna dagar); väntad styrka 21% att upptäcka 1 med 12 par, bortfallet inräknat som fördelning; ungefär 60 par behövs"
+    }
+  ]
+}

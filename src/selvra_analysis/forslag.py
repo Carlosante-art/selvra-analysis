@@ -12,6 +12,7 @@ mer — då pågår försöket.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from datetime import date, timedelta
@@ -23,6 +24,16 @@ import yaml
 from selvra_analysis import granska
 from selvra_analysis import study as st
 from selvra_analysis.ingest_garmin import person_paths
+
+GRINDLOGG = Path("data/grindlogg.jsonl")
+
+
+def _logga_grind(person: str, idag: date, dom: str, skal: str) -> None:
+    """Grindens beslut persisteras — självstudien forskar på dem (METODPLAN §7)."""
+    GRINDLOGG.parent.mkdir(parents=True, exist_ok=True)
+    with GRINDLOGG.open("a") as f:
+        f.write(json.dumps({"datum": str(idag), "person": person, "forslag": FORSLAG_ID,
+                            "dom": dom, "skal": skal[:160]}, ensure_ascii=False) + "\n")
 
 FORSLAG_ID = "p02-promenad-somn"
 ANTAL_DAGAR = 24
@@ -106,8 +117,10 @@ def forslagsrad(person: str, db_path: Path, idag: date | None = None,
 
     dom = resultat.get("verdict", resultat.get("dom", ""))
     stopp = [c for c in resultat.get("checks", []) if c.get("level") == granska.STOPP]
-    print(f"  förslagsgrinden: {dom or ('STOPP' if stopp else 'OK')}"
+    slutdom = dom or ("STOPP" if stopp else "OK")
+    print(f"  förslagsgrinden: {slutdom}"
           + (f" ({stopp[0]['text'][:80]}…)" if stopp else ""), file=sys.stderr)
+    _logga_grind(person, idag, slutdom, stopp[0]["text"] if stopp else "")
     if stopp or dom == granska.STOPP:
         return None
     return INBJUDAN
