@@ -30,7 +30,7 @@ UT="$DEST/selvra-backup-$(date +%F).tar.gz.enc"
 
 tar czf - \
     --exclude='*.duckdb' --exclude='*.log' \
-    data/raw data/personer data/push data/snapshots .env \
+    data/raw data/personer data/push data/snapshots data/serrier .env \
     | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
         -pass env:SELVRA_BACKUP_LOSEN -out "$UT"
 

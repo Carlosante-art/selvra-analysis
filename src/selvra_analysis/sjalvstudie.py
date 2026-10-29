@@ -26,6 +26,8 @@ from pathlib import Path
 
 import duckdb
 
+from selvra_analysis import serrier
+
 RORLOGG = Path("data/rorlogg.jsonl")
 GRINDLOGG = Path("data/grindlogg.jsonl")
 DB = Path("data/selvra.duckdb")
@@ -120,8 +122,10 @@ def rapport() -> str:
 
 
 def main() -> int:
+    nya = serrier.uppdatera()
     UT.parent.mkdir(parents=True, exist_ok=True)
-    UT.write_text(rapport())
+    UT.write_text(rapport() + f"\n## serrier\n\n{nya} nya kandidater i dag; "
+                  "register: `python -m selvra_analysis.serrier lista`\n")
     print(f"skrev {UT}", file=sys.stderr)
     return 0
 
