@@ -5,6 +5,7 @@ from datetime import date, datetime
 import pandas as pd
 
 from selvra_analysis import api_jamforelse as aj
+from selvra_analysis import rorlogg
 
 FACIT = pd.DataFrame([
     {"reading_date": date(2026, 10, 30), "steps": 8000, "total_sleep_seconds": 25200,
@@ -45,3 +46,14 @@ def test_natt_tillhor_uppvakningsdagen() -> None:
     aj._ta_somn(a, {"sleep_level": 4}, datetime(2026, 10, 30, 6, 30))
     assert set(a.somn) == {date(2026, 10, 30)}
     assert a.somn[date(2026, 10, 30)]["total_sleep_seconds"] == 120
+
+
+def test_rorloggen_beskriver_roret_aldrig_manniskan(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    rad = rorlogg.logga("garminconnect", "x", bibliotek="0.2.0", enhet="Venu 3",
+                        firmware="12.18", dagar=10, rader=9, falt=["steps", "hrv_avg_ms"])
+    assert rad["falt"] == ["hrv_avg_ms", "steps"]
+    text = (tmp_path / "data" / "rorlogg.jsonl").read_text()
+    assert "Venu 3" in text
+    for forbjudet in ("mmol", "bpm_varde", "sleep_seconds_varde"):
+        assert forbjudet not in text  # form, aldrig mätvärden

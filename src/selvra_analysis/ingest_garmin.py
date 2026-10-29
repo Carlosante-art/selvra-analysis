@@ -23,6 +23,7 @@ import hashlib
 import os
 import sys
 from datetime import UTC, date, datetime, timedelta
+from importlib import metadata
 from pathlib import Path
 
 import duckdb
@@ -35,6 +36,7 @@ from garminconnect import (
     GarminConnectTooManyRequestsError,
 )
 
+from selvra_analysis import rorlogg
 from selvra_analysis.ingest_clarity import WEARABLE_COLUMNS, ensure_raw_tables
 
 SNAPSHOTS = Path("data/snapshots")
@@ -216,6 +218,12 @@ def load(db_path: Path, days_back: int = 90, token_dir: Path | None = None, snap
     if df.empty:
         print("Inga Garmin-data hittades.", file=sys.stderr)
         return 0
+
+    enhet, firmware = rorlogg.enhetsinfo(garmin)
+    rorlogg.logga("garminconnect", token_dir.parts[-2] if token_dir else "default",
+                  bibliotek=metadata.version("garminconnect"),
+                  enhet=enhet, firmware=firmware, dagar=days_back,
+                  rader=len(df), falt=list(df.columns))
 
     text = df.to_csv(index=False)
     digest = hashlib.sha256(text.encode()).hexdigest()

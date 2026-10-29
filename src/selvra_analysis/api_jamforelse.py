@@ -33,7 +33,7 @@ from pathlib import Path
 import fitdecode
 import pandas as pd
 
-from selvra_analysis.ingest_garmin import _login_with_token, parse_day, person_paths
+from selvra_analysis.ingest_garmin import _fetch, _login_with_token, person_paths
 
 FIT_DIR = Path("data/fit")
 UT = Path("data/rapporter/api-jamforelse.md")
@@ -187,7 +187,9 @@ def inventera(mapp: Path) -> str:
 
 def las_garminconnect(person: str, dagar: list[date]) -> pd.DataFrame:
     g = _login_with_token(person_paths(person)["token"])
-    return pd.DataFrame([parse_day(g, str(d)) | {"reading_date": d} for d in dagar])
+    df = _fetch(g, min(dagar), max(dagar))
+    df["reading_date"] = pd.to_datetime(df["reading_date"]).dt.date
+    return df[df["reading_date"].isin(set(dagar))]
 
 
 def las_kalla_json(fil: Path) -> pd.DataFrame:
