@@ -98,6 +98,93 @@ def read_glucose(db: Path) -> pd.DataFrame:
     return df
 
 
+NATT_MIN_AVLASNINGAR = 36      # halva natten 00–06 vid 5-minutersgrid
+FONSTER_MIN_AVLASNINGAR = 20   # per 3-timmarsfönster för formraden
+
+
+def _natt_rad(db: Path, today: date) -> str | None:
+    """Nattens glukos 00–06 — raden en T1:a letar efter först. Tystnad utan täckning."""
+    try:
+        with duckdb.connect(str(db), read_only=True) as con:
+            r = con.execute(
+                "select glucose_mmol, reading_at_local from intermediate.int_cgm_readings "
+                "where reading_date = ? and extract(hour from reading_at_local) < 6 "
+                "and glucose_mmol is not null order by reading_at_local", [today]).df()
+    except duckdb.Error:
+        return None
+    if len(r) < NATT_MIN_AVLASNINGAR:
+        return None
+    lagst = r.loc[r["glucose_mmol"].idxmin()]
+    kl = pd.to_datetime(lagst["reading_at_local"]).strftime("%H:%M")
+    return (f"CGM:n i natt 00–06: snitt {r['glucose_mmol'].mean():.1f} mmol/L, "
+            f"lägsta {lagst['glucose_mmol']:.1f} kl {kl}").replace(".", ",")
+
+
+def _form_rad(db: Path, yesterday: date) -> str | None:
+    """Var dagen hände: stabilaste och oroligaste 3-timmarsfönstret i går."""
+    try:
+        with duckdb.connect(str(db), read_only=True) as con:
+            r = con.execute(
+                "select (extract(hour from reading_at_local)::int / 3) * 3 as fonster, "
+                "stddev_samp(glucose_mmol) as sd, count(*) as n "
+                "from intermediate.int_cgm_readings where reading_date = ? "
+                "and glucose_mmol is not null group by 1 having count(*) >= ?",
+                [yesterday, FONSTER_MIN_AVLASNINGAR]).df()
+    except duckdb.Error:
+        return None
+    if len(r) < 3 or r["sd"].isna().any():
+        return None
+    basta, varsta = r.loc[r["sd"].idxmin()], r.loc[r["sd"].idxmax()]
+    f = lambda v: f"{int(v):02d}–{int(v) + 3:02d}"
+    return (f"I går var {f(basta['fonster'])} stabilast och {f(varsta['fonster'])} "
+            f"oroligast (spridning {basta['sd']:.1f} mot {varsta['sd']:.1f} mmol/L)").replace(".", ",")
+
+
+def _svit_rad(glukos: pd.DataFrame, today: date) -> str | None:
+    """Giltiga dagar i rad inom det egna bandet — beskrivning, aldrig streak-konfetti."""
+    if glukos is None or glukos.empty or "mean_mmol" not in glukos:
+        return None
+    g = glukos.dropna(subset=["mean_mmol"]).sort_values("reading_date")
+    yesterday = today - timedelta(days=1)
+    hist = g[g["reading_date"] < yesterday]["mean_mmol"].tail(BASELINE_DAYS)
+    if len(hist) < STAGE2_DAYS or yesterday not in set(g["reading_date"]):
+        return None
+    lo, hi = hist.quantile(0.1), hist.quantile(0.9)
+    svit, dag = 0, yesterday
+    per_dag = dict(zip(g["reading_date"], g["mean_mmol"], strict=False))
+    while dag in per_dag and lo <= per_dag[dag] <= hi:
+        svit += 1
+        dag -= timedelta(days=1)
+    if svit < 2:
+        return None
+    return f"{svit} giltiga dagar i rad inom ditt vanliga glukossnitt"
+
+
+def _handelse_rad(db: Path, yesterday: date) -> str | None:
+    """Eko av gårdagens loggade händelser — korrelationen syns utan att påstås."""
+    try:
+        with duckdb.connect(str(db), read_only=True) as con:
+            r = con.execute(
+                "select typ, notering from raw.personal_events "
+                "where try_cast(left(start, 10) as date) <= ? "
+                "and coalesce(try_cast(left(slut, 10) as date), "
+                "try_cast(left(start, 10) as date)) >= ?", [yesterday, yesterday]).df()
+    except duckdb.Error:
+        return None
+    if r.empty:
+        return None
+    delar = [t + (f" ({n})" if isinstance(n, str) and n.strip() else "")
+             for t, n in zip(r["typ"], r["notering"], strict=False)]
+    return "Loggat i går: " + ", ".join(delar)
+
+
+def extrarader(db: Path, today: date, glukos: pd.DataFrame | None) -> list[str]:
+    """Berikningsraderna, var och en bakom sin egen täckningsgrind."""
+    kandidater = [_natt_rad(db, today), _form_rad(db, today - timedelta(days=1)),
+                  _svit_rad(glukos, today), _handelse_rad(db, today - timedelta(days=1))]
+    return [r + "." for r in kandidater if r]
+
+
 def _sync_line(df: pd.DataFrame, today: date) -> str | None:
     """Warn first when the watch has not synced, so a gap is noticed in days, not months."""
     if df.empty:
@@ -122,7 +209,8 @@ def _measure_line(m: Measure, value: float, history: pd.Series, stage2: bool) ->
 
 
 def compose(name: str, df: pd.DataFrame, today: date,
-            glukos: pd.DataFrame | None = None) -> tuple[str, str]:
+            glukos: pd.DataFrame | None = None,
+            extra: list[str] | None = None) -> tuple[str, str]:
     """Subject and body of one morning's mail. CGM-raderna först — de är
     primärsignalen för den som har dem; klockraderna därefter."""
     yesterday = today - timedelta(days=1)
@@ -145,6 +233,9 @@ def compose(name: str, df: pd.DataFrame, today: date,
         # The person's last BASELINE_DAYS days *with data*: a sync gap must not empty the baseline.
         hist = frame.loc[frame["reading_date"] < day, m.column].dropna().tail(BASELINE_DAYS)
         lines.append("- " + _measure_line(m, float(row[m.column].iloc[0]), hist, len(hist) >= STAGE2_DAYS))
+        shown += 1
+    for rad in (extra or []):
+        lines.append("- " + rad)
         shown += 1
     if not shown:
         lines.append("Inga nya värden för i går och i natt ännu.")

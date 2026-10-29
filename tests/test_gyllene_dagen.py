@@ -174,3 +174,33 @@ def test_cgm_rader_forst_med_egna_band():
 
     p = mp.payload(subject, body, IDAG, timme=7)
     assert "glukossnittet" in p["kort"]
+
+
+def test_extrarader_ar_faktarader_och_raknas() -> None:
+    tom = _dagar().iloc[0:0]
+    _, body = mm.compose("Carl", tom, IDAG, extra=["CGM:n i natt 00–06: snitt 6,8 mmol/L."])
+    assert "- CGM:n i natt" in body
+    assert "Inga nya värden" not in body  # en extrarad är ett värde
+
+
+def test_sviten_beskriver_aldrig_konfetti() -> None:
+    dagar = [IDAG - timedelta(days=i) for i in range(25, 0, -1)]
+    glukos = pd.DataFrame({"reading_date": dagar, "mean_mmol": [8.0] * 25})
+    rad = mm._svit_rad(glukos, IDAG)
+    assert rad is not None
+    assert "i rad inom ditt vanliga" in rad
+    assert "🔥" not in rad and "!" not in rad  # beskrivning, inte streak-konfetti
+
+    # Gårdagen utanför bandet → ingen svit, ingen rad.
+    glukos.loc[glukos["reading_date"] == IDAG - timedelta(days=1), "mean_mmol"] = 15.0
+    assert mm._svit_rad(glukos, IDAG) is None
+
+
+def test_natt_och_form_tiger_utan_tabell(tmp_path) -> None:
+    # En databas utan intermediate-schema (wearable-only-person) ger tystnad, inte krasch.
+    import duckdb as d
+    db = tmp_path / "t.duckdb"
+    d.connect(str(db)).close()
+    assert mm._natt_rad(db, IDAG) is None
+    assert mm._form_rad(db, IDAG) is None
+    assert mm._handelse_rad(db, IDAG) is None

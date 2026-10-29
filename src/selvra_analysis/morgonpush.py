@@ -31,7 +31,7 @@ from pywebpush import WebPushException, webpush
 from selvra_analysis.forslag import forslagsrad
 from selvra_analysis.ingest_garmin import load as load_garmin
 from selvra_analysis.ingest_garmin import person_paths
-from selvra_analysis.morgonmejl import FETCH_DAYS, compose, read_days, read_glucose
+from selvra_analysis.morgonmejl import FETCH_DAYS, compose, extrarader, read_days, read_glucose
 from selvra_analysis.trendvakt import trendrad
 
 KEY_DIR = Path("data/push")
@@ -110,8 +110,11 @@ def _report(person: str, fetch: bool) -> dict:
     if fetch and paths["token"].exists():  # CGM-person utan klocka ännu: inget att hämta
         load_garmin(paths["db"], FETCH_DAYS, paths["token"], paths["snapshots"])
     today = date.today()
+    glukos = read_glucose(paths["db"])
     subject, body = compose(conf["namn"], read_days(paths["db"]), today,
-                            glukos=read_glucose(paths["db"]))
+                            glukos=glukos, extra=extrarader(paths["db"], today, glukos))
+    if person == "carl" and not glukos.empty:
+        body = body.rstrip() + "\n\nAGP-vyn uppdaterad i morse: selvra-morgonvy.html i Downloads.\n"
     trad = trendrad(person, paths["db"], today, skriv=fetch)
     if trad:
         body = body.rstrip() + "\n\n" + trad + "\n"
