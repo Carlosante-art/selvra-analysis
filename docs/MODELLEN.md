@@ -99,6 +99,28 @@ beslut.
 - **Metod:** METODPLAN:s prioritering styrs av verkliga studiers behov, aldrig
   av vad som är intressant.
 
+## Domstolsprincipen — varför förbättringsloopen fungerar
+
+Varaktigt ackumulerande system har alltid samma fyra delar: en billig
+**generator** av kandidater (hypoteser, förslag — gärna en LLM, de blir bättre
+gratis), en **omutlig domare** (verklighetskontakt: lottade dagar, frusna
+regler, facit som aldrig redigeras), ett **minne** där vinster består (domar,
+benchmarkfall, rörloggen), och **självreferens** — loopens utdata förbättrar
+loopen, *inklusive domaren själv* (misser blir frusna fall, dolda uppsättningar
+förbrukas, blinda författare krävs). Den dubbla självreferensen är det ovanliga:
+systemet blir klokare, och dess förmåga att veta det blir också klokare.
+
+Flaskhalsen är alltid domen, aldrig generatorn. Systemets tillväxttakt sätts av
+hur snabbt verkligheten kan döma utan att domaren korrumperas — en natt tar en
+natt, tolv par tar tio veckor. Kurvan böjs uppåt på exakt tre hederliga sätt,
+och alla tre står redan i planen: **parallellisera verklighetskontakten**
+(fler personer), **gör domen snabbare utan att försvaga den** (sekventiella
+gränser, METODPLAN §2) och **återanvänd bevisad kunskap** (hierarkisk Bayes,
+§3). Genvägen — låta systemet döma sig självt, optimera egna utfall — ger en
+exponentialkurva i självförtroende, inte i kunskap (ML-reglerna i METODPLAN).
+Man skapar inte intelligensen; man skapar domstolen och ser till att den
+skalar.
+
 ## Vad vi säger nej till (lika viktigt som planen)
 
 - **Tre filter före allt nytt:** pilot-blocker? klinisk/verklig efterfrågan?
@@ -124,3 +146,4 @@ Inte MAU. I ordning:
 
 - 2026-10-28: Första versionen.
 - 2026-10-29: Mätlagret in i L0:s förbättringsloop (METODPLAN §6).
+- 2026-10-29: Domstolsprincipen — generator, omutlig domare, minne, dubbel självreferens; flaskhalsen är domen.
