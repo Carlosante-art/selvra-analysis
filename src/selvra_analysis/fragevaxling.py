@@ -14,7 +14,7 @@ Fyra typer (forskningsgrund i docs/privat/brevvaxling-design.md):
 Disciplin: högst EN fråga per brev, samma typ aldrig två brev i rad, tystnad
 är standard. Kalibreringsfrågor är alltid relativa eget normal — aldrig
 siffer-skalor (DESIGN §4). Den som faktiskt kopplar detta till morgonbrevet
-byggs i FAS 1, bakom studie 002-låsning + api-inventering.
+byggs i FAS 1, bakom studie 003-låsning + api-inventering.
 """
 
 from __future__ import annotations
