@@ -160,6 +160,17 @@ oavsett om det någonsin blir en tjänst av det:
    modellen av användaren måste modellen veta hur mycket den kan lita på
    sina egna data.
 
+**Avgränsningen som alltid följer med: rörets trohet är inte fysiologisk
+sanning.** Jämförelsen mot enhetens fil svarar "levererade röret det enheten
+registrerade?" — aldrig "stämmer pulsen?". Fel som träffar fil och API lika
+syns inte i rörjämförelsen utan bara som förändringspunkter i personens
+tidsserie vid versionsbyten — därför loggas firmware per hämtning (rörloggen),
+och de två dimensionerna är komplementära. Motivet är belagt i litteraturen:
+mjukvaruuppdateringar flyttar mått 3–13 % inom samma person (Sturrock m.fl.,
+PLOS Digital Health 2025) och en tredjedel av firmwareuppdateringar kan
+ogiltigförklara en validering (Woolley m.fl., BMJ HCI 2019). Inte heller
+enhetens fil är neutralt facit — även rådataprodukter versioneras.
+
 **Gränsen, så att mätlagret inte blir ett eget projekt:** det gäller de
 personers apparater som redan är i drift och de rör Selvra faktiskt använder —
 ingenting mer. Jämförelsebänkar och källor Selvra inte använder ligger
