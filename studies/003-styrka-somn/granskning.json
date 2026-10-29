@@ -1,0 +1,34 @@
+{
+  "study": "003-styrka-somn",
+  "reviewed_at": "2026-10-29T22:06:05+00:00",
+  "spec_sha256": "4f35fda9d5024028f1cac6b03dd4abd8e7291b9e1c90bac01a3dbc41e532454a",
+  "data_fingerprint": "90243629b6f86bdeff5e78b3d762a0123ba9d7ad12fbea7efe0fb0803397b179",
+  "verdict": "STOPP",
+  "checks": [
+    {
+      "id": "tid",
+      "level": "OK",
+      "text": "24 analyserade dagar från 2026-11-02 till 2027-01-10 (70 kalenderdagar)"
+    },
+    {
+      "id": "overforing",
+      "level": "OK",
+      "text": "minst 3 kalenderdag(ar) mellan två analyserade dagar med olika villkor; insulinkänsligheten är förhöjd upp till 24–48 h efter träning och hypoglykemirisken minst 24 h, nattlig risk störst efter eftermiddagsträning (Riddell 2017)."
+    },
+    {
+      "id": "positivitet",
+      "level": "STOPP",
+      "text": "ingen mätning av garmin_traningsminuter de senaste 56 dagarna: varken positivitet eller följsamhet går att verifiera. Ladda källan (Oura: OURA_TOKEN och make live) eller ange kolumn: manuell och motivera"
+    },
+    {
+      "id": "underlag",
+      "level": "VARNING",
+      "text": "0% av de tillåtna dagarna de senaste 90 dagarna hade giltigt utfall; väntat antal kompletta par 0 av 12"
+    },
+    {
+      "id": "underlag",
+      "level": "STOPP",
+      "text": "med väntat bortfall (0 par) kan testet inte nå p ≤ 0.05; öka design.par"
+    }
+  ]
+}

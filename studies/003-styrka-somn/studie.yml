@@ -1,0 +1,71 @@
+id: 003-styrka-somn
+titel: Långt styrkepass och nattens sömn
+fraga: Är nattsömnen längre efter en dag med minst 60 minuters styrketräning jämfört
+  med en vilodag?
+tes: En dag med minst 60 minuters styrketräning ger minst 30 minuter längre nattsömn.
+motbevis: Hela intervallet visar mindre än 30 minuters förlängning, eller kortare
+  sömn.
+design:
+  typ: n1
+  A: Styrketräning minst 60 minuter, startad på klockan, avslutad före 20:00
+  B: 'Vilodag: ingen startad aktivitet, högst 15 minuter registrerad träning'
+  start: 2026-11-02
+  par: 12
+  periodlangd_dagar: 1
+  tvatt_dagar: 0
+  foljsamhet:
+    kolumn: garmin_traningsminuter
+    A:
+      min: 60
+    B:
+      max: 15
+  verkan:
+    typ: traning
+    borjar: '16:00'
+  dagar:
+    datum:
+    - 2026-11-02
+    - 2026-11-05
+    - 2026-11-08
+    - 2026-11-11
+    - 2026-11-14
+    - 2026-11-17
+    - 2026-11-20
+    - 2026-11-23
+    - 2026-11-26
+    - 2026-11-29
+    - 2026-12-02
+    - 2026-12-05
+    - 2026-12-08
+    - 2026-12-11
+    - 2026-12-14
+    - 2026-12-17
+    - 2026-12-20
+    - 2026-12-23
+    - 2026-12-26
+    - 2026-12-29
+    - 2027-01-01
+    - 2027-01-04
+    - 2027-01-07
+    - 2027-01-10
+    minsta_avstand: 3
+  dagar_motivering: Tre dagars mellanrum täcker träningsvärk och eftereffekt på sömnbehovet.
+  genomforbarhet: A kräver ett planerat gympass; B är en naturlig dag utan startad
+    aktivitet.
+utfall:
+  kolumn: total_sleep_seconds
+  dagar_efter: 1
+analys:
+  metod: randomiseringstest
+  niva: 0.95
+  minsta_relevanta_effekt: 1800
+protokoll:
+  periodeffekt: Ordningen lottas; säsongsdrift i sömn drabbar A och B lika.
+  overforing: Minst tre kalenderdagar mellan studiedagar.
+  stoppregel: Avbryt vid sjukdom eller skada; passet är frivilligt varje gång.
+  andringslogg: []
+negativ_kontroll:
+  kolumn: total_sleep_seconds
+  dagar_efter: 0
+  motivering: Natten som slutar på morgonen FÖRE kvällspasset är redan sövd när passet
+    sker; en skillnad där avslöjar schemaläckage eller förväntanseffekt.
