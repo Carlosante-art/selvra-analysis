@@ -32,6 +32,8 @@ och studien får avgöras tidigt när bevisen räcker. Bryter inte en-körning-
 principen — regeln är låst, den har bara flera förutbestämda avläsningar.
 Kräver: utökning av studie.yml (avlasningar + gränser), las/kor-stöd,
 kalibreringstest av total felrisk, granska-kontroll av gränserna.
+Kodreferens före bygge: StudyU (HPI, open source) implementerar digital
+n-of-1-körning med randomisering — läs deras lösningar först (SOTA-svep 2026-10-29).
 
 ## 3. Hierarkisk styrkedelning — n ≥ 2-metoden
 
