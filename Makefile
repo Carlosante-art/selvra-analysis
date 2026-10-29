@@ -185,3 +185,7 @@ syn:
 dashboard-data:
 	cd dashboard && SELVRA_DUCKDB=$(abspath $(DB)) uv run quarto render datahalsa.qmd
 	@echo "Öppna dashboard/datahalsa.html"
+
+## Share-diffen: realtidsröret mot Clarity-exporten, parat per 5-minutersslot (§6)
+share-diff:
+	uv run python -m selvra_analysis.sharediff
