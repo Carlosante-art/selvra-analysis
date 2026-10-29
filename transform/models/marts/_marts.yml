@@ -554,6 +554,30 @@ models:
       does_not_measure: emotions, cortisol or perceived stress; a single spike says nothing
         about cause
       epistemics: derived
+  - name: garmin_traningsminuter
+    description: Total duration of started Garmin activities that day, minutes. Null when
+      no activity was recorded that day.
+    data_type: double
+    meta:
+      construct: logged exercise volume
+      source_standard: Garmin Connect activities (startTimeLocal date attribution)
+      valid_range: '> 0'
+      iglu_function: null
+      does_not_measure: exercise that was never started on the watch, intensity, or
+        incidental movement; a forgotten start button makes a training day look like rest
+      epistemics: observed
+  - name: had_garmin_activity
+    description: True when at least one Garmin activity was started that day; false when
+      the day has wearable data but no activity; null when there is no wearable data.
+    data_type: boolean
+    meta:
+      construct: training day per the watch
+      source_standard: Garmin Connect activities
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: whether training actually happened — only whether it was started
+        on the watch; distinct from the manually logged had_training
+      epistemics: observed
   - name: hr_lowest_bpm
     description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute
       average of the day). Null when there is no wearable data for the day.
@@ -1150,6 +1174,30 @@ models:
       does_not_measure: emotions, cortisol or perceived stress; a single spike says nothing
         about cause
       epistemics: derived
+  - name: garmin_traningsminuter
+    description: Total duration of started Garmin activities that day, minutes. Null when
+      no activity was recorded that day.
+    data_type: double
+    meta:
+      construct: logged exercise volume
+      source_standard: Garmin Connect activities (startTimeLocal date attribution)
+      valid_range: '> 0'
+      iglu_function: null
+      does_not_measure: exercise that was never started on the watch, intensity, or
+        incidental movement; a forgotten start button makes a training day look like rest
+      epistemics: observed
+  - name: had_garmin_activity
+    description: True when at least one Garmin activity was started that day; false when
+      the day has wearable data but no activity; null when there is no wearable data.
+    data_type: boolean
+    meta:
+      construct: training day per the watch
+      source_standard: Garmin Connect activities
+      valid_range: true/false
+      iglu_function: null
+      does_not_measure: whether training actually happened — only whether it was started
+        on the watch; distinct from the manually logged had_training
+      epistemics: observed
   - name: hr_lowest_bpm
     description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute
       average of the day). Null when there is no wearable data for the day.

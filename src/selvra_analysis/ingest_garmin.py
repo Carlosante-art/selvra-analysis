@@ -177,6 +177,27 @@ def _login(email: str, password: str) -> Garmin:
     return garmin
 
 
+def hamta_pass(garmin: Garmin, start: date, end: date) -> pd.DataFrame:
+    """Aktiviteter (pass) i spannet: det klockan vet som dygnsaggregaten inte bär.
+    Ett pass som aldrig startades finns inte här — det är kolumnens ontologi."""
+    try:
+        akt = garmin.get_activities_by_date(str(start), str(end)) or []
+    except FETCH_ERRORS as err:
+        print(f"aktiviteter kunde inte hämtas: {err}", file=sys.stderr)
+        akt = []
+    rader = [{
+        "activity_id": a.get("activityId"),
+        "started_at": a.get("startTimeLocal"),
+        "activity_type": (a.get("activityType") or {}).get("typeKey"),
+        "duration_s": a.get("duration"),
+        "distance_m": a.get("distance"),
+        "avg_hr": a.get("averageHR"),
+        "calories": a.get("calories"),
+    } for a in akt if a.get("activityId") is not None]
+    return pd.DataFrame(rader, columns=["activity_id", "started_at", "activity_type",
+                                        "duration_s", "distance_m", "avg_hr", "calories"])
+
+
 def _fetch(garmin: Garmin, start: date, end: date) -> pd.DataFrame:
     rows = []
     day = start
@@ -239,6 +260,12 @@ def load(db_path: Path, days_back: int = 90, token_dir: Path | None = None, snap
         # Merge, inte ersätt: en 10-dagars morgonhämtning får aldrig radera historiken.
         con.execute("delete from raw.garmin_daily where reading_date >= ?", [str(start)])
         con.execute(f"insert into raw.garmin_daily ({cols}) select {cols} from garmin_df")  # noqa: S608
+        pass_df = hamta_pass(garmin, start, end)
+        pass_df["loaded_at"] = datetime.now(UTC).isoformat(timespec="seconds")
+        con.register("pass_df", pass_df)
+        # Merge, inte ersätt — samma regel som dagsraderna.
+        con.execute("delete from raw.garmin_activities where started_at >= ?", [str(start)])
+        con.execute("insert into raw.garmin_activities select * from pass_df")
         n = con.execute("select count(*) from raw.garmin_daily").fetchone()[0]
         con.execute("delete from raw.source_files where kind = 'garmin'")
         con.execute("insert into raw.source_files values ('garmin', ?, ?, ?, ?)",

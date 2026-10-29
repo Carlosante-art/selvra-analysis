@@ -56,6 +56,14 @@ models:
       - name: reading_date
         tests: [unique, not_null]
 
+  - name: stg_garmin_activities
+    description: >
+      Garmin activities (started sessions) with their calendar date. A session the user
+      never started on the watch does not exist here — that is the column's ontology.
+    columns:
+      - name: activity_id
+        tests: [unique, not_null]
+
   - name: stg_garmin_daily
     description: >
       Garmin sleep, heart and step data per day. Empty when no Garmin data has been loaded.

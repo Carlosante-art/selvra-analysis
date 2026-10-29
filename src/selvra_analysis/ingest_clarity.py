@@ -149,6 +149,12 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
         "create table if not exists raw.source_files "
         "(kind varchar, sha256 varchar, bytes bigint, n_rows bigint, loaded_at varchar)"
     )
+    con.execute(
+        "create table if not exists raw.garmin_activities "
+        "(activity_id bigint, started_at timestamp, activity_type varchar, "
+        "duration_s double, distance_m double, avg_hr double, calories double, "
+        "loaded_at varchar)"
+    )
     # Migration för databaser skapade före stress-kolumnerna (2026-10-29).
     for tabell in ("raw.oura_sleep", "raw.garmin_daily"):
         for kol in ("stress_avg", "stress_max"):

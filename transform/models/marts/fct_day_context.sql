@@ -8,7 +8,17 @@
 -- The day spine is every day with any data: CGM or wearable. A person without a
 -- CGM (wearable-only mode) still gets a full context row per day; the glucose
 -- columns in the mart are simply null for days the CGM did not cover.
-with days as (
+with aktiviteter as (
+
+    select
+        reading_date,
+        round(sum(duration_s) / 60.0, 1) as garmin_traningsminuter
+    from {{ ref('stg_garmin_activities') }}
+    group by reading_date
+
+),
+
+days as (
 
     select reading_date from {{ ref('fct_glucose_daily') }}
     union
@@ -80,6 +90,11 @@ select
     sl.hrv_avg_ms,
     sl.stress_avg,
     sl.stress_max,
+    akt.garmin_traningsminuter,
+    case
+        when akt.garmin_traningsminuter is not null then true
+        when sl.wearable_source is not null then false
+    end as had_garmin_activity,
     sl.hr_lowest_bpm,
     sl.total_sleep_seconds,
     sl.deep_sleep_seconds,
@@ -98,6 +113,8 @@ select
             then sl.steps >= {{ var('high_steps_threshold', 10000) }}
     end as high_steps
 from days as d
+left join aktiviteter as akt
+    on d.reading_date = akt.reading_date
 left join events as e
     on d.reading_date between e.start_date and e.end_date
 left join inferred_sensor_starts as s
@@ -107,9 +124,8 @@ left join sleep as sl
 left join dosing as dsg
     on d.reading_date = dsg.reading_date
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
-         sl.hrv_avg_ms,
-    sl.stress_avg,
-    sl.stress_max, sl.hr_lowest_bpm, sl.total_sleep_seconds,
+         sl.hrv_avg_ms, sl.stress_avg, sl.stress_max, akt.garmin_traningsminuter,
+         sl.wearable_source, sl.hr_lowest_bpm, sl.total_sleep_seconds,
          sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct,
          sl.steps, sl.wearable_source, dsg.insulin_bolus_units, dsg.carbs_logged_g,
          dsg.n_boluses
