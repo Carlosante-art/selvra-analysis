@@ -189,7 +189,8 @@ def test_sviten_beskriver_aldrig_konfetti() -> None:
     rad = mm._svit_rad(glukos, IDAG)
     assert rad is not None
     assert "i rad inom ditt vanliga" in rad
-    assert "🔥" not in rad and "!" not in rad  # beskrivning, inte streak-konfetti
+    assert "🔥" not in rad  # beskrivning, inte streak-konfetti
+    assert "!" not in rad
 
     # Gårdagen utanför bandet → ingen svit, ingen rad.
     glukos.loc[glukos["reading_date"] == IDAG - timedelta(days=1), "mean_mmol"] = 15.0
@@ -198,9 +199,8 @@ def test_sviten_beskriver_aldrig_konfetti() -> None:
 
 def test_natt_och_form_tiger_utan_tabell(tmp_path) -> None:
     # En databas utan intermediate-schema (wearable-only-person) ger tystnad, inte krasch.
-    import duckdb as d
     db = tmp_path / "t.duckdb"
-    d.connect(str(db)).close()
+    duckdb.connect(str(db)).close()
     assert mm._natt_rad(db, IDAG) is None
     assert mm._form_rad(db, IDAG) is None
     assert mm._handelse_rad(db, IDAG) is None
