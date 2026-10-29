@@ -14,6 +14,8 @@ with unioned as (
         rem_sleep_seconds,
         sleep_efficiency_pct,
         hrv_avg_ms,
+        stress_avg,
+        stress_max,
         hr_lowest_bpm,
         steps,
         'garmin' as wearable_source
@@ -30,6 +32,8 @@ with unioned as (
         rem_sleep_seconds,
         sleep_efficiency_pct,
         hrv_avg_ms,
+        stress_avg,
+        stress_max,
         hr_lowest_bpm,
         steps,
         'oura' as wearable_source
@@ -46,6 +50,8 @@ select
     rem_sleep_seconds,
     sleep_efficiency_pct,
     hrv_avg_ms,
+    stress_avg,
+    stress_max,
     hr_lowest_bpm,
     steps,
     wearable_source

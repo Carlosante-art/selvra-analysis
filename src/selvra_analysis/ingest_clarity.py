@@ -109,7 +109,7 @@ def read_clarity_csv(path: Path) -> pd.DataFrame:
 
 OURA_COLUMNS = ["reading_date", "sleep_score", "readiness_score", "total_sleep_seconds",
                 "deep_sleep_seconds", "rem_sleep_seconds", "sleep_efficiency_pct", "hrv_avg_ms",
-                "hr_lowest_bpm", "steps"]
+                "hr_lowest_bpm", "steps", "stress_avg", "stress_max"]
 # Garmin loads the same per-day shape into its own raw table; int_wearable_daily unions them.
 WEARABLE_COLUMNS = OURA_COLUMNS
 
@@ -133,7 +133,8 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
     con.execute(
         "create table if not exists raw.garmin_daily (reading_date date, sleep_score integer, "
         "readiness_score integer, total_sleep_seconds integer, deep_sleep_seconds integer, "
-        "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double, steps integer)"
+        "rem_sleep_seconds integer, sleep_efficiency_pct double, hrv_avg_ms double, hr_lowest_bpm double, "
+        "steps integer, stress_avg integer, stress_max integer)"
     )
     con.execute(
         "create table if not exists raw.nightscout_entries "
@@ -148,6 +149,10 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
         "create table if not exists raw.source_files "
         "(kind varchar, sha256 varchar, bytes bigint, n_rows bigint, loaded_at varchar)"
     )
+    # Migration för databaser skapade före stress-kolumnerna (2026-10-29).
+    for tabell in ("raw.oura_sleep", "raw.garmin_daily"):
+        for kol in ("stress_avg", "stress_max"):
+            con.execute(f"alter table {tabell} add column if not exists {kol} integer")
 
 
 def load(paths: list[Path], db_path: Path) -> int:

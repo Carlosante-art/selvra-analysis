@@ -529,6 +529,31 @@ models:
       iglu_function: null
       does_not_measure: daytime autonomic state or stress; values are not comparable across devices
       epistemics: derived
+  - name: stress_avg
+    description: Garmin's daily average stress score (Firstbeat, 0-100), derived from HRV
+      patterns over the whole day. Null when there is no wearable data or the device lacks
+      the feature.
+    data_type: integer
+    meta:
+      construct: physiological activation over the day
+      source_standard: Garmin Connect (Firstbeat stress); Oura has no equivalent and stays null
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: emotions, cortisol or perceived stress; a proprietary HRV-pattern
+        score where exercise, alcohol and a hard conversation can look alike
+      epistemics: derived
+  - name: stress_max
+    description: Garmin's highest stress score of the day (Firstbeat, 0-100). Null when
+      there is no wearable data or the device lacks the feature.
+    data_type: integer
+    meta:
+      construct: peak physiological activation
+      source_standard: Garmin Connect (Firstbeat stress); Oura has no equivalent and stays null
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: emotions, cortisol or perceived stress; a single spike says nothing
+        about cause
+      epistemics: derived
   - name: hr_lowest_bpm
     description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute
       average of the day). Null when there is no wearable data for the day.
@@ -1099,6 +1124,31 @@ models:
       valid_range: '> 0'
       iglu_function: null
       does_not_measure: daytime autonomic state or stress; values are not comparable across devices
+      epistemics: derived
+  - name: stress_avg
+    description: Garmin's daily average stress score (Firstbeat, 0-100), derived from HRV
+      patterns over the whole day. Null when there is no wearable data or the device lacks
+      the feature.
+    data_type: integer
+    meta:
+      construct: physiological activation over the day
+      source_standard: Garmin Connect (Firstbeat stress); Oura has no equivalent and stays null
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: emotions, cortisol or perceived stress; a proprietary HRV-pattern
+        score where exercise, alcohol and a hard conversation can look alike
+      epistemics: derived
+  - name: stress_max
+    description: Garmin's highest stress score of the day (Firstbeat, 0-100). Null when
+      there is no wearable data or the device lacks the feature.
+    data_type: integer
+    meta:
+      construct: peak physiological activation
+      source_standard: Garmin Connect (Firstbeat stress); Oura has no equivalent and stays null
+      valid_range: 0-100
+      iglu_function: null
+      does_not_measure: emotions, cortisol or perceived stress; a single spike says nothing
+        about cause
       epistemics: derived
   - name: hr_lowest_bpm
     description: Lowest heart rate during sleep (Oura) or Garmin's daily resting heart rate (lowest 30-minute

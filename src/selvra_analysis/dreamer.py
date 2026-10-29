@@ -56,7 +56,8 @@ Tillgängliga kolumner i marts.mart_analysis_days (för utfall.kolumn):
             n_hyper_level1_events, n_hyper_level2_events
   Sömn och aktivitet (Oura/Garmin, null om wearable-data saknas): sleep_score,
             readiness_score, hrv_avg_ms, hr_lowest_bpm, total_sleep_seconds,
-            deep_sleep_seconds, rem_sleep_seconds, sleep_efficiency_pct, steps
+            deep_sleep_seconds, rem_sleep_seconds, sleep_efficiency_pct, steps,
+            stress_avg, stress_max (Garmin Firstbeat 0–100; Oura: null)
   Tidsfönster (utfall.matt + utfall.fonster): medel, topp, tid_over_10"""
 
 SYSTEM_PROMPT_TEMPLATE = """\

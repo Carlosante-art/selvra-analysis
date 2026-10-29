@@ -78,6 +78,8 @@ select
     sl.sleep_score,
     sl.readiness_score,
     sl.hrv_avg_ms,
+    sl.stress_avg,
+    sl.stress_max,
     sl.hr_lowest_bpm,
     sl.total_sleep_seconds,
     sl.deep_sleep_seconds,
@@ -105,7 +107,9 @@ left join sleep as sl
 left join dosing as dsg
     on d.reading_date = dsg.reading_date
 group by d.reading_date, s.reading_date, sl.sleep_score, sl.readiness_score,
-         sl.hrv_avg_ms, sl.hr_lowest_bpm, sl.total_sleep_seconds,
+         sl.hrv_avg_ms,
+    sl.stress_avg,
+    sl.stress_max, sl.hr_lowest_bpm, sl.total_sleep_seconds,
          sl.deep_sleep_seconds, sl.rem_sleep_seconds, sl.sleep_efficiency_pct,
          sl.steps, sl.wearable_source, dsg.insulin_bolus_units, dsg.carbs_logged_g,
          dsg.n_boluses

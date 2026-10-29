@@ -55,7 +55,7 @@ EVENT_COLUMNS = {
 # CGM day. This is what lets a person without a CGM (wearable-only mode) run studies.
 WEARABLE_UTFALL = {"sleep_score", "readiness_score", "hrv_avg_ms", "hr_lowest_bpm",
                    "total_sleep_seconds", "deep_sleep_seconds", "rem_sleep_seconds",
-                   "sleep_efficiency_pct", "steps"}
+                   "sleep_efficiency_pct", "steps", "stress_avg", "stress_max"}
 
 
 def utfallsgiltig(df: pd.DataFrame, col: str) -> pd.Series:

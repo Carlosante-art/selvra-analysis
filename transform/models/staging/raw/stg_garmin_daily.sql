@@ -13,6 +13,8 @@ select
     rem_sleep_seconds,
     sleep_efficiency_pct,
     hrv_avg_ms,
+    stress_avg,
+    stress_max,
     hr_lowest_bpm,
     steps
 from {{ source('raw', 'garmin_daily') }}

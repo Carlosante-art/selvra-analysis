@@ -80,6 +80,9 @@ def parse_day(day: str, sleep: dict | None, summary: dict | None, hrv: dict | No
         "hrv_avg_ms": hrv_summary.get("lastNightAvg"),
         "hr_lowest_bpm": (summary or {}).get("restingHeartRate"),
         "steps": (summary or {}).get("totalSteps"),
+        # Firstbeat-poäng ur HRV-mönster: fysiologisk aktivering, inte känslor.
+        "stress_avg": (summary or {}).get("averageStressLevel"),
+        "stress_max": (summary or {}).get("maxStressLevel"),
     }
 
 

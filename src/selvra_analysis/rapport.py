@@ -15,7 +15,7 @@ from selvra_analysis.stats import COVERAGE_NOTE
 KOLUMN_ENHETER = {"steps": "steg", "hr_lowest_bpm": "slag/min", "hrv_avg_ms": "ms",
                   "total_sleep_seconds": "s", "deep_sleep_seconds": "s",
                   "rem_sleep_seconds": "s", "sleep_score": "poäng", "readiness_score": "poäng",
-                  "sleep_efficiency_pct": "pp"}
+                  "sleep_efficiency_pct": "pp", "stress_avg": "poäng", "stress_max": "poäng"}
 
 
 def utfallsenhet(spec: dict) -> str:

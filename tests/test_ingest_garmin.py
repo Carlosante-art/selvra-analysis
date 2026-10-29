@@ -8,7 +8,8 @@ def test_each_value_comes_from_the_endpoint_that_holds_it() -> None:
     summary, resting HR and steps from the user summary — never mixed up."""
     sleep = {"dailySleepDTO": {"sleepTimeSeconds": 25200, "deepSleepSeconds": 5400,
                                "remSleepSeconds": 6300, "sleepScores": {"overall": {"value": 82}}}}
-    summary = {"totalSteps": 11450, "restingHeartRate": 47}
+    summary = {"totalSteps": 11450, "restingHeartRate": 47,
+               "averageStressLevel": 34, "maxStressLevel": 92}
     hrv = {"hrvSummary": {"lastNightAvg": 52}}
     row = parse_day("2026-10-26", sleep, summary, hrv)
     assert row["sleep_score"] == 82
@@ -17,6 +18,8 @@ def test_each_value_comes_from_the_endpoint_that_holds_it() -> None:
     assert row["hrv_avg_ms"] == 52
     assert row["hr_lowest_bpm"] == 47
     assert row["steps"] == 11450
+    assert row["stress_avg"] == 34
+    assert row["stress_max"] == 92
 
 
 def test_garmin_has_no_readiness_or_efficiency() -> None:
