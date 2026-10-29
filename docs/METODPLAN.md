@@ -176,6 +176,38 @@ personers apparater som redan är i drift och de rör Selvra faktiskt använder 
 ingenting mer. Jämförelsebänkar och källor Selvra inte använder ligger
 utanför detta och prövas i så fall separat, mot egna grindar.
 
+## ML-reglerna — föreslå och attackera, aldrig döma
+
+Grundregeln är uppmätt, inte tyckt: som domare släppte frontier-LLM:en igenom
+17–20 av 30 trasiga designer där den deterministiska granskaren släppte 0, och
+en kunskapsbas gjorde den sämre (RESULTAT.md). Samma modell var hederlig på
+ren sifferläsning (motortestets LLM-arm). Därav tre roller:
+
+1. **Generera.** LLM skriver studieutkast, tolkningar och synteser — alltid
+   genom grindarna (granskaren fäller utkast, språkgrinden fäller prosa,
+   reserven är deterministisk). Bättre modeller ger bättre förslag; leverans-
+   vägen ändras aldrig. Skannern förblir med flit modellfri: lutningar,
+   korrelationer, sviter — detektorer som går att citera.
+2. **Attackera.** Agenter författar benchmarkfall, chaos monkey (PROTOKOLL 7)
+   och motortestets LLM-arm är stående mätbänkar. En modell som försöker fälla
+   systemet kan bara göra nytta: en träff blir en rättning, en miss ett bevis.
+   Varje ny modellgeneration mäts om i LLM-armen — "har AI blivit bättre på
+   metodgranskning?" är en empirisk fråga med facit.
+3. **Lära, modellfritt.** Systemets förbättring är ett data-svänghjul utan
+   viktuppdateringar: personliga percentiler, styrka ur egen varians,
+   Dreamer-minnet, misser som blir frusna fall, veckokalibrering. Planerat
+   statistiskt lärande är klassiskt och granskbart: hierarkisk Bayes (§3),
+   förändringspunkter vid versionsbyten.
+
+**Aldrig i domsvägen.** Ingen tränad modell avgör håller/motbevisad/obestämd,
+och ingen optimering sker på systemets egna utfall — det bygger en maskin som
+blir skickligare på att låta rätt, inte på att ha rätt.
+
+**Om en tränad modell någonsin får plats i kedjan** (t.ex. artefakt-
+klassificering): den behandlas som ett rör. Versionsloggas i rörloggen som en
+firmware, byts aldrig tyst, får fruset facit före driftsättning enligt
+PROTOKOLL, och ett modellbyte markerar seriebrott i serierna den rört.
+
 ## Byggs inte, med skäl
 
 - **Bandit-allokering för behandlingsval** (adaptiv randomisering mot "bästa
