@@ -246,6 +246,22 @@ def compose(name: str, df: pd.DataFrame, today: date,
     return subject, "\n".join(lines) + "\n"
 
 
+def framstegsrad(par_nu: int, par_mal: int, titel: str) -> str | None:
+    """Äkta framsteg mot en dom — goal-gradient utan manipulation.
+
+    Forskningen (Kivetz 2006) säger att synligt framsteg mot ett mål bär
+    uthållighet; den manipulativa grenen (Nunes & Drèze: påhittat försprång)
+    är förbjuden här. Måttet är grindens EGET: väntat antal kompletta par mot
+    de par studien kräver — samma tal granskaren räknar, så raden och grinden
+    aldrig kan motsäga varandra. Tiger när målet nåtts (då talar
+    förslagsgrinden) eller inget mål finns."""
+    if par_mal <= 0 or par_nu >= par_mal:
+        return None
+    kvar = par_mal - par_nu
+    return (f"{titel.capitalize()}: {par_nu} av {par_mal} kompletta par finns i underlaget. "
+            f"Ännu {kvar} par tills frågan kan prövas — bär klockan, så växer det.")
+
+
 def _stage_footer(n_days: int) -> str:
     if n_days < STAGE2_DAYS:
         return (f"Selvra har {n_days} dagar med data från dig. Vid {STAGE2_DAYS} dagar lär den sig ditt eget "

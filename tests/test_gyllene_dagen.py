@@ -204,3 +204,18 @@ def test_natt_och_form_tiger_utan_tabell(tmp_path) -> None:
     assert mm._natt_rad(db, IDAG) is None
     assert mm._form_rad(db, IDAG) is None
     assert mm._handelse_rad(db, IDAG) is None
+
+
+def test_framstegsraden_ar_akta_aldrig_fabricerad() -> None:
+    # äkta framsteg mot en dom, aldrig gamification
+    rad = mm.framstegsrad(5, 12, "din sömnstudie")
+    assert rad is not None
+    assert "5 av 12 kompletta par" in rad
+    assert "Ännu 7 par" in rad
+    for konfetti in ("🎉", "🔥", "grattis", "!"):
+        assert konfetti not in rad
+
+    # målet nått → tystnad (då talar förslagsgrinden), och inget mål → tystnad
+    assert mm.framstegsrad(12, 12, "x") is None
+    assert mm.framstegsrad(15, 12, "x") is None
+    assert mm.framstegsrad(5, 0, "x") is None

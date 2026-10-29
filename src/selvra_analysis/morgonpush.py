@@ -19,19 +19,30 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
 
+import duckdb
 import yaml
 from cryptography.hazmat.primitives import serialization
 from py_vapid import Vapid01
 from pywebpush import WebPushException, webpush
 
+from selvra_analysis import granska
+from selvra_analysis import study as st
 from selvra_analysis.forslag import forslagsrad
 from selvra_analysis.ingest_garmin import load as load_garmin
 from selvra_analysis.ingest_garmin import person_paths
-from selvra_analysis.morgonmejl import FETCH_DAYS, compose, extrarader, read_days, read_glucose
+from selvra_analysis.morgonmejl import (
+    FETCH_DAYS,
+    compose,
+    extrarader,
+    framstegsrad,
+    read_days,
+    read_glucose,
+)
 from selvra_analysis.trendvakt import trendrad
 
 KEY_DIR = Path("data/push")
@@ -104,6 +115,36 @@ def send(person: str, data: dict) -> None:
         raise
 
 
+def _framstegsrad_for(person: str, paths: dict) -> str | None:
+    """Äkta framsteg mot personens aktiva studieutkast, annars tystnad.
+    Räknar giltiga utfallsdagar de senaste 90 dagarna mot studiens dagmål."""
+    mapp = paths["dir"] / "forslag"
+    if not mapp.exists():
+        return None
+    try:
+        # Aktivt n1-utkast: har ett dagmål och är inte låst. Grindens egen
+        # par-räkning är måttet — aldrig en lösare dagräkning som kan motsäga den.
+        for fil in sorted(mapp.glob("*/studie.yml")):
+            if (fil.parent / "las.json").exists():
+                continue
+            spec = yaml.safe_load(fil.read_text())
+            if ((spec.get("design") or {}).get("dagar") or {}).get("datum"):
+                break
+        else:
+            return None
+        studie = st.load(fil)
+        with duckdb.connect(str(paths["db"]), read_only=True) as con:
+            res = granska.review(studie, con)
+        for c in res.get("checks", []):
+            m = re.search(r"kompletta par (\d+) av (\d+)", c.get("text", ""))
+            if m:
+                return framstegsrad(int(m.group(1)), int(m.group(2)),
+                                    spec.get("titel", "din studie").lower())
+        return None
+    except (st.StudyError, duckdb.Error, KeyError, OSError):
+        return None
+
+
 def _report(person: str, fetch: bool) -> dict:
     paths = person_paths(person)
     conf = yaml.safe_load((paths["dir"] / "person.yml").read_text())
@@ -115,6 +156,9 @@ def _report(person: str, fetch: bool) -> dict:
                             glukos=glukos, extra=extrarader(paths["db"], today, glukos))
     if person == "carl" and not glukos.empty:
         body = body.rstrip() + "\n\nAGP-vyn uppdaterad i morse: selvra-morgonvy.html i Downloads.\n"
+    frad = _framstegsrad_for(person, paths)
+    if frad:
+        body = body.rstrip() + "\n\n" + frad + "\n"
     trad = trendrad(person, paths["db"], today, skriv=fetch)
     if trad:
         body = body.rstrip() + "\n\n" + trad + "\n"
