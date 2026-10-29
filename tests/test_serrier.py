@@ -80,3 +80,29 @@ def test_schemat_ar_en_aterspelning_av_journalen(tmp_path, monkeypatch) -> None:
     assert ("17.05", date(2026, 10, 29)) in fw
     assert ("17.06", date(2026, 11, 4)) in fw
     assert h == [("kandidat", "garminconnect")]
+
+
+def test_identisk_formandring_over_apparater_ar_uppstroms(tmp_path, monkeypatch) -> None:
+    """Princip 3-kontrollen: samma formändring på två modeller = uppströms
+    (bibliotek/pipeline), inte apparaten. Firmware skiljer sig per modell och
+    grupperas aldrig ihop."""
+    monkeypatch.chdir(tmp_path)
+    journal = [
+        # identisk fältändring på två modeller samma dag → uppströms
+        {"op": "kandidat", "id": "a", "datum": "2026-11-01", "modell": "Venu 2",
+         "ror": "garminconnect", "beskrivning": "falt: [x] → [x, stress]"},
+        {"op": "kandidat", "id": "b", "datum": "2026-11-01", "modell": "Venu 3",
+         "ror": "garminconnect", "beskrivning": "falt: [x] → [x, stress]"},
+        # firmware skiljer sig per modell → var för sig, apparatspecifikt
+        {"op": "kandidat", "id": "c", "datum": "2026-11-01", "modell": "Venu 2",
+         "ror": "garminconnect", "beskrivning": "firmware: '18' → '19'"},
+        {"op": "kandidat", "id": "d", "datum": "2026-11-01", "modell": "Venu 3",
+         "ror": "garminconnect", "beskrivning": "firmware: '17' → '18'"},
+    ]
+    g = serrier.grupperade(journal)
+    falt = next(x for x in g if "falt" in x["beskrivning"])
+    assert falt["modeller"] == ["Venu 2", "Venu 3"]
+    assert "UPPSTRÖMS" in falt["omfattning"]
+    firmware = [x for x in g if "firmware" in x["beskrivning"]]
+    assert len(firmware) == 2  # två skilda händelser
+    assert all("en apparat" in x["omfattning"] for x in firmware)

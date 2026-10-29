@@ -184,19 +184,52 @@ def spela_upp(db: Path = DB) -> None:
                          h["status"], h.get("kvitto"), h.get("tillverkar_svar")])
 
 
-def lista() -> str:
-    rader = _journal_rader()
-    handelser: dict[str, dict] = {}
+def grupperade(idag_journal: list[dict] | None = None) -> list[dict]:
+    """Kandidater grupperade över apparater (princip 3 / populationskontrollen):
+    en IDENTISK formändring som träffar flera modeller är uppströms — bibliotek,
+    API eller pipeline — inte apparaten. Hoppar bara en modell är det apparaten.
+
+    Returnerar en post per unik (beskrivning, datum); omfattning säger hur många
+    apparater och om det är uppströms eller apparatspecifikt."""
+    rader = idag_journal if idag_journal is not None else _journal_rader()
+    status = {}
     for r in rader:
         if r["op"] == "kandidat":
-            handelser[r["id"]] = r | {"status": "kandidat"}
-        elif r["op"] == "status" and r["id"] in handelser:
-            handelser[r["id"]]["status"] = r["status"]
-    if not handelser:
+            status[r["id"]] = "kandidat"
+        elif r["op"] == "status":
+            status[r["id"]] = r["status"]
+    grupper: dict[tuple, dict] = {}
+    for r in rader:
+        if r["op"] != "kandidat":
+            continue
+        nyckel = (r["beskrivning"], r["datum"])
+        g = grupper.setdefault(nyckel, {
+            "beskrivning": r["beskrivning"], "datum": r["datum"], "ror": r["ror"],
+            "modeller": set(), "ids": [], "statusar": set()})
+        g["modeller"].add(r["modell"])
+        g["ids"].append(r["id"])
+        g["statusar"].add(status.get(r["id"], "kandidat"))
+    ut = []
+    for g in grupper.values():
+        n = len(g["modeller"])
+        g["omfattning"] = (f"{n} apparater — UPPSTRÖMS (bibliotek/API/pipeline, inte apparaten)"
+                           if n >= 2 else "en apparat (apparatspecifik)")
+        g["modeller"] = sorted(g["modeller"])
+        ut.append(g)
+    return sorted(ut, key=lambda g: (g["datum"], g["beskrivning"]))
+
+
+def lista() -> str:
+    grupper = grupperade()
+    if not grupper:
         return "Registret är tomt — inga formändringar observerade ännu."
-    return "\n".join(f"{h['id']}  {h['datum']}  {h['modell']}/{h['ror']}  "
-                     f"[{h['status']}]  {h['beskrivning']}"
-                     for h in sorted(handelser.values(), key=lambda x: x["datum"]))
+    rader = []
+    for g in grupper:
+        status = "/".join(sorted(g["statusar"]))
+        rader.append(f"{g['datum']}  {','.join(g['modeller'])}/{g['ror']}  [{status}]  "
+                     f"{g['beskrivning'][:70]}")
+        rader.append(f"           ↳ {g['omfattning']}")
+    return "\n".join(rader)
 
 
 def main(argv: list[str] | None = None) -> int:
