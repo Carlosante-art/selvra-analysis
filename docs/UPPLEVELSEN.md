@@ -71,6 +71,15 @@ assertionerna mjukas upp i smyg.
 deploy. Layoutbrott ska upptäckas där — inte på en telefon av en människa som
 inte bett om att vara testare.
 
+## 7b. Meningen reser aldrig utan sin täckning
+
+När motorns text levereras till någon annans yta (integration, API, MCP)
+följer täckningen med som omutbar metadata — GRADE-nivå, band, förbehåll,
+källattribuering — och integrationsvillkoren förbjuder beskärning. En mening
+vars förbehåll strippats är inte längre Selvras mening; grinden måste gälla
+på ytan den visas på, inte bara i motorn som skrev den. Konstitutionen är en
+del av leveranskontraktet.
+
 ## 8. En yta per person, och friktion med avsikt
 
 Testare-1 har notisen och morgonsidan — inte terminalen, inte dashboarden, inte
@@ -88,3 +97,4 @@ studie kräver ett aktivt ja till Carl, aldrig ett tryck i en notis).
 - 2026-10-28: Första versionen, åtta regler.
 - 2026-10-29: §5 utökad — avvikelser som ryms i rörets kända mätfel redovisas inte som avvikelser.
 - 2026-10-29: §2b — "vad detta inte är"-konventionen (lånad från selvra-brain).
+- 2026-10-29: §7b — meningen reser aldrig utan sin täckning (motor-inte-yta-formen).

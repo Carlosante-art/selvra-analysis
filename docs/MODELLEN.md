@@ -16,6 +16,15 @@ och håller tyst när täckning saknas. Positionen (kanon): *Selvra är ett
 protokoll med stora databaser, som connectas med MCP:er. Selvra-app är dess
 första klient. Selvra Diabetes är dess första vertikal.*
 
+## Formen: motor, inte yta (positionering låst 2026-10-29)
+
+Selvra är en intelligensmotor, inte en yta: den levererar grindade meningar
+med täckningsmetadata till andras grafer. Egna ytor (breven, morgonsidan) är
+motorns laboratorium — där varje mening prövas mot riktiga människor — aldrig
+dess produkt. Grafarbete byggs inte nytt; det som finns (morgonvyn) är Carls
+instrument. L4 (andra system frågar Selvra) är därmed huvudspåret, inte
+slutsteget. Förebild i formen: Firstbeat — motorn inuti andras produkter.
+
 ## Lagren
 
 | # | Lager | Vad det är | Läge 2026-10-28 |
@@ -150,3 +159,4 @@ Inte MAU. I ordning:
 - 2026-10-28: Första versionen.
 - 2026-10-29: Mätlagret in i L0:s förbättringsloop (METODPLAN §6).
 - 2026-10-29: Domstolsprincipen — generator, omutlig domare, minne, dubbel självreferens; flaskhalsen är domen.
+- 2026-10-29: Formen låst — motor, inte yta; meningar till andras grafer; egna ytor är laboratoriet.
