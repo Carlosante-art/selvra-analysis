@@ -14,5 +14,6 @@ MARKOR=data/rapporter/morgon.datum
   uv run python -m selvra_analysis.morgonpush skicka testare-1 || echo "push testare-1 misslyckades ($?)"
   bash scripts/backup.sh || echo "backup misslyckades ($?)"
   uv run python -m selvra_analysis.sjalvstudie || echo "självstudien misslyckades ($?)"
+  uv run python -m selvra_analysis.friktionsvakt || echo "friktionsvakten misslyckades ($?)"
   date +%F > "$MARKOR"
 } >> data/rapporter/morgon.log 2>&1
