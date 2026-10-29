@@ -23,6 +23,14 @@ människa och testad i CI, eller (b) AI-text som passerat **språkgrinden**
 rådgivningsspråk, längdtak. Underkänd AI-text skickas aldrig — reserven är
 rapportens eget, motorskrivna svar. Det finns ingen tredje kategori.
 
+## 2b. Varje laddad modul avgränsar sig nedåt
+
+Moduler vars utdata kan övertolkas bär ett "vad detta inte är"-block i sin
+docstring (konvention lånad från selvra-brain): sharediffen säger "aldrig
+vilket rör som har rätt", rapporten säger "rörets trohet är inte fysiologisk
+sanning". Avgränsningen skrivs där koden bor, så att nästa läsare möter den
+före frestelsen.
+
 ## 3. Varje tal är spårbart
 
 Ett tal i ett brev, en notis eller på sajten ska gå att följa till en
@@ -79,3 +87,4 @@ studie kräver ett aktivt ja till Carl, aldrig ett tryck i en notis).
 
 - 2026-10-28: Första versionen, åtta regler.
 - 2026-10-29: §5 utökad — avvikelser som ryms i rörets kända mätfel redovisas inte som avvikelser.
+- 2026-10-29: §2b — "vad detta inte är"-konventionen (lånad från selvra-brain).
