@@ -37,11 +37,16 @@ def logga(kalla: str, person: str, **form) -> dict:
 
 
 def enhetsinfo(garmin) -> tuple[str, str]:
-    """Modell och firmware ur Garmins senaste-enhet-svar; tomt vid fel, aldrig stopp."""
+    """Modell och firmware; get_devices bär firmware (get_device_last_used gör det inte).
+
+    Firmware per hämtning är fellogg-dimensionens nyckel: mjukvaruversioner
+    flyttar mått flera procent inom samma person (Sturrock m.fl. 2025), och
+    drift som träffar fil och API lika syns bara som förändringspunkter vid
+    kända versionsbyten. Tomt vid fel, aldrig stopp."""
     try:
-        d = garmin.get_device_last_used() or {}
-        fw = next((str(d[k]) for k in ("currentFirmwareVersionString", "currentFirmwareVersion",
-                                       "firmwareVersion", "softwareVersion") if d.get(k)), "")
-        return str(d.get("lastUsedDeviceName", "")), fw
+        enheter = garmin.get_devices() or []
+        d = enheter[0] if enheter else {}
+        return (str(d.get("productDisplayName", "")),
+                str(d.get("currentFirmwareVersion", "")))
     except Exception:  # noqa: BLE001 — loggen får aldrig fälla hämtningen
         return "", ""
