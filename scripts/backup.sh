@@ -28,9 +28,13 @@ export SELVRA_BACKUP_LOSEN
 mkdir -p "$DEST"
 UT="$DEST/selvra-backup-$(date +%F).tar.gz.enc"
 
-tar czf - \
-    --exclude='*.duckdb' --exclude='*.log' \
-    data/raw data/personer data/push data/snapshots data/serrier data/sagt .env \
+# Bara det oersättliga som faktiskt finns — nya journaler (sagt, serrier) dyker
+# upp först när de använts, och en frånvarande mapp får inte fälla backupen.
+MAL=()
+for m in data/raw data/personer data/push data/snapshots data/serrier data/sagt .env; do
+    [ -e "$m" ] && MAL+=("$m")
+done
+tar czf - --exclude='*.duckdb' --exclude='*.log' "${MAL[@]}" \
     | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
         -pass env:SELVRA_BACKUP_LOSEN -out "$UT"
 
