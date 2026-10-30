@@ -31,7 +31,7 @@ DB = Path("data/selvra.duckdb")
 
 TYPER = ("intention", "handelse", "sjalvbild")
 STATUSAR = ["sagt", "matt", "provat"]
-KALLOR = ("morgonsvar", "onboarding", "import")
+KALLOR = ("morgonsvar", "onboarding", "import", "mcp")
 POLARITETER = ("bekraftad", "negerad")
 MODALITETER = ("faktisk", "avsedd", "hypotetisk", "annans_rost")
 EVIDENSTYPER = ("matserie", "last_studie")
@@ -133,7 +133,7 @@ def hamta(amne: str, person: str = "carl") -> list[dict]:
     Enkel textsökning i citaten (ingen embeddings-sökning i v0). Returnerar
     varje posts egna ord och epistemiska status som de sparades; negerade
     poster bär alltid polaritet 'negerad', aldrig utan fältet. v0 är Carls
-    lager; annan person ger tom lista (pappas/andras data bor inte i sagt)."""
+    lager; annan person ger tom lista (andra personers data bor inte i sagt)."""
     if person != "carl":
         return []
     nal = amne.casefold()
