@@ -83,3 +83,45 @@ def test_glukos_ar_monster_i_tid_aldrig_andel_utanfor_mal() -> None:
     ok, _ = sprakgrind.granska_reflektion("Glukosen steg efter 21 varje kväll denna vecka.",
                                           "steg efter 21 varje kväll")
     assert ok
+
+
+def test_hamta_ger_tillbaka_orden_byte_for_byte(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    sagt.spara(POST)
+    träff = sagt.hamta("promenera")
+    assert len(träff) == 1
+    r = träff[0]
+    assert r["citat"] == POST["citat"]          # ordagrant, aldrig omskrivet
+    assert r["citat_offset"] == POST["citat_offset"]
+    assert r["modalitet"] == POST["modalitet"]
+    assert r["kalla"] == POST["kalla"]
+    assert r["status"] == "sagt"                 # ingen evidens → sagt
+    assert sagt.hamta("segelbåt") == []          # ingen matchning
+
+
+def test_hamta_negerad_bar_alltid_falt(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    neg = {**POST, "citat": "jag tar inte kaffe efter 15", "citat_offset": 0,
+           "polaritet": "negerad", "typ": "handelse", "modalitet": "faktisk"}
+    sagt.spara(neg)
+    r = sagt.hamta("kaffe")
+    assert len(r) == 1
+    assert r[0]["polaritet"] == "negerad"        # aldrig utan fältet
+    assert "inte" in r[0]["citat"]
+
+
+def test_hamta_bar_evidens_och_bekraftelse(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    pid = sagt.spara(POST)
+    sagt.bekrafta(pid, "2026-11-01T07:00:00Z")
+    sagt.uppgradera_status(pid, "matt", {"typ": "matserie", "referens": "steg 14 d"})
+    r = sagt.hamta("promenera")[0]
+    assert r["status"] == "matt"
+    assert r["evidens"]["referens"] == "steg 14 d"
+    assert r["bekraftad_av_anvandaren_vid"] == "2026-11-01T07:00:00Z"
+
+
+def test_hamta_bara_carl_i_v0(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    sagt.spara(POST)
+    assert sagt.hamta("promenera", person="testare-1") == []

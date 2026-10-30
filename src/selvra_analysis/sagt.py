@@ -112,8 +112,9 @@ def _status(pid: str) -> str | None:
     return status
 
 
-def spela_upp(db: Path = DB) -> None:
-    """Journalen → DuckDB-schemat sagt. Schemat är en vy; sanningen är journalen."""
+def _aktuella() -> dict[str, dict]:
+    """Journalen reducerad till varje posts aktuella tillstånd. Sanningen är
+    journalen; detta är bara dess uppspelning (status, evidens, bekräftelse)."""
     poster: dict[str, dict] = {}
     for r in _journal_rader():
         if r["op"] == "post":
@@ -123,6 +124,36 @@ def spela_upp(db: Path = DB) -> None:
             poster[r["id"]]["evidens"] = r["evidens"]
         elif r["op"] == "bekraftelse" and r["id"] in poster:
             poster[r["id"]]["bekraftad_av_anvandaren_vid"] = r["vid"]
+    return poster
+
+
+def hamta(amne: str, person: str = "carl") -> list[dict]:
+    """Poster vars citat innehåller `amne` — ordagrant, aldrig omskrivet.
+
+    Enkel textsökning i citaten (ingen embeddings-sökning i v0). Returnerar
+    varje posts egna ord och epistemiska status som de sparades; negerade
+    poster bär alltid polaritet 'negerad', aldrig utan fältet. v0 är Carls
+    lager; annan person ger tom lista (pappas/andras data bor inte i sagt)."""
+    if person != "carl":
+        return []
+    nal = amne.casefold()
+    ut = []
+    for p in _aktuella().values():
+        if nal in str(p.get("citat", "")).casefold():
+            ut.append({
+                "citat": p.get("citat"), "citat_offset": p.get("citat_offset"),
+                "typ": p.get("typ"), "polaritet": p.get("polaritet"),
+                "modalitet": p.get("modalitet"), "status": p.get("status", "sagt"),
+                "kalla": p.get("kalla"), "said_at": p.get("said_at"),
+                "evidens": p.get("evidens"),
+                "bekraftad_av_anvandaren_vid": p.get("bekraftad_av_anvandaren_vid"),
+            })
+    return sorted(ut, key=lambda r: str(r.get("said_at") or ""))
+
+
+def spela_upp(db: Path = DB) -> None:
+    """Journalen → DuckDB-schemat sagt. Schemat är en vy; sanningen är journalen."""
+    poster = _aktuella()
     with duckdb.connect(str(db)) as con:
         con.execute("create schema if not exists sagt")
         kolumner = ", ".join(f"{f} varchar" for f in FALT if f != "citat_offset") \
